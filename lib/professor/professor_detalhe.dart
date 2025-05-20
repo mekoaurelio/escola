@@ -53,7 +53,6 @@ class ProfessorDetalhe extends StatelessWidget {
         ///AQUI CARREGA TODOS OS CAMPOS QUE NÃO SÃO DAS TABELAS AUXILIARES
         //f.controllerName: professor?[f.controllerName]?.toString() ?? '',
 
-      f.controllerName: Utils.formatInitialValue(
         f.controllerName, professor?[f.controllerName]?.toString() ?? '',f.tipo
       ),
 

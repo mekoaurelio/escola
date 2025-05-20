@@ -9,7 +9,6 @@ import '../services/utils.dart';
 class ApiMySql {
   static String pathDados = 'https://www.xmktech.net/dados/';
 
-  ///***********************************************************************
   static get(var table, var id,) async {
     var sql = '';
     // var idE=Utils.getIdEntidade();
@@ -18,7 +17,6 @@ class ApiMySql {
     if (id != null) {
       sql += ' AND id=$id';
     }
-   // print(sql);
     return executaSql(sql);
   }
 
@@ -27,7 +25,6 @@ class ApiMySql {
     var url = 'https://www.xmktech.net/dados/get.php?sql=$sql';
     try {
       final response = await http.get(Uri.parse(url));
-        print(response.body);
       if (response.statusCode == 200) {
         String volta = response.body.trim();
         if (volta.contains('NENHUM')) {
@@ -67,32 +64,6 @@ class ApiMySql {
     return lista;
   }
   ///************************************************************************
-
-  //area_atuacao_id
-
-  static getGrid() async {
-    final sql = '''
-  SELECT
-    SUM(vencimento_basico_atual)        AS soma_venc_basico_atual,
-    SUM(complementacao_piso)            AS soma_complementacao_piso,
-    SUM(jornada_suplementar)            AS soma_jornada_suplementar,
-    SUM(adicional_ats)                  AS soma_adicional_ats,
-    SUM(abono_permanencia)              AS soma_abono_permanencia,
-    SUM(gratificacao_direcao)           AS soma_gratificacao_direcao,
-    SUM(diferenca_enquadramento)        AS soma_diferenca_enquadramento,
-    SUM(encargos_sociais)               AS soma_encargos_sociais,
-    SUM(
-      adicional_especial_5
-      + adicional_especial_10
-      + adicional_especial_25
-    )                                    AS soma_adicionais_especiais
-  FROM professor
-''';
-
-    print(sql);
-    return  executaSql(sql);
-   // return lista;
-  }
 
   static Future getUserByEmailPassword(String idUser, String password,) async {
     String sql = 'Select * from vo_user where id_user="$idUser" and password="$password"';
@@ -165,10 +136,6 @@ class ApiMySql {
     data.forEach((campo, valor) {
       if(valor.contains('R\$')){
         valor=Utils.saldoToSave(valor);
-      }
-      if(valor.contains('%')){
-        valor=Utils.saldoToSave(valor);
-        valor=valor.trim();
       }
       // Escapa aspas simples
       final escaped = valor.replaceAll("'", "''");

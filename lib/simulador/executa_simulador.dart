@@ -35,8 +35,6 @@ class _SimuladorExecutaState extends State<SimuladorExecuta> with TickerProvider
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : ProgressaoScreen(
-       // fundeb: fundebRaw,       // sua lista do Fundeb
-       // infantil: infantilRaw,   // sua lista do Infantil
       ),
     );
   }

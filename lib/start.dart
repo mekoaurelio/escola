@@ -6,7 +6,6 @@ import 'auxiliares/cargo_lista.dart';
 import 'auxiliares/encargo_social_lista.dart';
 import 'auxiliares/fonte_receita_lista.dart';
 import 'auxiliares/lista_cod_descri.dart';
-import 'impacto/impacto_main.dart';
 import 'professor/professor_lista.dart';
 import 'services/upload_video.dart';
 import 'simulador/executa_simulador.dart';
@@ -41,8 +40,6 @@ class _StartState extends State<Start> {
   // Navigation items
   final List<Map<String, dynamic>> _mainNavigationItems = [
     {'title': 'professores'.tr, 'icon': Icons.perm_contact_cal_sharp, 'index': 0},
-    {'title': 'simulador'.tr, 'icon': Icons.calendar_month, 'index': 1},
-    {'title': 'Impacto', 'icon': Icons.lightbulb_outline, 'index': 2},
   ];
 
   final List<Map<String, dynamic>> _auxiliaryNavigationItems = [
@@ -108,10 +105,6 @@ class _StartState extends State<Start> {
 
      // if (_currentPage == 'cargos'.tr) return UploadVideoPage();
       if (_currentPage == 'professores'.tr) return ProfessorLista(table: 'professor',);
-      if (_currentPage == 'simulador'.tr) return SimuladorExecuta();
-      if (_currentPage == 'impacto') return ImpactoMain();
-
-     // if (_currentPage == 'simulador'.tr) return Simulador();
       return Container();
 
     }
@@ -324,7 +317,6 @@ class _StartState extends State<Start> {
       case 1:
         return 'simulador'.tr;
       case 2:
-        return 'impacto';
       case 3:
         return 'config'.tr;
       default:

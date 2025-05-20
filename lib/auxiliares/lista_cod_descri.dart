@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 
 import '../services/base_lista.dart';
 import '../widgets/line.dart';
-import '../widgets/painel.dart';
 import 'cod_descri.dart';
 
 class ListaCodDescri extends ListaBase {
@@ -54,9 +53,6 @@ class _ListaBaseState extends ListaBaseState<ListaCodDescri> {
     var result=await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => Panel(
-        width: MediaQuery.of(context).size.width *0.44,
-        height: MediaQuery.of(context).size.height *0.44,
         child: CodDescri(data: lista[hoverIndex],table: widget.table,),
         onClose: () => Navigator.of(context).pop(),
       ),
@@ -71,9 +67,6 @@ class _ListaBaseState extends ListaBaseState<ListaCodDescri> {
     var result=await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => Panel(
-        width: MediaQuery.of(context).size.width *0.44,
-        height: MediaQuery.of(context).size.height *0.44,
         child: CodDescri(data: null,table: widget.table,),
          onClose: () => Navigator.of(context).pop(),
       ),

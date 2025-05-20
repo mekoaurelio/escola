@@ -23,32 +23,6 @@ class Utils {
   static var formatterD =  DateFormat('dd/MM/yyyy');
   static var formatterh =  DateFormat('hh:mm');
 
-  static String formatInitialValue(String key, String rawValue,String tipo) {
-    print(key);
-    print(rawValue);
-    if (tipo == 'data' && rawValue.isNotEmpty) {
-      try {
-        final dt = DateTime.parse(rawValue);
-        return DateFormat('dd/MM/yyyy').format(dt);
-      } catch (_) {
-        return rawValue; // se não parsear, devolve original
-      }
-    }else
-/*
-    if(tipo=='dinheiro'){
-      try {
-        //String vr = Utils.vrBco(rawValue);
-        return 'R\$ '+Utils.formatVr.format(rawValue).toString();
-        //return vr;
-      } catch (_) {
-        return rawValue; // se não parsear, devolve original
-      }
-    }else
-
- */
-      return rawValue;
-  }
-
   static  borda(){
     return  const Border(
       bottom: BorderSide(
@@ -66,9 +40,6 @@ class Utils {
 
   static String saldoToSave(String tex) {
     String sl=tex;
-    if(tex.contains('%')) {
-      sl = tex.replaceAll('%', '');
-    }
     if(tex.contains('\$')) {
       sl = tex.substring(3, tex.length);
     }

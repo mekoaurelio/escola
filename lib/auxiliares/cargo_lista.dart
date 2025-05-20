@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 
 import '../services/base_lista.dart';
 import '../widgets/line.dart';
-import '../widgets/painel.dart';
 import 'cargo_detalhe.dart';
 import 'cod_descri.dart';
 
@@ -55,9 +54,6 @@ class _ListaBaseState extends ListaBaseState<CargoLista> {
     var result=await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => Panel(
-        width: MediaQuery.of(context).size.width *0.44,
-        height: MediaQuery.of(context).size.height *0.44,
         child: CargoDetalhe(data: lista[hoverIndex],table: widget.table,),
         onClose: () => Navigator.of(context).pop(),
       ),
@@ -72,9 +68,6 @@ class _ListaBaseState extends ListaBaseState<CargoLista> {
     var result=await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => Panel(
-        width: MediaQuery.of(context).size.width *0.44,
-        height: MediaQuery.of(context).size.height *0.44,
         child: CargoDetalhe(data: null,table: widget.table,),
          onClose: () => Navigator.of(context).pop(),
       ),
