@@ -40,6 +40,8 @@ class _StartState extends State<Start> {
   // Navigation items
   final List<Map<String, dynamic>> _mainNavigationItems = [
     {'title': 'professores'.tr, 'icon': Icons.perm_contact_cal_sharp, 'index': 0},
+    {'title': 'simulador'.tr, 'icon': Icons.calendar_today, 'index': 1},
+    {'title': 'rating'.tr, 'icon': Icons.comment, 'index': 2},
   ];
 
   final List<Map<String, dynamic>> _auxiliaryNavigationItems = [
@@ -105,6 +107,8 @@ class _StartState extends State<Start> {
 
      // if (_currentPage == 'cargos'.tr) return UploadVideoPage();
       if (_currentPage == 'professores'.tr) return ProfessorLista(table: 'professor',);
+      if (_currentPage == 'simulador'.tr) return Simulador();
+      if (_currentPage == 'rating'.tr) return SimuladorExecuta();
       return Container();
 
     }
@@ -317,6 +321,7 @@ class _StartState extends State<Start> {
       case 1:
         return 'simulador'.tr;
       case 2:
+        return 'rating'.tr;
       case 3:
         return 'config'.tr;
       default:
