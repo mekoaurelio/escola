@@ -208,7 +208,6 @@ class _StartState extends State<Start> {
         : languageCode == 'pt'
         ? 'BR'
         : 'ES';
-
     Get.updateLocale(Locale(languageCode, countryCode));
     setState(() {
       _currentLanguage = languageCode;
