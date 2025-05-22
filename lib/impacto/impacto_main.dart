@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'impacto_grid.dart';
 
+
 class ImpactoMain extends StatefulWidget {
   const ImpactoMain({Key? key}) : super(key: key);
 
