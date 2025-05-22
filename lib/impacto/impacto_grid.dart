@@ -54,7 +54,7 @@ class _ImpactoGridState extends State<ImpactoGrid> {
     sql+=' FROM professor';
 
     var impacto=await ApiMySql.getGrid();
-    print('impacto');
+   // print('impacto');
     print(impacto);
   }
 
