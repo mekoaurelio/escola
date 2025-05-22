@@ -9,6 +9,7 @@ import '../services/utils.dart';
 class ApiMySql {
   static String pathDados = 'https://www.xmktech.net/dados/';
 
+  //**************************************************
   static get(var table, var id,) async {
     var sql = '';
     // var idE=Utils.getIdEntidade();
@@ -25,6 +26,7 @@ class ApiMySql {
     var url = 'https://www.xmktech.net/dados/get.php?sql=$sql';
     try {
       final response = await http.get(Uri.parse(url));
+      //  print(response.body);
       if (response.statusCode == 200) {
         String volta = response.body.trim();
         if (volta.contains('NENHUM')) {
