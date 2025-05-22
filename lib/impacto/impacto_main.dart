@@ -21,7 +21,6 @@ class _ImpactoMainState extends State<ImpactoMain> with TickerProviderStateMixin
     setState(() => isLoading = false);
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
