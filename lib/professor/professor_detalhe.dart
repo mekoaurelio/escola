@@ -1,7 +1,6 @@
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 
 import '../data/api_my_sql.dart';
 import '../services/generic_form_screen.dart';
@@ -54,7 +53,7 @@ class ProfessorDetalhe extends StatelessWidget {
         ///AQUI CARREGA TODOS OS CAMPOS QUE NÃO SÃO DAS TABELAS AUXILIARES
         //f.controllerName: professor?[f.controllerName]?.toString() ?? '',
 
-      f.controllerName: _formatInitialValue(
+      f.controllerName: Utils.formatInitialValue(
         f.controllerName, professor?[f.controllerName]?.toString() ?? '',f.tipo
       ),
 
@@ -92,26 +91,6 @@ class ProfessorDetalhe extends StatelessWidget {
         ]),
       ),
     );
-  }
-
-  String _formatInitialValue(String key, String rawValue,String tipo) {
-    if (tipo == 'data' && rawValue.isNotEmpty) {
-      try {
-        final dt = DateTime.parse(rawValue);
-        return DateFormat('dd/MM/yyyy').format(dt);
-      } catch (_) {
-        return rawValue; // se não parsear, devolve original
-      }
-    }else
-      if(tipo=='dinheiro'){
-        try {
-          final vr = Utils.vrBco(rawValue);
-          return vr;
-        } catch (_) {
-          return rawValue; // se não parsear, devolve original
-        }
-      }else
-    return rawValue;
   }
 
   Widget _buildTab(List<FormFieldData> fields, Map<String, String> initial,int tabIndex) {

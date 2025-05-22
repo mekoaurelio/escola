@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:country_flags/country_flags.dart';
 
-import 'services/auth_service.dart';
-
 import 'auxiliares/cargo_lista.dart';
 import 'auxiliares/encargo_social_lista.dart';
 import 'auxiliares/fonte_receita_lista.dart';
@@ -41,13 +39,6 @@ class _StartState extends State<Start> {
 
   // Navigation items
   final List<Map<String, dynamic>> _mainNavigationItems = [
-    {
-      'title': 'professores'.tr,
-      'icon': Icons.perm_contact_cal_sharp,
-      'index': 0,
-    },
-    {'title': 'simulador'.tr, 'icon': Icons.calendar_today, 'index': 1},
-    {'title': 'rating'.tr, 'icon': Icons.comment, 'index': 2},
   ];
 
   final List<Map<String, dynamic>> _auxiliaryNavigationItems = [
@@ -67,7 +58,7 @@ class _StartState extends State<Start> {
   }
 
   Future<void> _initializeApp() async {
-    //  setState(() => _isLoading = false);
+  //  setState(() => _isLoading = false);
   }
 
   /// Maps page names to database table names
@@ -87,37 +78,26 @@ class _StartState extends State<Start> {
   /// Gets the appropriate content widget for the current page
   Widget _getContent() {
     final isAuxiliaryPage = _auxiliaryNavigationItems.any(
-      (item) => item['title'] == _currentPage,
+          (item) => item['title'] == _currentPage,
     );
-    var tb = _getTableFromPage(_currentPage);
+    var tb=_getTableFromPage(_currentPage);
     if (isAuxiliaryPage) {
       ///mesmo sendo uma tabela auxiliar não é do tipo código e descrição
       if (_currentPage == 'cargos'.tr) {
-        return CargoLista(table: tb, title: '');
       }
       if (_currentPage == 'encargos_sociais'.tr) {
-        return EncargoSocialLista(table: tb);
       }
       if (_currentPage == 'fonte_receita'.tr) {
-        return FonteReceitaLista(table: tb);
       }
 
       /// Aqui são todas as tabelas que são código e descrição
-      return ListaCodDescri(
-        key: ValueKey(
-          tb,
-        ), // <-- isso força o rebuild com base no nome da tabela
+      return  ListaCodDescri(
         table: tb,
         title: '',
       );
-
       /// QUEM NÃO É CÓDIGO E DESCRIÇÃO
-    } else {
-      // if (_currentPage == 'cargos'.tr) return UploadVideoPage();
-      if (_currentPage == 'professores'.tr)
-        return ProfessorLista(table: 'professor');
-      if (_currentPage == 'simulador'.tr) return Simulador();
-      if (_currentPage == 'rating'.tr) return SimuladorExecuta();
+    }else {
+     // if (_currentPage == 'cargos'.tr) return UploadVideoPage();
       return Container();
     }
   }
@@ -154,29 +134,18 @@ class _StartState extends State<Start> {
         _buildNavigationDrawer(),
         Expanded(
           child: Column(
-            children: [_buildAppBar(), Expanded(child: _getContent())],
           ),
         ),
       ],
     );
   }
 
-  /// Builds the app bar with language selector and logout button
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.white,
       title: Text(_currentPage),
       actions: [
         _buildLanguageDropdown(),
-        IconButton(
-          icon: const Icon(Icons.logout),
-          tooltip: 'Logout',
-          onPressed: () {
-            // Clear session storage and navigate to login
-            AuthService.logout();
-            Get.offAllNamed('/login');
-          },
-        ),
         const SizedBox(width: 16),
       ],
     );
@@ -193,35 +162,31 @@ class _StartState extends State<Start> {
             _changeLanguage(value);
           }
         },
-        items:
-            _languages.map((lang) {
-              return DropdownMenuItem<String>(
-                value: lang['code'],
-                child: Row(
-                  children: [
-                    CountryFlag.fromCountryCode(
-                      lang['country']!,
-                      height: 20,
-                      width: 30,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(lang['name']!),
-                  ],
+          return DropdownMenuItem<String>(
+            value: lang['code'],
+            child: Row(
+              children: [
+                CountryFlag.fromCountryCode(
+                  lang['country']!,
+                  height: 20,
+                  width: 30,
                 ),
-              );
-            }).toList(),
+                const SizedBox(width: 8),
+                Text(lang['name']!),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }
 
   /// Handles language change
   void _changeLanguage(String languageCode) {
-    final countryCode =
-        languageCode == 'en'
-            ? 'AU'
-            : languageCode == 'pt'
-            ? 'BR'
-            : 'ES';
+        ? 'AU'
+        : languageCode == 'pt'
+        ? 'BR'
+        : 'ES';
 
     Get.updateLocale(Locale(languageCode, countryCode));
     setState(() {
@@ -236,13 +201,11 @@ class _StartState extends State<Start> {
     return BottomNavigationBar(
       currentIndex: _currentTabIndex,
       onTap: (index) => _onNavigationItemSelected(index),
-      items:
-          _mainNavigationItems.map((item) {
-            return BottomNavigationBarItem(
-              icon: Icon(item['icon']),
-              label: item['title'],
-            );
-          }).toList(),
+        return BottomNavigationBarItem(
+          icon: Icon(item['icon']),
+          label: item['title'],
+        );
+      }).toList(),
     );
   }
 
@@ -257,10 +220,6 @@ class _StartState extends State<Start> {
           Image.asset('assets/images/Xmktec_logo.jpeg', height: 105),
           Texto(tit: 'title'.tr, cor: Colors.black54),
           const SizedBox(height: 20),
-          ..._mainNavigationItems.map(
-            (item) =>
-                _buildDrawerItem(item['title'], item['icon'], item['index']),
-          ),
           _buildDrawerItem(
             'auxiliar'.tr,
             Icons.settings,
@@ -274,11 +233,11 @@ class _StartState extends State<Start> {
 
   /// Builds a drawer navigation item (can have sub-items)
   Widget _buildDrawerItem(
-    String title,
-    IconData icon,
-    int index, {
-    List<Map<String, dynamic>>? subItems,
-  }) {
+      String title,
+      IconData icon,
+      int index, {
+        List<Map<String, dynamic>>? subItems,
+      }) {
     final bool isSelected = _currentPage == title;
 
     if (subItems == null || subItems.isEmpty) {
@@ -299,23 +258,19 @@ class _StartState extends State<Start> {
         title,
         style: TextStyle(color: isSelected ? Colors.black : Colors.grey),
       ),
-      children:
-          subItems.map((subItem) {
-            return ListTile(
-              contentPadding: const EdgeInsets.only(left: 72.0),
-              title: Text(
-                subItem['title'],
-                style: TextStyle(
-                  color:
-                      _currentPage == subItem['title']
-                          ? Colors.black
-                          : Colors.grey,
-                ),
-              ),
-              selected: _currentPage == subItem['title'],
-              onTap: () => _onNavigationItemSelected(subItem['index']),
-            );
-          }).toList(),
+        return ListTile(
+          contentPadding: const EdgeInsets.only(left: 72.0),
+          title: Text(
+            subItem['title'],
+            style: TextStyle(
+                  ? Colors.black
+                  : Colors.grey,
+            ),
+          ),
+          selected: _currentPage == subItem['title'],
+          onTap: () => _onNavigationItemSelected(subItem['index']),
+        );
+      }).toList(),
     );
   }
 
@@ -339,7 +294,6 @@ class _StartState extends State<Start> {
       case 1:
         return 'simulador'.tr;
       case 2:
-        return 'rating'.tr;
       case 3:
         return 'config'.tr;
       default:

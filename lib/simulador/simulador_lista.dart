@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../services/base_lista.dart';
 import '../services/utils.dart';
 import '../widgets/line.dart';
+import '../widgets/painel.dart';
 import 'simulador_detalhe.dart';
 
 class SimuladorLista extends ListaBase {
@@ -55,21 +56,28 @@ class _ListaBaseState extends ListaBaseState<SimuladorLista> {
     var result=await showDialog(
       context: context,
       barrierDismissible: false,
+      builder: (_) => Panel(
+        width: MediaQuery.of(context).size.width *0.50,
+        height: MediaQuery.of(context).size.height *0.90,
         child: SimuladorDetalhe(data: lista[hoverIndex],table: widget.table,),
         onClose: () => Navigator.of(context).pop(),
       ),
     );
-      setState(() {
-        carregarDados(widget.table);
-      });
+    setState(() {
+      carregarDados(widget.table);
+    });
   }
 
   Future<void> onAdd() async {
     var result=await showDialog(
       context: context,
       barrierDismissible: false,
+      builder: (_) => Panel(
+
+        width: MediaQuery.of(context).size.width *0.50,
+        height: MediaQuery.of(context).size.height *0.90,
         child: SimuladorDetalhe(data: null,table: widget.table,),
-         onClose: () => Navigator.of(context).pop(),
+        onClose: () => Navigator.of(context).pop(),
       ),
     );
     if(result!=null) {

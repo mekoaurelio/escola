@@ -25,9 +25,6 @@ class SimuladorAlt extends StatelessWidget {
     String campo='';
 
     final fields = <FormFieldData>[
-      if(data==null)
-      TextFormFieldData(controllerName: 'descricao', label: 'Descricao', tipo:'string'),
-
       tipo=='valor'?
       TextFormFieldData(controllerName: 'valor', label: 'Valor',
           inputFormatters: [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt'),],
@@ -47,17 +44,18 @@ class SimuladorAlt extends StatelessWidget {
         ),
     };
 
+
+
     return Scaffold(
       body: GenericFormScreen(
-        subTitle:data==null?'new'.tr: data!['descricao'],
+        subTitle: data!['descricao'],
         onBack: () => Get.back(),
         onSave: (formValues) async {
           if (data == null || data!['id'] == null) {
-            await ApiMySql.insertDynamic(formValues, tb);
+            // await ApiMySql.insertDynamic(formValues, table);
           } else {
             await ApiMySql.updateDynamic(tb,formValues,idValue: data!['id']);
-            Get.back();
-            //Utils.snak('congra'.tr, 'success'.tr, false, Colors.green);
+            Utils.snak('congra'.tr, 'success'.tr, false, Colors.green);
           }
         },
         fieldsData: fields,
