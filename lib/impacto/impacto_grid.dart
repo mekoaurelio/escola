@@ -57,6 +57,7 @@ class _ImpactoGridState extends State<ImpactoGrid> {
     print(impacto);
   }
 
+
   @override
   void initState() {
     super.initState();
