@@ -11,7 +11,6 @@ class ImpactoMain extends StatefulWidget {
 class _ImpactoMainState extends State<ImpactoMain> with TickerProviderStateMixin {
   bool isLoading = true;
 
-
   @override
   void initState() {
     super.initState();
