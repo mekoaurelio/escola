@@ -6,6 +6,7 @@ import 'auxiliares/cargo_lista.dart';
 import 'auxiliares/encargo_social_lista.dart';
 import 'auxiliares/fonte_receita_lista.dart';
 import 'auxiliares/lista_cod_descri.dart';
+import 'impacto/impacto_main.dart';
 import 'professor/professor_lista.dart';
 import 'services/upload_video.dart';
 import 'simulador/executa_simulador.dart';
@@ -108,7 +109,7 @@ class _StartState extends State<Start> {
       // if (_currentPage == 'cargos'.tr) return UploadVideoPage();
       if (_currentPage == 'professores'.tr) return ProfessorLista(table: 'professor',);
       if (_currentPage == 'simulador'.tr) return SimuladorExecuta();
-      if (_currentPage == 'impacto') return SimuladorExecuta();
+      if (_currentPage == 'impacto') return ImpactoMain();
 
       // if (_currentPage == 'simulador'.tr) return Simulador();
       return Container();
@@ -208,6 +209,7 @@ class _StartState extends State<Start> {
         : languageCode == 'pt'
         ? 'BR'
         : 'ES';
+
     Get.updateLocale(Locale(languageCode, countryCode));
     setState(() {
       _currentLanguage = languageCode;

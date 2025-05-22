@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/api_my_sql.dart';
 import '../services/base_lista.dart';
 import '../widgets/line.dart';
-import '../widgets/painelDireito.dart';
+import '../widgets/painel.dart';
 import 'professor_detalhe.dart';
 
 
@@ -64,8 +64,9 @@ class _ListaBaseState extends ListaBaseState<ProfessorLista> {
     var result=await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => PainelDireito(
-
+      builder: (_) => Panel(
+        width: MediaQuery.of(context).size.width *0.50,
+        height: MediaQuery.of(context).size.height *0.90,
         child: ProfessorDetalhe(professor: lista[hoverIndex],
           cargos: cargos,areaAtuacao: area_atuacao,localServico: local_servico,nivel:nivel,formacao: formacao,
           regime: regimeContracao,fonteReceita: fonte_receita,
@@ -94,7 +95,9 @@ class _ListaBaseState extends ListaBaseState<ProfessorLista> {
     var result=await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => PainelDireito(
+      builder: (_) => Panel(
+        width: MediaQuery.of(context).size.width *0.50,
+        height: MediaQuery.of(context).size.height *0.90,
         /// COMO ESTÁ ADD UM NOVO PROFESSOR A TEBELA professor VAI COMO NULL
         child: ProfessorDetalhe(professor: null,
           cargos: cargos,areaAtuacao: area_atuacao,localServico:local_servico,nivel:nivel,formacao: formacao,

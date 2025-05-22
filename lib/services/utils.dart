@@ -65,6 +65,10 @@ class Utils {
 
   static String saldoToSave(String tex) {
     String sl=tex;
+    if(tex.contains('%')) {
+      sl = tex.replaceAll('%','');
+      sl =sl.trim();
+    }
     if(tex.contains('\$')) {
       sl = tex.substring(3, tex.length);
     }

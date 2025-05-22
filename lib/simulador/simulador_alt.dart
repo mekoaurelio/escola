@@ -21,8 +21,6 @@ class SimuladorAlt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Define aqui os campos do seu formulário
-    String campo='';
 
     final fields = <FormFieldData>[
       tipo=='valor'?
@@ -44,8 +42,6 @@ class SimuladorAlt extends StatelessWidget {
         ),
     };
 
-
-
     return Scaffold(
       body: GenericFormScreen(
         subTitle: data!['descricao'],
@@ -55,13 +51,13 @@ class SimuladorAlt extends StatelessWidget {
             // await ApiMySql.insertDynamic(formValues, table);
           } else {
             await ApiMySql.updateDynamic(tb,formValues,idValue: data!['id']);
-            Utils.snak('congra'.tr, 'success'.tr, false, Colors.green);
+            Get.back();
+            //Utils.snak('congra'.tr, 'success'.tr, false, Colors.green);
           }
         },
         fieldsData: fields,
         initialValues: initialValues,
         hasImagePicker: false,
-
       ),
     );
   }

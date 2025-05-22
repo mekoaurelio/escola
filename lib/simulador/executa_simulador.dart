@@ -34,8 +34,7 @@ class _SimuladorExecutaState extends State<SimuladorExecuta> with TickerProvider
       backgroundColor: Colors.white,
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ProgressaoScreen(
-      ),
+          : ProgressaoScreen(),
     );
   }
 }

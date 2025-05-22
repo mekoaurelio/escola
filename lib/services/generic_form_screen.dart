@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:psycostatattoo/widgets/custom_butom.dart';
 
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
+
 import '../widgets/custom_text_field.dart';
 import '../widgets/formFieldData.dart';
 
@@ -62,7 +64,7 @@ class GenericFormScreenState extends State<GenericFormScreen> {
       appBar: AppBar(title: Text(widget.subTitle),backgroundColor: Colors.white,automaticallyImplyLeading:false),
       body: SingleChildScrollView(
        // padding: const EdgeInsets.all(56),
-        padding: const EdgeInsets.only(top: 0, left: 250, right: 250, bottom: 0),
+        padding: const EdgeInsets.only(top: 0, left: 10, right: 10, bottom: 0),
         child: Form(
           key: _formKey,
           child: Column(
@@ -76,9 +78,15 @@ class GenericFormScreenState extends State<GenericFormScreen> {
                     label: field.label,
                     hintText: field.hintText,
                     prefixIcon: field.prefixIcon,
-                    inputFormatters:field.inputFormatters,
+                    inputFormatters: field.inputFormatters,
                     obrigatorio: field.obrigatorio,
-                    //validator: fieldData.validator,
+                    /*
+                    keyboardType: field.tipo == 'dinheiro'
+                        ? TextInputType.numberWithOptions(decimal: true)
+                        : TextInputType.text,
+
+                     */
+
                   )
                 else if (field is DropdownFormFieldData)
                   DropdownButtonFormField<dynamic>(
