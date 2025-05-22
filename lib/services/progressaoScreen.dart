@@ -1,9 +1,51 @@
+
 import 'package:flutter/material.dart';
 import '../widgets/line.dart';
 import '../widgets/texto.dart';
 import 'utils.dart';
 
 /// Tela que mostra duas seções: Fundeb e Infantil
+/*
+class ProgressaoScreen extends StatelessWidget {
+  final List<Map<String, dynamic>> fundeb;
+  final List<Map<String, dynamic>> infantil;
+
+  const ProgressaoScreen({
+    Key? key,
+    required this.fundeb,
+    required this.infantil,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+        child: FractionallySizedBox(
+            widthFactor: 0.6,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _Section(
+                  title: 'SIMULADOR PCRM – PROFESSORES',
+                  items: fundeb,
+                ),
+                const SizedBox(height: 24),
+                _Section(
+                  title: 'SIMULADOR PCRM – EDUCADOR INFANTIL (40h)',
+                  items: infantil,
+                ),
+              ],
+            ),
+          ) ,
+        )
+    );
+
+  }
+}
+
+ */
+
 class ProgressaoScreen extends StatelessWidget {
   final List<Map<String, dynamic>> fundeb;
   final List<Map<String, dynamic>> infantil;
@@ -80,11 +122,16 @@ class _Section extends StatelessWidget {
 
     return   Column(
       children: [
+        Texto(tit: title, cor: Colors.black, bottom: 8),
+        // centraliza e limita largura a 60%
         Center(
+          child: FractionallySizedBox(
+            widthFactor: 0.6,
             child: Column(
               children: cards,
             ),
           ),
+        ),
       ],
     );
   }
@@ -147,5 +194,6 @@ class _ItemCard extends StatelessWidget {
           ],
         ),
       );
+   // );
   }
 }

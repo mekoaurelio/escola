@@ -3,11 +3,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'lang/translation_service.dart';
-import 'login/login_page.dart';
-import 'services/auth_service.dart';
 import 'start.dart';
 
-void main() async {
+void main()async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     // Replace with actual values
@@ -32,14 +30,13 @@ class TattooStudioApp extends StatefulWidget {
 }
 
 class _TattooStudioAppState extends State<TattooStudioApp> {
+
   @override
   Widget build(BuildContext context) {
-    // Check if user is logged in
-    final isLoggedIn = AuthService.isLoggedIn();
-
-    return GetMaterialApp(
+    return  GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Meu App',
+      // locale: state.locale,
       supportedLocales: const [
         Locale('pt'), // Português
         Locale('en'), // Inglês
@@ -48,17 +45,13 @@ class _TattooStudioAppState extends State<TattooStudioApp> {
       locale: TranslationService.locale,
       fallbackLocale: TranslationService.fallbackLocale,
       translations: TranslationService(),
+      //supportedLocales: const [Locale('pt', 'BR')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      // Set initial route based on authentication status
-      home: isLoggedIn ? const Start() : const LoginPage(),
-      routes: {
-        '/login': (context) => const LoginPage(),
-        '/home': (context) => const Start(),
-      },
+        GlobalCupertinoLocalizations.delegate,  ],
+
+      home: const Start(),
     );
   }
 }

@@ -62,6 +62,7 @@ class GenericFormScreenState extends State<GenericFormScreen> {
       appBar: AppBar(title: Text(widget.subTitle),backgroundColor: Colors.white,automaticallyImplyLeading:false),
       body: SingleChildScrollView(
        // padding: const EdgeInsets.all(56),
+        padding: const EdgeInsets.only(top: 0, left: 250, right: 250, bottom: 0),
         child: Form(
           key: _formKey,
           child: Column(
@@ -77,6 +78,7 @@ class GenericFormScreenState extends State<GenericFormScreen> {
                     prefixIcon: field.prefixIcon,
                     inputFormatters:field.inputFormatters,
                     obrigatorio: field.obrigatorio,
+                    //validator: fieldData.validator,
                   )
                 else if (field is DropdownFormFieldData)
                   DropdownButtonFormField<dynamic>(

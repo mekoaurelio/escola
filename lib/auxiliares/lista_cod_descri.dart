@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../services/base_lista.dart';
 import '../widgets/line.dart';
+import '../widgets/painelDireito.dart';
 import 'cod_descri.dart';
 
 class ListaCodDescri extends ListaBase {
@@ -53,13 +54,18 @@ class _ListaBaseState extends ListaBaseState<ListaCodDescri> {
     var result=await showDialog(
       context: context,
       barrierDismissible: false,
+      builder: (_) => PainelDireito(
         child: CodDescri(data: lista[hoverIndex],table: widget.table,),
         onClose: () => Navigator.of(context).pop(),
       ),
     );
+    print(result);
+   // if(result!=null) {
       setState(() {
         carregarDados(widget.table);
       });
+      //setState(() => lista = result);
+   // }
   }
 
 
@@ -67,6 +73,7 @@ class _ListaBaseState extends ListaBaseState<ListaCodDescri> {
     var result=await showDialog(
       context: context,
       barrierDismissible: false,
+      builder: (_) => PainelDireito(
         child: CodDescri(data: null,table: widget.table,),
          onClose: () => Navigator.of(context).pop(),
       ),
