@@ -39,6 +39,9 @@ class _StartState extends State<Start> {
 
   // Navigation items
   final List<Map<String, dynamic>> _mainNavigationItems = [
+    {'title': 'professores'.tr, 'icon': Icons.perm_contact_cal_sharp, 'index': 0},
+    {'title': 'simulador'.tr, 'icon': Icons.calendar_month, 'index': 1},
+    {'title': 'Impacto', 'icon': Icons.lightbulb_outline, 'index': 2},
   ];
 
   final List<Map<String, dynamic>> _auxiliaryNavigationItems = [
@@ -58,7 +61,7 @@ class _StartState extends State<Start> {
   }
 
   Future<void> _initializeApp() async {
-  //  setState(() => _isLoading = false);
+    //  setState(() => _isLoading = false);
   }
 
   /// Maps page names to database table names
@@ -84,21 +87,32 @@ class _StartState extends State<Start> {
     if (isAuxiliaryPage) {
       ///mesmo sendo uma tabela auxiliar não é do tipo código e descrição
       if (_currentPage == 'cargos'.tr) {
+        return CargoLista(table: tb,title: '',);
       }
       if (_currentPage == 'encargos_sociais'.tr) {
+        return EncargoSocialLista(table: tb,);
       }
       if (_currentPage == 'fonte_receita'.tr) {
+        return FonteReceitaLista(table: tb,);
       }
 
       /// Aqui são todas as tabelas que são código e descrição
       return  ListaCodDescri(
+        key: ValueKey(tb), // <-- isso força o rebuild com base no nome da tabela
         table: tb,
         title: '',
       );
       /// QUEM NÃO É CÓDIGO E DESCRIÇÃO
     }else {
-     // if (_currentPage == 'cargos'.tr) return UploadVideoPage();
+
+      // if (_currentPage == 'cargos'.tr) return UploadVideoPage();
+      if (_currentPage == 'professores'.tr) return ProfessorLista(table: 'professor',);
+      if (_currentPage == 'simulador'.tr) return SimuladorExecuta();
+      if (_currentPage == 'impacto') return SimuladorExecuta();
+
+      // if (_currentPage == 'simulador'.tr) return Simulador();
       return Container();
+
     }
   }
 
@@ -134,12 +148,17 @@ class _StartState extends State<Start> {
         _buildNavigationDrawer(),
         Expanded(
           child: Column(
+            children: [
+              _buildAppBar(),
+              Expanded(child: _getContent()),
+            ],
           ),
         ),
       ],
     );
   }
 
+  /// Builds the app bar with language selector
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.white,
@@ -162,6 +181,7 @@ class _StartState extends State<Start> {
             _changeLanguage(value);
           }
         },
+        items: _languages.map((lang) {
           return DropdownMenuItem<String>(
             value: lang['code'],
             child: Row(
@@ -183,6 +203,7 @@ class _StartState extends State<Start> {
 
   /// Handles language change
   void _changeLanguage(String languageCode) {
+    final countryCode = languageCode == 'en'
         ? 'AU'
         : languageCode == 'pt'
         ? 'BR'
@@ -201,6 +222,7 @@ class _StartState extends State<Start> {
     return BottomNavigationBar(
       currentIndex: _currentTabIndex,
       onTap: (index) => _onNavigationItemSelected(index),
+      items: _mainNavigationItems.map((item) {
         return BottomNavigationBarItem(
           icon: Icon(item['icon']),
           label: item['title'],
@@ -220,6 +242,11 @@ class _StartState extends State<Start> {
           Image.asset('assets/images/Xmktec_logo.jpeg', height: 105),
           Texto(tit: 'title'.tr, cor: Colors.black54),
           const SizedBox(height: 20),
+          ..._mainNavigationItems.map((item) => _buildDrawerItem(
+            item['title'],
+            item['icon'],
+            item['index'],
+          )),
           _buildDrawerItem(
             'auxiliar'.tr,
             Icons.settings,
@@ -258,11 +285,13 @@ class _StartState extends State<Start> {
         title,
         style: TextStyle(color: isSelected ? Colors.black : Colors.grey),
       ),
+      children: subItems.map((subItem) {
         return ListTile(
           contentPadding: const EdgeInsets.only(left: 72.0),
           title: Text(
             subItem['title'],
             style: TextStyle(
+              color: _currentPage == subItem['title']
                   ? Colors.black
                   : Colors.grey,
             ),
@@ -294,6 +323,7 @@ class _StartState extends State<Start> {
       case 1:
         return 'simulador'.tr;
       case 2:
+        return 'impacto';
       case 3:
         return 'config'.tr;
       default:
