@@ -53,6 +53,7 @@ class _ImpactoGridState extends State<ImpactoGrid> {
     sql+='+ adicional_especial_25)     AS soma_adicionais_especiais';
     sql+=' FROM professor';
 
+
     var impacto=await ApiMySql.getGrid();
     print(impacto);
   }
