@@ -12,7 +12,7 @@ class Texto extends StatefulWidget {
   Texto({
     this.tit,
     this.tam,
-    this.cor=Colors.white,
+    this.cor=Colors.black54,
     this.negrito,
     this.alin,
     this.linhas=1,

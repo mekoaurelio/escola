@@ -18,7 +18,7 @@ class ApiMySql {
     if (id != null) {
       sql += ' AND id=$id';
     }
-   // print(sql);
+    print(sql);
     return executaSql(sql);
   }
 
@@ -27,13 +27,14 @@ class ApiMySql {
     var url = 'https://www.xmktech.net/dados/get.php?sql=$sql';
     try {
       final response = await http.get(Uri.parse(url));
-       // print(response.body);
+      //  print(response.body);
       if (response.statusCode == 200) {
         String volta = response.body.trim();
         if (volta.contains('NENHUM')) {
           return dados;
         } else {
           dados = List<Map<String, dynamic>>.from(json.decode(volta));
+        //  print('NO EXECUTA $dados');
           return dados;
         }
       } else {
@@ -68,6 +69,24 @@ class ApiMySql {
   }
   ///************************************************************************
 
+  /// Dentro de ApiMySql
+  static Future<void> updateTotalProfessor({
+    required String campo,
+    required String valor,
+  }) async {
+    // Escapa aspas simples
+    final escaped = valor.replaceAll("'", "''");
+    final sql = '''
+    UPDATE professor_total 
+    SET $campo = '${escaped.contains('R\$')
+        ? Utils.saldoToSave(escaped)
+        : escaped.replaceAll(',', '.')}'
+   
+  ''';
+    await executaSql(sql);
+  }
+
+
   //area_atuacao_id
 
   static getGrid() async {
@@ -82,6 +101,8 @@ class ApiMySql {
     SUM(abono_permanencia) AS soma_abono_permanencia,
     SUM(gratificacao_direcao) AS soma_gratificacao_direcao,
     SUM(diferenca_enquadramento) AS soma_diferenca_enquadramento,
+    SUM(gratificacao_orientacao) AS soma_gratificacao_orientacao,
+   
     SUM(encargos_sociais) AS soma_encargos_sociais,
     SUM(
       adicional_especial_5
@@ -89,8 +110,7 @@ class ApiMySql {
       PLUS_OPERATOR adicional_especial_25
     ) AS soma_adicionais_especiais FROM professor
 ''';
-
-    print(sql);
+   // print(sql);
     return  executaSql(sql);
    // return lista;
   }

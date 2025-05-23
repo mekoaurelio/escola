@@ -234,13 +234,20 @@ class ProfessorDetalhe extends StatelessWidget {
         inputFormatters: [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt')],tipo: 'dinheiro'),
     TextFormFieldData(controllerName: 'vencimento_basico_proposta', label: 'Vencumento Proposto',
         inputFormatters: [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt')],tipo: 'dinheiro'),
-    TextFormFieldData(controllerName: 'jornada_suplementar', label: 'Jornada Suplementar',tipo:'string'),
+    TextFormFieldData(controllerName: 'jornada_suplementar', label: 'Jornada Suplementar',tipo:'string',
+        inputFormatters: [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt')]),
     TextFormFieldData(controllerName: 'percentual_ats', label: 'Percentual ATS',tipo: 'String'),
-    TextFormFieldData(controllerName: 'gratificacao_direcao', label: 'Gratificação Direção',tipo: 'String'),
-    TextFormFieldData(controllerName: 'gratificacao_orientacao', label: 'Gratificação Orientação',tipo: 'String'),
-    TextFormFieldData(controllerName: 'gratificacao_coordenacao', label: 'Gratificação Coordenação',tipo: 'String'),
-    TextFormFieldData(controllerName: 'adicional_ats', label: 'Adicional ATS',tipo: 'String' ),
-    TextFormFieldData(controllerName: 'salario_familia', label: 'Salário Família',tipo: 'dinheiro'),
+    TextFormFieldData(controllerName: 'gratificacao_direcao', label: 'Gratificação Direção',tipo: 'String',
+        inputFormatters: [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt')]),
+    TextFormFieldData(controllerName: 'gratificacao_orientacao', label: 'Gratificação Orientação',tipo: 'String',
+        inputFormatters: [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt')]),
+    TextFormFieldData(controllerName: 'gratificacao_coordenacao', label: 'Gratificação Coordenação',tipo: 'String',
+        inputFormatters: [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt')]),
+    TextFormFieldData(controllerName: 'adicional_ats', label: 'Adicional ATS',tipo: 'String',
+        inputFormatters: [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt')]),
+    TextFormFieldData(controllerName: 'salario_familia', label: 'Salário Família',tipo: 'dinheiro',
+        inputFormatters: [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt')]
+    ),
   ];
   ///CÁLCULOS
   List<FormFieldData> get _calcFields => [
