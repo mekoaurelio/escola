@@ -44,7 +44,7 @@ class SimuladorAlt extends StatelessWidget {
 
     return Scaffold(
       body: GenericFormScreen(
-        subTitle: data!['descricao'],
+        subTitle: data==null?'Novo Dado': data!['descricao'],
         onBack: () => Get.back(),
         onSave: (formValues) async {
           if (data == null || data!['id'] == null) {

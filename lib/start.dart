@@ -6,7 +6,9 @@ import 'auxiliares/cargo_lista.dart';
 import 'auxiliares/encargo_social_lista.dart';
 import 'auxiliares/fonte_receita_lista.dart';
 import 'auxiliares/lista_cod_descri.dart';
+import 'data/api_my_sql.dart';
 import 'impacto/impacto_main.dart';
+import 'import/pdfExtractorPage.dart';
 import 'professor/professor_lista.dart';
 import 'simulador/executa_simulador.dart';
 import 'widgets/texto.dart';
@@ -41,6 +43,7 @@ class _StartState extends State<Start> {
     {'title': 'professores'.tr, 'icon': Icons.perm_contact_cal_sharp, 'index': 0},
     {'title': 'simulador'.tr, 'icon': Icons.calendar_month, 'index': 1},
     {'title': 'Impacto', 'icon': Icons.lightbulb_outline, 'index': 2},
+    {'title': 'extracao', 'icon': Icons.lightbulb_outline, 'index': 3},
   ];
 
   final List<Map<String, dynamic>> _auxiliaryNavigationItems = [
@@ -60,8 +63,11 @@ class _StartState extends State<Start> {
   }
 
   Future<void> _initializeApp() async {
-    //  setState(() => _isLoading = false);
+
   }
+
+  // Supondo que você já tenha recebido do seu endpoint uma variável `rawText` (String)
+// com todo o conteúdo que você mostrou:
 
   /// Maps page names to database table names
   String _getTableFromPage(String page) {
@@ -104,10 +110,12 @@ class _StartState extends State<Start> {
       /// QUEM NÃO É CÓDIGO E DESCRIÇÃO
     }else {
 
-      // if (_currentPage == 'cargos'.tr) return UploadVideoPage();
       if (_currentPage == 'professores'.tr) return ProfessorLista(table: 'professor',);
       if (_currentPage == 'simulador'.tr) return SimuladorExecuta();
       if (_currentPage == 'Impacto') return ImpactoMain();
+      if (_currentPage == 'extracao') return PdfExtractorPage();
+
+
 
       // if (_currentPage == 'simulador'.tr) return Simulador();
       return Container();
@@ -239,7 +247,7 @@ class _StartState extends State<Start> {
         children: [
           const SizedBox(height: 20),
           Image.asset('assets/images/Xmktec_logo.jpeg', height: 105),
-          Texto(tit: 'title'.tr, cor: Colors.black54),
+          Texto(tit: 'title'.tr+' V.003', cor: Colors.black54),
           const SizedBox(height: 20),
           ..._mainNavigationItems.map((item) => _buildDrawerItem(
             item['title'],
@@ -324,9 +332,9 @@ class _StartState extends State<Start> {
       case 2:
         return 'Impacto';
       case 3:
-        return 'config'.tr;
+        return 'extracao'.tr;
       default:
-        return 'professores'.tr;
+        return 'putro'.tr;
     }
   }
 }

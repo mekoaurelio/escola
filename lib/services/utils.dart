@@ -24,7 +24,6 @@ class Utils {
   static var formatterh =  DateFormat('hh:mm');
 
   static String formatInitialValue(String key, String rawValue,String tipo) {
-    print(rawValue);
     if (tipo == 'data' && rawValue.isNotEmpty) {
       try {
         final dt = DateTime.parse(rawValue);
@@ -33,18 +32,14 @@ class Utils {
         return rawValue; // se não parsear, devolve original
       }
     }else
-/*
     if(tipo=='dinheiro'){
       try {
-        //String vr = Utils.vrBco(rawValue);
-        return 'R\$ '+Utils.formatVr.format(rawValue).toString();
-        //return vr;
+        final vr = Utils.vrBco(rawValue);
+        return vr;
       } catch (_) {
         return rawValue; // se não parsear, devolve original
       }
     }else
-
- */
       return rawValue;
   }
 

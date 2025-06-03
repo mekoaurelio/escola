@@ -9,8 +9,21 @@ import '../services/utils.dart';
 class ApiMySql {
   static String pathDados = 'https://www.xmktech.net/dados/';
 
-  ///***********************************************************************
-  static get(var table, var id,) async {
+ static Future<String> fetchPdfText() async {
+    final resp = await http.get(Uri.parse('https://www.xmktech.net/dados/extra.php'));
+    if (resp.statusCode != 200) {
+      throw Exception('Falha ao chamar API: ${resp.statusCode}');
+    }
+    final data = json.decode(resp.body);
+    if (data['success'] != true) {
+      throw Exception('Erro na extração: ${data['error']}');
+    }
+    return data['text'] as String;
+  }
+
+
+  ///**********************************************************************
+  static get(var table, var id, var orderBy) async {
     var sql = '';
     // var idE=Utils.getIdEntidade();
     var idE = '0';
@@ -18,7 +31,10 @@ class ApiMySql {
     if (id != null) {
       sql += ' AND id=$id';
     }
-    print(sql);
+    if(orderBy!=null){
+      sql+=' order by $orderBy';
+    }
+   // print(sql);
     return executaSql(sql);
   }
 
@@ -57,8 +73,8 @@ class ApiMySql {
         return 'ERRO DE CONEXÃO';
       }
     } catch (e) {
-      Utils.snak('ERRO AO INSERIR', e.toString(), false, Colors.red);
-      return 'ERRO AO INSERIR';
+     // Utils.snak('ERRO AO INSERIR', e.toString(), false, Colors.red);
+      return 'ERRO AO INSERIR $sql';
     }
   }
 
@@ -68,6 +84,58 @@ class ApiMySql {
     return lista;
   }
   ///************************************************************************
+
+  static getProfessor() async {
+    var sql2 = "SELECT f.id AS folha_id,f.id_municipio,f.matricula,f.nome,f.cpf,f.unidade,f.local_lotacao,";
+    sql2+="f.cargo,f.nivel,DATE_FORMAT(f.admissao, '%d/%m/%Y') AS admissao,f.competencia_mes,f.vantagens_total,";
+    sql2+="f.descontos_total,f.liquido_total,f.fgts_total,GROUP_CONCAT(CONCAT(dv.codigo, ':',dv.descricao, ':',";
+    sql2+="dv.percentual, ':',' R/\$ ', FORMAT(dv.valor, 2)) SEPARATOR ' | ') AS vantagens_detalhadas,";
+    sql2+=" SUM(CASE WHEN dv.codigo NOT IN ('21003', '21019') THEN dv.valor ELSE 0  END) AS soma_vantagens";
+    sql2+=" FROM folha f LEFT JOIN detalhe_vantagens dv ON f.id = dv.folha_id GROUP BY f.id ORDER BY f.id";
+
+    print(sql2);
+    List lista = await executaSql(sql2);
+    return lista;
+  }
+
+  static insertProf(var matricula,var nome, var cpf,var cargo,var local_lotacao,var unidade,var nivel,var admissao ) async {
+  //  var idCompany=Utils.getIdEntidade();
+    var idCompany=0;
+    var dt='';
+    if(admissao!=null){
+      dt=Utils.dtToMysql(admissao);
+    }
+    String sql = 'INSERT INTO folha (matricula,nome, cpf,unidade,local_lotacao,cargo,nivel,admissao) VALUES (';
+    sql += '"$matricula", ';
+    sql += '"$nome", ';
+    sql += '"$cpf", ';
+    sql += '"$unidade", ';
+    sql += '"$local_lotacao", ';
+    sql += '"$cargo", ';
+    sql += '"$nivel", ';
+    sql += '"$dt" ';
+    sql += ')';
+   // print(sql);
+    return await insereSql(sql);
+  }
+
+  static insertVantagens(var matricula,var codigo, var descricao,var valor,String percentual ) async {
+    //  var idCompany=Utils.getIdEntidade();
+    var idCompany=0;
+    var vr=Utils.saldoToSave(valor);
+    var perc=percentual.replaceAll('%', '');
+    perc=perc.replaceAll(',', '.');
+    String sql = 'INSERT INTO detalhe_vantagens (folha_id,codigo,descricao,valor,percentual) VALUES (';
+    sql += '"$matricula", ';
+    sql += '"$codigo", ';
+    sql += '"$descricao", ';
+    sql += '$vr, ';
+    sql += '$perc ';
+    sql += ')';
+   // print(sql);
+    return await insereSql(sql);
+  }
+
 
   /// Dentro de ApiMySql
   static Future<void> updateTotalProfessor({
@@ -165,7 +233,7 @@ class ApiMySql {
       ..write('INSERT INTO $tb (')..write(campos.join(', '))..write(
           ') VALUES (')..write(valores.join(', '))..write(')');
 
-    print(sql);
+   // print(sql);
     return await insereSql(sql.toString());
   }
 
@@ -200,7 +268,7 @@ class ApiMySql {
       ..write('UPDATE $tb SET ')..write(sets.join(', '))..write(
           ' WHERE $idField = \'${idValue.replaceAll("'", "''")}\'');
 
-    print(sql);
+   // print(sql);
     return await executaSql(sql.toString());
   }
 }

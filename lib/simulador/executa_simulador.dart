@@ -23,8 +23,8 @@ class _SimuladorExecutaState extends State<SimuladorExecuta> with TickerProvider
 
   Future<void> start() async {
     // recupera o JSArray dinâmico
-     fundebRaw = await ApiMySql.get('sim_fundeb_receita', null);
-     infantilRaw = await ApiMySql.get('sim_edu_infantil', null);
+     fundebRaw = await ApiMySql.get('sim_fundeb_receita', null,null);
+     infantilRaw = await ApiMySql.get('sim_edu_infantil', null,null);
     setState(() => isLoading = false);
   }
 

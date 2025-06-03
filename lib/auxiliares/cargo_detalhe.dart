@@ -52,7 +52,7 @@ class CargoDetalhe extends StatelessWidget {
             await ApiMySql.updateDynamic(table,formValues,idValue: data!['id']);
           }
           // Atualiza a lista e volta
-          final listaAtualizada = await ApiMySql.get(table, null);
+          final listaAtualizada = await ApiMySql.get(table, null,null);
           Get.back(result: listaAtualizada);
         },
         fieldsData: fields,

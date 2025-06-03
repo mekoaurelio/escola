@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../const/const.dart';
@@ -41,7 +42,7 @@ abstract class ListaBaseState<T extends ListaBase> extends State<T> {
   // void carregarDados(List<dynamic> data) async{
   void carregarDados(String table) async{
     List data=[];
-    data=await ApiMySql.get(table,null);
+    data=await ApiMySql.get(table,null,null);
     print(data);
     setState(() {
       lista = data;
@@ -72,7 +73,7 @@ abstract class ListaBaseState<T extends ListaBase> extends State<T> {
     );
     if (confirmar) {
       await ApiMySql.executaSql("DELETE FROM $table WHERE id=${lista[index]['id']}");
-      lista = await ApiMySql.get(table,null);
+      lista = await ApiMySql.get(table,null,null);
       setState(() {});
     }
   }

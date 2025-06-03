@@ -51,15 +51,15 @@ class _ListaBaseState extends ListaBaseState<ProfessorLista> {
 
   Future<void> selecao(rec) async {
     ///CARREGA TODAS AS TABELAS AUXILIARES
-    var cargos=await ApiMySql.get('cargo',null);
-    var area_atuacao=await ApiMySql.get('area_atuacao',null);
-    var local_servico=await ApiMySql.get('local_servico',null);
-    var nivel=await ApiMySql.get('nivel',null);
-    var formacao=await ApiMySql.get('formacao',null);
-    var regimeContracao=await ApiMySql.get('regime_contratacao',null);
-    var funcao=await ApiMySql.get('funcao',null);
-    var fonte_receita=await ApiMySql.get('fonte_receita',null);
-    var classe=await ApiMySql.get('classe',null);
+    var cargos=await ApiMySql.get('cargo',null,null);
+    var area_atuacao=await ApiMySql.get('area_atuacao',null,null);
+    var local_servico=await ApiMySql.get('local_servico',null,null);
+    var nivel=await ApiMySql.get('nivel',null,null);
+    var formacao=await ApiMySql.get('formacao',null,null);
+    var regimeContracao=await ApiMySql.get('regime_contratacao',null,null);
+    var funcao=await ApiMySql.get('funcao',null,null);
+    var fonte_receita=await ApiMySql.get('fonte_receita',null,null);
+    var classe=await ApiMySql.get('classe',null,null);
 
     var result=await showDialog(
       context: context,
@@ -82,15 +82,15 @@ class _ListaBaseState extends ListaBaseState<ProfessorLista> {
 
   Future<void> onAdd() async {
     ///CARREGA TODAS AS TABELAS AUXILIARES
-    var cargos=await ApiMySql.get('cargo',null);
-    var area_atuacao=await ApiMySql.get('area_atuacao',null);
-    var local_servico=await ApiMySql.get('local_servico',null);
-    var nivel=await ApiMySql.get('nivel',null);
-    var formacao=await ApiMySql.get('formacao',null);
-    var regimeContracao=await ApiMySql.get('regime_contratacao',null);
-    var funcao=await ApiMySql.get('funcao',null);
-    var fonte_receita=await ApiMySql.get('fonte_receita',null);
-    var classe=await ApiMySql.get('classe',null);
+    var cargos=await ApiMySql.get('cargo',null,null);
+    var area_atuacao=await ApiMySql.get('area_atuacao',null,null);
+    var local_servico=await ApiMySql.get('local_servico',null,null);
+    var nivel=await ApiMySql.get('nivel',null,null);
+    var formacao=await ApiMySql.get('formacao',null,null);
+    var regimeContracao=await ApiMySql.get('regime_contratacao',null,null);
+    var funcao=await ApiMySql.get('funcao',null,null);
+    var fonte_receita=await ApiMySql.get('fonte_receita',null,null);
+    var classe=await ApiMySql.get('classe',null,null);
 
     var result=await showDialog(
       context: context,
