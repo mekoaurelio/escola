@@ -101,6 +101,7 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> {
 
 
 /// Widget genérico para exibir uma seção com título e lista de itens
+/// INFANTIL
 class _Section extends StatelessWidget {
   final String title;
   final List<Map<String, dynamic>> items; //Tabela fundeb ou infantil
@@ -143,6 +144,15 @@ class _Section extends StatelessWidget {
       }
 
       lastValue = computed;
+      print('TITULO : $title ORDEM : '+data['ordem']+' VALOR :$computed PERCENTUAL : $perc TABELA : $table');
+
+      if(data['ordem']=='3'){
+        updateValor(firstValue,data['ordem']);
+      }
+      if(data['ordem']=='2' || data['ordem']=='4' || data['ordem']=='5' || data['ordem']=='6' ) {
+       updateValor(computed,data['ordem']);
+      }
+
       cards.add(
         _ItemCard(
           data: data,
@@ -203,6 +213,9 @@ class _Section extends StatelessWidget {
         Center(child: Column(children: cards)),
       ],
     );
+  }
+  updateValor(var computed,var ordem)async{
+    await ApiMySql.executaSql('UPDATE $table set valor=$computed where ordem=$ordem');
   }
 }
 
@@ -298,11 +311,7 @@ class _ItemCard extends StatelessWidget {
           ///EDITA O VALOR BÁSICO
           if (isFirst)
             IconButton(
-              icon: const Icon(
-                Icons.handshake_outlined,
-                color: Colors.grey,
-                size: 15,
-              ),
+              icon: const Icon(Icons.handshake_outlined, color: Colors.grey, size: 15,),
               onPressed: () async {
                 // abre o dialog e, quando fechar, dispara o callback:
                 await showDialog(
@@ -310,15 +319,15 @@ class _ItemCard extends StatelessWidget {
                   barrierDismissible: false,
                   builder:
                       (_) => Panel(
-                    width: MediaQuery.of(context).size.width * 0.44,
-                    height: MediaQuery.of(context).size.height * 0.44,
-                    child: SimuladorAlt(
-                      data: data,
-                      tb: table,
-                      tipo: 'valor',
-                    ),
-                    onClose: () => Navigator.of(context).pop(),
-                  ),
+                        width: MediaQuery.of(context).size.width * 0.44,
+                        height: MediaQuery.of(context).size.height * 0.44,
+                        child: SimuladorAlt(
+                          data: data,
+                          tb: table,
+                          tipo: 'valor',
+                        ),
+                        onClose: () => Navigator.of(context).pop(),
+                      ),
                 );
                 onEdited(); // <— aqui recarrega a tela
               },

@@ -48,6 +48,10 @@ class ProfessorDetalhe extends StatelessWidget {
     final initialClasse = professor?['classe_id']?.toString() ?? '1';
     final initialReceita = professor?['fonte_receita_id']?.toString() ?? '1';
 
+    String dateString=Utils.dtMySql(professor?['admissao'],'dd/MM/yyyy');
+    DateTime parsedDate = Utils.parseDate(dateString);
+    int yearsDifference = Utils.calculateYearsDifference(parsedDate);
+
     final initial = {
       for (var f in _allFields)
 
@@ -55,6 +59,8 @@ class ProfessorDetalhe extends StatelessWidget {
         f.controllerName: Utils.formatInitialValue(
             f.controllerName, professor?[f.controllerName]?.toString() ?? '',f.tipo
         ),
+
+      'tempo_servico_anos':'$dateString - $yearsDifference Anos',
 
       ///SE EXISTIR DADO, MOSTRA ESSE DADO, CASO CONTRARIO O CONTROLLER APARECE EM BRANCO
       'cargo_id': initialCargoId, // Se não for válido, usa vazio
@@ -92,8 +98,6 @@ class ProfessorDetalhe extends StatelessWidget {
     );
   }
 
-
-
   Widget _buildTab(List<FormFieldData> fields, Map<String, String> initial,int tabIndex) {
     return GenericFormScreen(
       subTitle: '',
@@ -130,7 +134,7 @@ class ProfessorDetalhe extends StatelessWidget {
   List<FormFieldData> get _basicFields => [
     TextFormFieldData(controllerName: 'matricula', label: 'Matrícula',tipo: 'String'),
     TextFormFieldData(controllerName: 'nome', label: 'Nome',tipo: 'String'),
-    TextFormFieldData(controllerName: 'data_admissao', label: 'Data de Admissão',obrigatorio: false,inputFormatters: [Utils.maskDt],tipo: 'data'),
+    TextFormFieldData(controllerName: 'admissao', label: 'Data de Admissão',obrigatorio: false,inputFormatters: [Utils.maskDt],tipo: 'data'),
   ];
   ///PROFISSIONAL
   List<FormFieldData> get _profFields => [
@@ -187,7 +191,7 @@ class ProfessorDetalhe extends StatelessWidget {
     ///AREA DE ATUACÃO
     DropdownFormFieldData(
       controllerName: 'area_atuacao_id',
-      label: 'Áreaçãoa de atuação',
+      label: 'Área de atuação',
       hint: 'Selecione...',
       items: areaAtuacao,
       idField: 'id',

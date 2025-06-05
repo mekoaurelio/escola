@@ -129,6 +129,35 @@ class Utils {
   }
 
   ///DATAS ****************************
+  static DateTime parseDate(String dateStr) {
+    try {
+      final parts = dateStr.split('/');
+      if (parts.length != 3) throw const FormatException('Formato inválido');
+
+      final day = int.parse(parts[0]);
+      final month = int.parse(parts[1]);
+      final year = int.parse(parts[2]);
+
+      return DateTime(year, month, day);
+    } catch (e) {
+      throw FormatException('Data inválida: $dateStr');
+    }
+  }
+
+  static int calculateYearsDifference(DateTime fromDate) {
+    final now = DateTime.now();
+    int years = now.year - fromDate.year;
+
+    // Ajuste se ainda não chegou o aniversário este ano
+    if (now.month < fromDate.month ||
+        (now.month == fromDate.month && now.day < fromDate.day)) {
+      years--;
+    }
+
+    return years;
+  }
+
+
   static dtToMysql(var dateString){
     if(dateString!='') {
       DateFormat dateFormat = DateFormat("dd/MM/yyyy");
@@ -147,6 +176,7 @@ class Utils {
   }
 
   static String dtMySql(String dt,String mask){
+    print('$dt $mask');
     var formatterD = DateFormat(mask);
     DateTime xdt=DateTime.parse(dt);
     String dtV = formatterD.format(xdt);

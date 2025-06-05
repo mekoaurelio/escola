@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:html' as html;
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -10,7 +8,6 @@ import '../data/api_my_sql.dart';
 import '../services/screenSize.dart';
 import '../services/utils.dart';
 import '../widgets/line.dart';
-import '../widgets/uploadPdf.dart';
 import '../widgets/vantagens.dart';
 
 class PdfExtractorPage extends StatefulWidget {
@@ -50,8 +47,6 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
 
       });
     });
-
-
   }
 
   Future<void> uploadFile(String fileName, Uint8List fileBytes) async {
@@ -60,8 +55,8 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
       status = 'Enviando arquivo...';
     });
 
-    //final uri = Uri.parse('https://www.xmktech.net/dados/upload_pdf.php');
-    final uri = Uri.parse('https://importacao-contracheques.onrender.com/imports');
+    final uri = Uri.parse('https://www.xmktech.net/dados/upload_pdf.php');
+    //final uri = Uri.parse('https://importacao-contracheques.onrender.com/imports');
 
     final request = http.MultipartRequest('POST', uri);
     request.files.add(http.MultipartFile.fromBytes(
@@ -161,7 +156,6 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
       // Detecta bloco de “Unidade”
       if (line.startsWith('Unidade:')) {
         final parts = line.split(RegExp(r'\s+'));
-        final unidade = parts.length > 1 ? parts[1] : '';
         continue;
       }
 

@@ -117,7 +117,8 @@ class _ListaBaseState extends ListaBaseState<ProfessorLista> {
       mainAxisAlignment: MainAxisAlignment.start,
       children:  [
         Line(tex: '', tam: 48, cor: Colors.black54, top: 5, bottom: 5),
-        Line(tex: 'Descrição do cargo', tam: 300, alin: Alignment.centerLeft),
+        Line(tex: 'Matrícula', tam: 70, alin: Alignment.centerLeft),
+        Line(tex: 'Nome', tam: 300, alin: Alignment.centerLeft),
       ],
     );
   }
@@ -135,7 +136,8 @@ class _ListaBaseState extends ListaBaseState<ProfessorLista> {
                 children: [
                   image(),
                   Line(tex: '', tam: 5),
-                  Line(tex: row['nome'], tam: 300, alin: Alignment.centerLeft,), //
+                  Line(tex: row['matricula'], tam: 70, alin: Alignment.centerLeft,),
+                  Line(tex: row['nome'], tam: 300, alin: Alignment.centerLeft,),
                 ],
               ),
             ),

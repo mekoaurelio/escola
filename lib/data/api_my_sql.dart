@@ -93,7 +93,7 @@ class ApiMySql {
     sql2+=" SUM(CASE WHEN dv.codigo NOT IN ('21003', '21019') THEN dv.valor ELSE 0  END) AS soma_vantagens";
     sql2+=" FROM folha f LEFT JOIN detalhe_vantagens dv ON f.id = dv.folha_id GROUP BY f.id ORDER BY f.id";
 
-    print(sql2);
+    //print(sql2);
     List lista = await executaSql(sql2);
     return lista;
   }

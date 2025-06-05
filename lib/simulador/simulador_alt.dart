@@ -26,7 +26,7 @@ class SimuladorAlt extends StatelessWidget {
       tipo=='valor'?
       TextFormFieldData(controllerName: 'valor', label: 'Valor',
           inputFormatters: [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt'),],
-          tipo:'dinheiro'):
+          tipo:'string'):
 
       TextFormFieldData(controllerName: 'percentual', label: 'Percentual',
           inputFormatters: [CurrencyTextInputFormatter.currency(symbol: '%', locale: 'pt')],
