@@ -48,6 +48,7 @@ class ProfessorDetalhe extends StatelessWidget {
     final initialClasse = professor?['classe_id']?.toString() ?? '1';
     final initialReceita = professor?['fonte_receita_id']?.toString() ?? '1';
 
+    String? nomeProf=professor?['nome'];
     String dateString=Utils.dtMySql(professor?['admissao'],'dd/MM/yyyy');
     DateTime parsedDate = Utils.parseDate(dateString);
     int yearsDifference = Utils.calculateYearsDifference(parsedDate);
@@ -80,7 +81,7 @@ class ProfessorDetalhe extends StatelessWidget {
         appBar: AppBar(
           automaticallyImplyLeading: false,
           backgroundColor: Colors.white,
-          title: Text('Professor'),
+          title: Text(nomeProf!),
           bottom: TabBar(tabs: [
             Tab(text: 'Dados Básicos'),
             Tab(text: 'Profissional'),

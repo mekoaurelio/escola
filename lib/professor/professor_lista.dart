@@ -6,7 +6,6 @@ import '../widgets/line.dart';
 import '../widgets/painel.dart';
 import 'professor_detalhe.dart';
 
-
 class ProfessorLista extends ListaBase {
   final String table;
 
@@ -67,7 +66,7 @@ class _ListaBaseState extends ListaBaseState<ProfessorLista> {
       builder: (_) => Panel(
         width: MediaQuery.of(context).size.width *0.50,
         height: MediaQuery.of(context).size.height *0.90,
-        child: ProfessorDetalhe(professor: lista[hoverIndex],
+        child: ProfessorDetalhe(professor: currentItems[hoverIndex],
           cargos: cargos,areaAtuacao: area_atuacao,localServico: local_servico,nivel:nivel,formacao: formacao,
           regime: regimeContracao,fonteReceita: fonte_receita,
         classe: classe, funcao: funcao,),

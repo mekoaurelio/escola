@@ -1,8 +1,10 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import para FilteringTextInputFormatter
 
 import '../data/api_my_sql.dart';
 import '../services/utils.dart'; // Assumindo que Utils.formatVr existe
+import '../widgets/custom_text_field.dart';
 import '../widgets/line.dart';
 import '../widgets/texto.dart';
 
@@ -171,40 +173,39 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               /// Cabeçalho, carga horário. dispersão horizontal e dispersão total
-              Row(
-                children: [
-                  const Text('Carga Horária:'),
-                  const SizedBox(width: 10),
-                  SizedBox(
-                    width: 60,
-                    child: TextField(
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly], // Aceita apenas dígitos
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (value) {
-                        int? newCargaHoraria = int.tryParse(value);
-                        if (newCargaHoraria != null && newCargaHoraria > 0) {
-                          setState(() {
-                            cargaHoraria = newCargaHoraria;
-                            _calculateTableAndDispersions(); // Recalcula ao mudar a carga horária
-                          });
-                        }
-                      },
-                      controller: _cargaHorariaController,
+              Container(
+                color: Colors.blue.shade200,
+                child: Row(
+                  children: [
+                    Texto(tit:'Carga Horária:',right: 10,left: 10,),
+                    SizedBox(
+                      width: 60,
+                      child: CustomTextFiel(
+                        controller: _cargaHorariaController,
+                        label: '',
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        onChanged: (value) {
+                          int? newCargaHoraria = int.tryParse(value);
+                          if (newCargaHoraria != null && newCargaHoraria > 0) {
+                            setState(() {
+                              cargaHoraria = newCargaHoraria;
+                              _calculateTableAndDispersions(); // Recalcula ao mudar a carga horária
+                            });
+                          }
+                        },
+                      )
                     ),
-                  ),
-                  const Text(' h'),
-                  const SizedBox(width: 40),
-                  const Text('Dispersão Horizontal (NE):'), // Especifique que é da última linha
-                  const SizedBox(width: 10),
-                  Texto(tit: '$_dispersaoHorizontal%',cor: Colors.blue,negrito: true,tam: 16,),
-                  const SizedBox(width: 40),
-                  const Text('Dispersão Total:'),
-                  const SizedBox(width: 10),
-                  Texto(tit: '$_dispersaoTotal%',cor: Colors.blue,negrito: true,tam: 16,),
-                ],
+                    const Text(' h'),
+                    const SizedBox(width: 40),
+                    const Text('Dispersão Horizontal (NE):'), // Especifique que é da última linha
+                    const SizedBox(width: 10),
+                    Texto(tit: '$_dispersaoHorizontal%',cor: Colors.blue,negrito: true,tam: 16,),
+                    const SizedBox(width: 40),
+                    const Text('Dispersão Total:'),
+                    const SizedBox(width: 10),
+                    Texto(tit: '$_dispersaoTotal%',cor: Colors.blue,negrito: true,tam: 16,right: 10),
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
 
@@ -218,13 +219,17 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
               const SizedBox(height: 10),
 
               /// Classes header row (dynamic columns)
-              Row(
-                children: [
-                  const SizedBox(width: 40), // Empty space for level column
-                  for (int i = 1; i <= cargaHoraria; i++)
-                    Line(tex: i.toString(), tam: 100, cor: Colors.black, alin: Alignment.center, negrito: true,),
-                ],
-              ),
+             Container(
+               color: Colors.grey.shade200,
+               child: Row(
+                 children: [
+                   const SizedBox(width: 40), // Empty space for level column
+
+                   for (int i = 1; i <= cargaHoraria; i++)
+                     Line(tex: i.toString(), tam: 100, cor: Colors.black, alin: Alignment.center, negrito: true,fontSize: 16,),
+                 ],
+               ),
+             ),
               const SizedBox(height: 10),
 
               /// Níveis rows (NB, NC, ND, NE)

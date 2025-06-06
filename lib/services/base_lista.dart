@@ -22,6 +22,7 @@ abstract class ListaBase extends StatefulWidget {
 abstract class ListaBaseState<T extends ListaBase> extends State<T> {
   TextEditingController controller = TextEditingController();
   List lista = [];
+  List currentItems=[];
   List listaOriginal = [];
   bool isLoadingBase = true;
   var userId='';
@@ -98,7 +99,7 @@ abstract class ListaBaseState<T extends ListaBase> extends State<T> {
     int totalPages = (lista.length / itemsPerPage).ceil();
     int startItemIndex = (currentPage - 1) * itemsPerPage;
     int endItemIndex = startItemIndex + itemsPerPage;
-    List currentItems = lista.sublist(
+    currentItems = lista.sublist(
       startItemIndex,
       endItemIndex > lista.length ? lista.length : endItemIndex,
     );
