@@ -22,6 +22,117 @@ class Utils {
   static final formatVr = NumberFormat("#,##0.00", "pt_BR");
   static var formatterD =  DateFormat('dd/MM/yyyy');
   static var formatterh =  DateFormat('hh:mm');
+/*
+  static double getValueFromMatrix(List<double> baseValues, double progressionRate, String code) {
+    // Extrai a letra e o número do código (ex: "NC4" → "NC" e 4)
+    String rowCode = code.substring(0, 2); // Pega os dois primeiros caracteres (NA, NB, NC...)
+    int column = int.tryParse(code.substring(2)) ?? 1; // Pega o número após as letras
+
+    // Cria a matriz com os valores progressivos
+    Map<String, List<double>> matrix = {};
+
+    // Nomes das linhas na ordem correspondente aos baseValues
+    List<String> rowNames = ["BASE", "NA", "NB", "NC", "ND", "NE"];
+
+    for (int i = 0; i < baseValues.length; i++) {
+      String rowName = rowNames[i];
+      double initialValue = baseValues[i];
+      List<double> rowValues = [initialValue];
+
+      // Calcula os valores para as colunas 2-6 com a taxa de progressão
+      for (int j = 1; j < 31; j++) {
+        double nextValue = rowValues.last * (1 + progressionRate / 100);
+        rowValues.add(double.parse(nextValue.toStringAsFixed(2))); // Arredonda para 2 decimais
+      }
+
+      matrix[rowName] = rowValues;
+    }
+
+    // Busca o valor na matriz
+    if (matrix.containsKey(rowCode) && column >= 1 && column <= 6) {
+      return matrix[rowCode]![column - 1]; // -1 porque as colunas começam em 1
+    } else {
+      throw Exception("Código inválido ou coluna fora do intervalo");
+    }
+  }
+
+ */
+
+  static double getValueFromMatrix({
+    required List<double> baseValues,
+    required double progressionRate,
+    required String code,
+    int numberOfColumns = 6, // Parâmetro novo com valor padrão 6
+    bool roundValues = true, // Opcional: controla se valores são arredondados
+  }) {
+    // Validação dos parâmetros
+    if (baseValues.length != 6) {
+      throw ArgumentError("baseValues deve conter exatamente 6 valores");
+    }
+    if (numberOfColumns < 1) {
+      throw ArgumentError("numberOfColumns deve ser pelo menos 1");
+    }
+
+    // Extrai a linha e coluna do código
+    final rowPattern = RegExp(r'^([A-Z]{2})(\d+)$');
+    final match = rowPattern.firstMatch(code);
+
+    if (match == null) {
+      return 0;
+    }
+
+    final rowCode = match.group(1)!;
+    final column = int.parse(match.group(2)!);
+
+        // Valida a coluna solicitada
+        if (column < 1 || column > numberOfColumns) {
+      throw ArgumentError("Coluna $column fora do intervalo (1-$numberOfColumns)");
+    }
+
+    // Nomes das linhas fixos conforme a tabela original
+    const rowNames = ["BASE", "NA", "NB", "NC", "ND", "NE"];
+
+    // Cria a matriz dinamicamente
+    final matrix = <String, List<double>>{};
+
+    for (int i = 0; i < baseValues.length; i++) {
+      final rowName = rowNames[i];
+      final initialValue = baseValues[i];
+      final rowValues = [initialValue];
+
+      // Preenche as colunas adicionais
+      for (int j = 1; j < numberOfColumns; j++) {
+        double nextValue = rowValues.last * (1 + progressionRate / 100);
+        if (roundValues) {
+          nextValue = double.parse(nextValue.toStringAsFixed(2));
+        }
+        rowValues.add(nextValue);
+      }
+
+      matrix[rowName] = rowValues;
+    }
+
+    // Retorna o valor solicitado
+    if (matrix.containsKey(rowCode)) {
+      return matrix[rowCode]![column - 1]; // Ajuste de índice 0-based
+    } else {
+      throw ArgumentError("Código de linha '$rowCode' não encontrado");
+    }
+  }
+
+  static String getNivel(String input) {
+    if (input.isEmpty) return input; // Retorna vazio se a string for vazia
+
+    // Pega o primeiro caractere
+    String firstChar = input[0];
+
+    // Pega os caracteres restantes e converte para inteiro
+    String remainingChars = input.substring(1);
+    int number = int.tryParse(remainingChars) ?? 0; // Usa 0 como fallback se não for número
+
+    // Retorna a combinação do primeiro caractere com o número
+    return '$firstChar$number';
+  }
 
   static String formatInitialValue(String key, String rawValue,String tipo) {
     if (tipo == 'data' && rawValue.isNotEmpty) {

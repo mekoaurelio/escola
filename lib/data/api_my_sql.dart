@@ -43,7 +43,7 @@ class ApiMySql {
     var url = 'https://www.xmktech.net/dados/get.php?sql=$sql';
     try {
       final response = await http.get(Uri.parse(url));
-      //  print(response.body);
+       // print(response.body);
       if (response.statusCode == 200) {
         String volta = response.body.trim();
         if (volta.contains('NENHUM')) {
@@ -90,7 +90,8 @@ class ApiMySql {
     sql2+="f.cargo,f.nivel,DATE_FORMAT(f.admissao, '%d/%m/%Y') AS admissao,f.competencia_mes,f.vantagens_total,";
     sql2+="f.descontos_total,f.liquido_total,f.fgts_total,GROUP_CONCAT(CONCAT(dv.codigo, ':',dv.descricao, ':',";
     sql2+="dv.percentual, ':',' R/\$ ', FORMAT(dv.valor, 2)) SEPARATOR ' | ') AS vantagens_detalhadas,";
-    sql2+=" SUM(CASE WHEN dv.codigo NOT IN ('21003', '21019') THEN dv.valor ELSE 0  END) AS soma_vantagens";
+    sql2+=" SUM(CASE WHEN dv.codigo NOT IN ('21003', '21019') THEN dv.valor ELSE 0  END) AS soma_vantagens,";
+    sql2+=" SUM(CASE WHEN dv.codigo IN ('21019') THEN dv.valor ELSE 0  END) AS soma_apts";
     sql2+=" FROM folha f LEFT JOIN detalhe_vantagens dv ON f.id = dv.folha_id GROUP BY f.id ORDER BY f.id";
 
     //print(sql2);

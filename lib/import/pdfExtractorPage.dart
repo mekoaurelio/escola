@@ -469,10 +469,9 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
                                 SizedBox(width: 5,),
                                 Line(tex: item['cpf'], tam: 100, alin: Alignment.centerLeft,cor: Colors.black,negrito: true),
                                 Line(tex: item['nome'], tam: 200, alin: Alignment.centerLeft,cor: Colors.black,negrito: true,fontSize: 14,),
-
-                                Line(tex: item['unidade'], tam: 200, alin: Alignment.centerLeft,cor: Colors.black,negrito: true),
-                                Line(tex: item['local_lotacao'], tam: 200, alin: Alignment.centerLeft,cor: Colors.black,negrito: true),
                                 Line(tex: item['cargo'], tam: 200, alin: Alignment.centerLeft,cor: Colors.black,negrito: true),
+                                Line(tex: item['local_lotacao'], tam: 200, alin: Alignment.centerLeft,cor: Colors.black,negrito: true),
+                                Line(tex: item['unidade'], tam: 200, alin: Alignment.centerLeft,cor: Colors.black,negrito: true),
                                 Line(tex: item['nivel'], tam: 30, alin: Alignment.centerLeft,cor: Colors.black,negrito: true),
                               ],
                             ),
@@ -483,7 +482,8 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
                             Row(
                               children: [
                                 Line(tex: 'Total de Vantagens', tam: 200, alin: Alignment.centerLeft,cor: Colors.blue,negrito: true,),
-                                Line(tex: Utils.vrBco(item['soma_vantagens']), tam: 300, alin: Alignment.centerRight,cor: Colors.blue,negrito: true,),
+                                Line(tex: Utils.formatVr.format(double.parse(item['soma_vantagens'])), tam: 300, alin: Alignment.centerRight,cor: Colors.blue,negrito: true,),
+
                               ],
                             ),
                             SizedBox(height: 10,)

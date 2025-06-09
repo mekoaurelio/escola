@@ -42,12 +42,14 @@ class _LineState extends State<Line> with SingleTickerProviderStateMixin {
     return Container(
       width: widget.tam,
       alignment: widget.alin ?? Alignment.center,
+      //color: Colors.yellow,
       child: Texto(
         tit: widget.tex,
         cor: widget.cor ?? Colors.black87,
         tam: widget.fontSize ?? 12,
         top: widget.top ?? 0,
         bottom: widget.bottom ?? 0,
+        negrito: widget.negrito ?? false,
       ),
     );
   }
