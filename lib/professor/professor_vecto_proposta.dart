@@ -5,10 +5,12 @@ import '../services/screenSize.dart';
 import '../services/utils.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/line.dart';
+import '../widgets/paginationFooter.dart';
 import '../widgets/texto.dart';
 
 class ProfessorVectoProposta extends StatefulWidget {
   const ProfessorVectoProposta();
+
   @override
   State<ProfessorVectoProposta> createState() => _ProfessorVectoPropostaState();
 }
@@ -34,6 +36,7 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
   List<double> matrizProfessor =[];
   List<double> matrizInfantil =[];
   double percP=0,percI=0;
+  int hoverIndex = -1;
 
   @override
   void initState() {
@@ -94,37 +97,6 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
     return lista.sublist(start, end > lista.length ? lista.length : end);
   }
 
-  Widget _buildFooter(int totalPages, ScreenSizeConfig screenSizeConfig) {
-    return Container(
-      color: Colors.grey[200],
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          IconButton(
-            onPressed: currentPage > 1 ? () => setState(() => currentPage = 1) : null,
-            icon: Icon(Icons.first_page, color: Colors.black54, size: screenSizeConfig.getFooterIconSize()),
-          ),
-          IconButton(
-            onPressed: currentPage > 1 ? () => setState(() => currentPage--) : null,
-            icon: Icon(Icons.arrow_back, color: Colors.black54, size: screenSizeConfig.getFooterIconSize()),
-          ),
-          Text('Página $currentPage de $totalPages',
-              style: TextStyle(fontSize: screenSizeConfig.getBodyFontSize(), color: Colors.black54)),
-          IconButton(
-            onPressed: currentPage < totalPages ? () => setState(() => currentPage++) : null,
-            icon: Icon(Icons.arrow_forward, color: Colors.black54, size: screenSizeConfig.getFooterIconSize()),
-          ),
-          IconButton(
-            onPressed: currentPage < totalPages ? () => setState(() => currentPage = totalPages) : null,
-            icon: Icon(Icons.last_page, color: Colors.black54, size: screenSizeConfig.getFooterIconSize()),
-          ),
-          Text('${lista.length} Itens',
-              style: TextStyle(fontSize: screenSizeConfig.getBodyFontSize(), color: Colors.black54)),
-        ],
-      ),
-    );
-  }
-
   Widget cabecalho() {
     return Card(
         color: Colors.grey.shade300,
@@ -140,6 +112,7 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
             Line(tex: 'Vencimento', tam: 100, alin: Alignment.centerRight,cor: Colors.black,negrito: true,fontSize: 16),
             Line(tex: 'APTS', tam: 100, alin: Alignment.centerRight,cor: Colors.black,negrito: true,fontSize: 16),
             Line(tex: 'Vantagens', tam: 100, alin: Alignment.centerRight,cor: Colors.black,negrito: true,fontSize: 16),
+            Line(tex: 'Total', tam: 100, alin: Alignment.centerRight,cor: Colors.black,negrito: true,fontSize: 16),
             Line(tex: 'Proposta', tam: 100, alin: Alignment.centerRight,cor: Colors.black,negrito: true,fontSize: 16)
           ],
         )
@@ -155,6 +128,7 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
             Line(tex: '', tam: 70, alin: Alignment.center,cor: Colors.black,negrito: true,fontSize: 16),
             Line(tex: Utils.formatVr.format(somaVencimentos).toString() , tam: 100, alin: Alignment.centerRight,cor: Colors.blue,negrito: true,fontSize: 13),
             Line(tex: '', tam: 100, alin: Alignment.center,cor: Colors.black,fontSize: 13),
+            Line(tex: '', tam: 100, alin: Alignment.centerRight,cor: Colors.black,negrito: true,fontSize: 16),
             Line(tex: '', tam: 100, alin: Alignment.centerRight,cor: Colors.black,negrito: true,fontSize: 16),
             Line(tex: Utils.formatVr.format(somaPropostas).toString(), tam: 100, alin: Alignment.centerRight,cor: Colors.blue,negrito: true,fontSize: 13)
           ],
@@ -240,6 +214,8 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
                         String vencimento=vantagens[0];
                         int pos=vencimento.indexOf('\$');
                         String descriVantagem=vencimento.substring(0,pos);
+                        int posV=descriVantagem.indexOf(':');
+                        descriVantagem=descriVantagem.substring(posV+1,descriVantagem.length);
                         vencimento=vencimento.substring(pos+1,vencimento.length);
                         
                         bool isInfante=currentItems[index]['unidade'].toString().contains('Prof.Educ.Inf');//Prof.Educ.Inf.Lic.Plena
@@ -261,26 +237,57 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
 
                         String proposta=Utils.formatVr.format(vrP).toString();
                         String atps=item['soma_apts'].toString().replaceAll('-', '');
-                        return
-                            Row(
+                        double sumVantagem=double.parse(item['soma_vantagens']);
+                        double total=double.parse(atps)+sumVantagem+double.parse(vecto);
+
+                       // bool propostaMenorVecto=total<double.parse(vrP.toString());
+
+                        return MouseRegion(
+                            onEnter: (_) => setState(() => hoverIndex = index),
+                            onExit: (_) => setState(() => hoverIndex = -1),
+                          child: Container(
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: Colors.grey.shade300,
+                                    width: 1.0,         // Espessura da linha
+                                  ),
+                                ),
+                                color: hoverIndex == index ? Colors.blue.shade50 : Colors.transparent,
+                              ),
+                            child: Row(
                               children: [
-                                Line(tex: item['matricula'], tam: 90, alin: Alignment.centerLeft,cor: propostaMenorVecto?Colors.black:Colors.red,negrito: true,fontSize: 13,),
+                                Line(tex: item['matricula'], tam: 90, alin: Alignment.centerLeft,cor: propostaMenorVecto?Colors.black:Colors.red,negrito: true,fontSize: 13,top: 10,),
                                 Line(tex: item['nome'], tam: 250, alin: Alignment.centerLeft,cor: propostaMenorVecto?Colors.black:Colors.red,negrito: true,fontSize: 13),
                                 Line(tex: isInfante?'Normal':'Infantil', tam: 70, alin: Alignment.center,cor: Colors.black,fontSize: 13),
                                 Line(tex: item['nivel'], tam: 70, alin: Alignment.center,cor: propostaMenorVecto?Colors.black:Colors.red,negrito: true,fontSize: 13),
                                 Line(tex: vencimento, tam: 100, alin: Alignment.centerRight,cor: propostaMenorVecto?Colors.black:Colors.red,fontSize: 13),
-                                Line(tex: Utils.formatVr.format(double.parse(atps)), tam: 100, alin: Alignment.centerRight,cor: Colors.black,negrito: true,),
-                                Line(tex: Utils.formatVr.format(double.parse(item['soma_vantagens'])), tam: 100, alin: Alignment.centerRight,cor: Colors.black,negrito: true,),
+                                Line(tex: Utils.formatVr.format(double.parse(atps)), tam: 100, alin: Alignment.centerRight,cor: Colors.black,),
+                                Line(tex: Utils.formatVr.format(double.parse(item['soma_vantagens'])), tam: 100, alin: Alignment.centerRight,cor: Colors.black,),
+                                Line(tex: Utils.formatVr.format(total), tam: 100, alin: Alignment.centerRight,cor: Colors.black,negrito: true,),
+
                                 Line(tex:proposta.toString(), tam: 100, alin: Alignment.centerRight,cor: propostaMenorVecto?Colors.black:Colors.red,negrito: true,fontSize: 13),
 
                                 Line(tex:proposta=='0,00'?' Nível inválido $mk':descriVantagem.contains('Vencimento')?'':' $descriVantagem',
-                                    tam: 200, alin: Alignment.centerLeft,cor: Colors.red,negrito: true,fontSize: 11),
+                                    tam: 100, alin: Alignment.centerLeft,cor: Colors.red,negrito: true,fontSize: 11),
                               ],
-                            );
+                            )
+                          ),
+                        );
                       },
                     ),
                   ),
-                  _buildFooter(totalPages, screenSizeConfig),
+                  PaginationFooter(
+                    currentPage: currentPage,
+                    totalPages: totalPages,
+                    totalItems: lista.length,
+                    onPageChanged: (newPage) {
+                      // A lógica de atualização do estado permanece no widget pai.
+                      setState(() {
+                        currentPage = newPage;
+                      });
+                    },
+                  ),
                 ],
               ),
             ),

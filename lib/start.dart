@@ -6,11 +6,13 @@ import 'auxiliares/cargo_lista.dart';
 import 'auxiliares/encargo_social_lista.dart';
 import 'auxiliares/fonte_receita_lista.dart';
 import 'auxiliares/lista_cod_descri.dart';
-import 'data/api_my_sql.dart';
+import 'grafico/grafico_fundeb_exercicio.dart';
+import 'grafico/home.dart';
+import 'impacto/impacto_grid2.dart';
 import 'impacto/impacto_main.dart';
 import 'import/pdfExtractorPage.dart';
-import 'professor/professor_lista.dart';
 import 'professor/professor_vecto_proposta.dart';
+import 'professor/professores.dart';
 import 'professor/tabela_professor.dart';
 import 'professor/tabela_professor_infantil.dart';
 import 'simulador/executa_simulador.dart';
@@ -25,9 +27,10 @@ class Start extends StatefulWidget {
 
 class _StartState extends State<Start> {
   // Constants
-  static const _initialPage = 'Galeria';
+  static const _initialPage = 'Home';
   static const _initialLanguage = 'pt';
   static const _initialTabIndex = 0;
+  Color appBarColorCrypto = Color(0xFF2459A9);
 
   // State variables
   String _currentPage = _initialPage;
@@ -44,12 +47,14 @@ class _StartState extends State<Start> {
   // Navigation items
   final List<Map<String, dynamic>> _mainNavigationItems = [
     {'title': 'professores'.tr, 'icon': Icons.perm_contact_cal_sharp, 'index': 0},
-    {'title': 'Simulador', 'icon': Icons.calendar_month, 'index': 1},
+    {'title': 'Simulador', 'icon': Icons.swap_vertical_circle_rounded, 'index': 1},
     {'title': 'Impacto', 'icon': Icons.lightbulb_outline, 'index': 2},
-    {'title': 'Extracao', 'icon': Icons.lightbulb_outline, 'index': 3},
-    {'title': 'Tabela Professor', 'icon': Icons.perm_contact_cal, 'index': 11},
-    {'title': 'Professor Infantil', 'icon': Icons.perm_contact_cal, 'index': 12},// Note que este é 11
-    {'title': 'Vecto X Proposto', 'icon': Icons.perm_contact_cal, 'index': 13},
+    {'title': 'Impacto2', 'icon': Icons.lightbulb_outline, 'index': 14},
+    {'title': 'Extracao', 'icon': Icons.archive_outlined, 'index': 3},
+    {'title': 'Tabela Professor', 'icon': Icons.person, 'index': 11},
+    {'title': 'Professor Infantil', 'icon': Icons.face_unlock_outlined, 'index': 12},// Note que este é 11
+    {'title': 'Vecto X Proposto', 'icon': Icons.auto_graph_outlined, 'index': 13},
+    {'title': 'Home', 'icon': Icons.auto_graph_outlined, 'index': 15},
   ];
 
   final List<Map<String, dynamic>> _auxiliaryNavigationItems = [
@@ -116,13 +121,15 @@ class _StartState extends State<Start> {
       /// QUEM NÃO É CÓDIGO E DESCRIÇÃO
     }else {
 
-      if (_currentPage == 'professores'.tr) return ProfessorLista(table: 'folha',);
+      if (_currentPage == 'professores'.tr) return Professores();
       if (_currentPage == 'Simulador') return SimuladorExecuta();
       if (_currentPage == 'Impacto') return ImpactoMain();
+      if (_currentPage == 'Impacto2') return ImpactoGrid2();
       if (_currentPage == 'Extracao') return PdfExtractorPage();
       if (_currentPage == 'Tabela Professor') return SimuladorTabelaProfessor();
       if (_currentPage == 'Professor Infantil') return TabelaProfessorInfantil();
       if (_currentPage == 'Vecto X Proposto') return ProfessorVectoProposta();
+      if (_currentPage == 'Home') return FundebChartSelector();
       return Container();
 
     }
@@ -173,8 +180,8 @@ class _StartState extends State<Start> {
   /// Builds the app bar with language selector
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.white,
-      title: Text(_currentPage),
+      backgroundColor: appBarColorCrypto,
+      title: Texto(tit:_currentPage,cor:Colors.white),
       actions: [
         _buildLanguageDropdown(),
         const SizedBox(width: 16),
@@ -252,7 +259,7 @@ class _StartState extends State<Start> {
         children: [
           const SizedBox(height: 20),
           Image.asset('assets/images/Xmktec_logo.jpeg', height: 105),
-          Texto(tit: 'title'.tr+' V.008', cor: Colors.black54),
+          Texto(tit: 'title'.tr+' V.009', cor: Colors.black54),
           const SizedBox(height: 20),
           ..._mainNavigationItems.map((item) => _buildDrawerItem(
             item['title'],
@@ -350,8 +357,10 @@ class _StartState extends State<Start> {
         return 'Professor Infantil';
       case 13:
         return "Vecto X Proposto";
+      case 14:
+        return 'Impacto2';
       default:
-        return 'Galeria'; // Retorna um valor padrão seguro
+        return 'Home'; // Retorna um valor padrão seguro
     }
   }
 }

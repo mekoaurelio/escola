@@ -407,6 +407,7 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
             Line(tex: 'Local', tam: 200, alin: Alignment.centerLeft,cor: Colors.black,negrito: true),
             Line(tex: 'Cargo', tam: 200, alin: Alignment.centerLeft,cor: Colors.black,negrito: true),
             Line(tex: 'Nível', tam: 30, alin: Alignment.centerLeft,cor: Colors.black,negrito: true),
+            Line(tex: 'Admissão', tam: 70, alin: Alignment.centerLeft,cor: Colors.black,negrito: true),
           ],
         )
     );
@@ -427,12 +428,15 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
               label: const Text('Selecionar PDF e Carregar folha'),
               onPressed: selecionarEEnviarArquivo,
             ),
+            /*
             const SizedBox(height: 10),
             ElevatedButton.icon(
               icon: const Icon(Icons.upload_file),
               label: const Text('Carrega folha'),
               onPressed: carregarFolha,
             ),
+
+             */
 
             const SizedBox(height: 20),
             ValueListenableBuilder<double>(
@@ -459,6 +463,11 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
                       itemCount: currentItems.length,
                       itemBuilder: (context, index) {
                         final item = currentItems[index];
+
+                        // String dateString=Utils.dtMySql(item['admissao'],'yyyy/mm/dd');
+                         DateTime parsedDate = Utils.parseDate(item['admissao']);
+                         int yearsDifference = Utils.calculateYearsDifference(parsedDate);
+
                         return Column(
                           children: [
                             cabecalho(),
@@ -473,6 +482,8 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
                                 Line(tex: item['local_lotacao'], tam: 200, alin: Alignment.centerLeft,cor: Colors.black,negrito: true),
                                 Line(tex: item['unidade'], tam: 200, alin: Alignment.centerLeft,cor: Colors.black,negrito: true),
                                 Line(tex: item['nivel'], tam: 30, alin: Alignment.centerLeft,cor: Colors.black,negrito: true),
+                                Line(tex: item['admissao']+' $yearsDifference anos', tam: 90, alin: Alignment.centerLeft
+                                    ,cor: Colors.black,negrito: true,fontSize: 9,),
                               ],
                             ),
                             SizedBox(height: 5,),

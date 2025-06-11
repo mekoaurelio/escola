@@ -38,6 +38,7 @@ class ProfessorDetalhe extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ///VERICIA SE EXISTE DADOS DAS TABELAS AUXILIARES
+   /*
     final initialCargoId = professor?['cargo_id']?.toString() ?? '1';
     final initialArea = professor?['area_atuacao_id']?.toString() ?? '1';
     final initialLocal = professor?['local_servico_id']?.toString() ?? '1';
@@ -48,10 +49,26 @@ class ProfessorDetalhe extends StatelessWidget {
     final initialClasse = professor?['classe_id']?.toString() ?? '1';
     final initialReceita = professor?['fonte_receita_id']?.toString() ?? '1';
 
+    */
+
     String? nomeProf=professor?['nome'];
-    String dateString=Utils.dtMySql(professor?['admissao'],'dd/MM/yyyy');
-    DateTime parsedDate = Utils.parseDate(dateString);
-    int yearsDifference = Utils.calculateYearsDifference(parsedDate);
+
+   // String dateString=Utils.dtMySql(professor?['admissao'],'dd/MM/yyyy');
+
+   // DateTime parsedDate = Utils.parseDate(dateString);
+   // int yearsDifference = Utils.calculateYearsDifference(parsedDate);
+
+    print('KKKKKKKKKK');
+    String vantagensDetalhadas=professor?['vantagens_detalhadas'];
+    var vatagens=vantagensDetalhadas.split('|');
+    var v;
+    for(int i = 0 ; i<vatagens.length ; i++) {
+      v=vatagens[i].split(':');
+      print('Código '+v[0]);
+      print('Descricao '+v[1]);
+      print('Obs '+v[2]);
+      print('Valor '+v[3]);
+    }
 
     final initial = {
       for (var f in _allFields)
@@ -61,9 +78,10 @@ class ProfessorDetalhe extends StatelessWidget {
             f.controllerName, professor?[f.controllerName]?.toString() ?? '',f.tipo
         ),
 
-      'tempo_servico_anos':'$dateString - $yearsDifference Anos',
+     // 'tempo_servico_anos':'$dateString - $yearsDifference Anos',
 
       ///SE EXISTIR DADO, MOSTRA ESSE DADO, CASO CONTRARIO O CONTROLLER APARECE EM BRANCO
+     /*
       'cargo_id': initialCargoId, // Se não for válido, usa vazio
       'area_atuacao_id': initialArea ,
       'local_servico_id':  initialLocal ,
@@ -73,6 +91,8 @@ class ProfessorDetalhe extends StatelessWidget {
       'funcao_id':  initialfuncao ,
       'classe_id':  initialClasse ,
       'fonte_receita_id':  initialReceita ,
+
+      */
     };
 
     return DefaultTabController(
@@ -97,6 +117,12 @@ class ProfessorDetalhe extends StatelessWidget {
         ]),
       ),
     );
+  }
+
+  pegaVencimento(var vatagens){
+    var v=vatagens.split('|');
+    String vcto=v[0];
+
   }
 
   Widget _buildTab(List<FormFieldData> fields, Map<String, String> initial,int tabIndex) {

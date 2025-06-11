@@ -22,42 +22,41 @@ class Utils {
   static final formatVr = NumberFormat("#,##0.00", "pt_BR");
   static var formatterD =  DateFormat('dd/MM/yyyy');
   static var formatterh =  DateFormat('hh:mm');
-/*
-  static double getValueFromMatrix(List<double> baseValues, double progressionRate, String code) {
-    // Extrai a letra e o número do código (ex: "NC4" → "NC" e 4)
-    String rowCode = code.substring(0, 2); // Pega os dois primeiros caracteres (NA, NB, NC...)
-    int column = int.tryParse(code.substring(2)) ?? 1; // Pega o número após as letras
 
-    // Cria a matriz com os valores progressivos
-    Map<String, List<double>> matrix = {};
+  static double somaVantagens(var partes){
+    String valorStr='0';
+    for (final parte in partes) {
+      print(partes);
+      final detalhesVantagem = parte.split(':');
+      if (detalhesVantagem.length > 3 && detalhesVantagem[0]!='21003' ) {
+        print(detalhesVantagem[3]);
+         valorStr = detalhesVantagem[3]
+            .replaceAll('R/\$', '')
+            .replaceAll('-', '')
+            .replaceAll(',', '')
+            .trim();
+        return double.parse(valorStr);
 
-    // Nomes das linhas na ordem correspondente aos baseValues
-    List<String> rowNames = ["BASE", "NA", "NB", "NC", "ND", "NE"];
-
-    for (int i = 0; i < baseValues.length; i++) {
-      String rowName = rowNames[i];
-      double initialValue = baseValues[i];
-      List<double> rowValues = [initialValue];
-
-      // Calcula os valores para as colunas 2-6 com a taxa de progressão
-      for (int j = 1; j < 31; j++) {
-        double nextValue = rowValues.last * (1 + progressionRate / 100);
-        rowValues.add(double.parse(nextValue.toStringAsFixed(2))); // Arredonda para 2 decimais
       }
-
-      matrix[rowName] = rowValues;
     }
-
-    // Busca o valor na matriz
-    if (matrix.containsKey(rowCode) && column >= 1 && column <= 6) {
-      return matrix[rowCode]![column - 1]; // -1 porque as colunas começam em 1
-    } else {
-      throw Exception("Código inválido ou coluna fora do intervalo");
-    }
+    return 0;
   }
-
- */
-
+  static double getVencimento(var partes){
+    if (partes.isNotEmpty) {
+      // 1. Cálculo do vencimento base
+      String vencimentoStr = partes[0];
+      int pos = vencimentoStr.indexOf('\$');
+      if (pos != -1) {
+        vencimentoStr = vencimentoStr.substring(pos + 1).replaceAll(',', '#');
+        vencimentoStr = vencimentoStr.replaceAll('.', ',');
+        vencimentoStr = vencimentoStr.replaceAll('#', '');
+        vencimentoStr = vencimentoStr.replaceAll(',', '.');
+        return double.parse(vencimentoStr);
+      }
+      return 0;
+    }
+    return 0;
+  }
   static double getValueFromMatrix({
     required List<double> baseValues,
     required double progressionRate,

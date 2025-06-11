@@ -43,7 +43,11 @@ abstract class ListaBaseState<T extends ListaBase> extends State<T> {
   // void carregarDados(List<dynamic> data) async{
   void carregarDados(String table) async{
     List data=[];
-    data=await ApiMySql.get(table,null,null);
+    if(table=='folha'){
+      data=await ApiMySql.getProfessor();
+    }else {
+      data = await ApiMySql.get(table, null, null);
+    }
    // print(data);
     setState(() {
       lista = data;
