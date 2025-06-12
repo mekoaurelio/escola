@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Import para FilteringTextInputFormatter
 
 import '../data/api_my_sql.dart';
 import '../services/utils.dart'; // Assumindo que Utils.formatVr existe
-import '../widgets/custom_text_field.dart';
 import '../widgets/line.dart';
 import '../widgets/texto.dart';
 
@@ -16,7 +14,8 @@ class SimuladorTabelaProfessor extends StatefulWidget {
 
 class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   int cargaHoraria = 20;
-  final List<String> niveis = ['BASE','NA','NB', 'NC', 'ND', 'NE'];
+  double _percEntreColunas=0;
+  final List<String> niveis = ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'];
 
   var profs; // Dados brutos da API
   double valorBase = 0; // Valor inicial 'valor'
@@ -34,40 +33,38 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   String _dispersaoHorizontal = '0.00%'; // Valor inicial como string formatada
   String _dispersaoTotal = '0.00%'; // Valor inicial como string formatada
 
-  // Controladores para os campos de texto
-  late TextEditingController _cargaHorariaController;
-  late TextEditingController _percEntreColunas;
 
   int? selectedRow;
   int? selectedColumn;
   String selectedValue = 'Nenhuma célula selecionada';
-  String nivel='',coluna='';
+  String nivel = '',
+      coluna = '';
   var professores;
 
 // Adicione este método para lidar com a seleção
-  void _handleCellSelection(int row, int column) async{
-   setState(() {
-     selectedRow = row;
-     selectedColumn = column;
-     selectedValue = '${niveis[row]}  ${column + 1}';
-   });
+  void _handleCellSelection(int row, int column) async {
+    setState(() {
+      selectedRow = row;
+      selectedColumn = column;
+      selectedValue = '${niveis[row]}  ${column + 1}';
+    });
 
-      nivel=niveis[row].substring(1,2);
-      coluna=(column + 1).toString();
-      if(coluna.length==1){
-        coluna='0$coluna';
+    nivel = niveis[row].substring(1, 2);
+    coluna = (column + 1).toString();
+    if (coluna.length == 1) {
+      coluna = '0$coluna';
+    }
+    String ni = nivel + coluna;
+    String Profs = '';
+    for (var item in professores) {
+      if (item['nivel'] == ni) {
+        Profs += item['nome'] + '\n';
       }
-      String ni=nivel+coluna;
-      String Profs='';
-      for (var item in professores) {
-        if(item['nivel']==ni) {
-          Profs += item['nome'] + '\n';
-        }
-      }
-      if(Profs.length==0){
-        Profs='Não existe';
-      }
-      Utils.snak('Valor', Profs, false, Colors.green);
+    }
+    if (Profs.length == 0) {
+      Profs = 'Não existe';
+    }
+    Utils.snak('Valor', Profs, false, Colors.green);
   }
 
   int quantidadeDeProfessores(String nivel, int coluna) {
@@ -82,21 +79,17 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   @override
   void initState() {
     super.initState();
-    _cargaHorariaController = TextEditingController(text: cargaHoraria.toString());
-    _percEntreColunas=TextEditingController(text:'');
     _loadDataAndCalculate(); // Método para carregar dados e calcular tudo
   }
 
   @override
   void dispose() {
-    _cargaHorariaController.dispose();
-    _percEntreColunas.dispose();
     super.dispose();
   }
 
   // Método para carregar dados e iniciar os cálculos
   Future<void> _loadDataAndCalculate() async {
-    professores=await ApiMySql.executaSql('select * from folha');
+    professores = await ApiMySql.executaSql('select * from folha');
 
     // Pré-processa a contagem de professores por nível
     _professoresPorNivel = {};
@@ -108,8 +101,8 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
     /// Pré-processa a contagem de professores por nível
     _professoresPorNivel = {};
     for (var item in professores) {
-    final nivel = item['nivel']?.toString() ?? '';
-    _professoresPorNivel[nivel] = (_professoresPorNivel[nivel] ?? 0) + 1;
+      final nivel = item['nivel']?.toString() ?? '';
+      _professoresPorNivel[nivel] = (_professoresPorNivel[nivel] ?? 0) + 1;
     }
 
     setState(() {
@@ -118,13 +111,19 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
 
     try {
       profs = await ApiMySql.get('sim_prof', null, 'ordem');
-      valorBase = double.parse(profs[0]['valor']); ///PISO INFANTIL
-      penA = double.parse(profs[2]['valor']); ///PROGRESSÃO ENTRE NÍVEIS
+      valorBase = double.parse(profs[0]['valor']);
+
+      ///PISO INFANTIL
+      penA = double.parse(profs[2]['valor']);
+
+      ///PROGRESSÃO ENTRE NÍVEIS
       penB = double.parse(profs[3]['valor']);
       penC = double.parse(profs[4]['valor']);
       penD = double.parse(profs[5]['valor']);
       penE = double.parse(profs[6]['valor']);
-      _percEntreColunas.text=profs[1]['percentual']; ///Percentual de cálculo entre as colunas
+      _percEntreColunas = double.parse(profs[1]['percentual']);
+
+      ///Percentual de cálculo entre as colunas
 
       _calculateTableAndDispersions(); // Calcula a tabela e dispersões
     } catch (e) {
@@ -149,12 +148,12 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       double vrAnteriorDaLinha = 0;
 
       // Define o valor inicial da linha com base no nível
-      if (nivelIndex == 0) vrAnteriorDaLinha = valorBase;//3
-      if (nivelIndex == 1) vrAnteriorDaLinha = penA;//tava 0
-      if (nivelIndex == 2) vrAnteriorDaLinha = penB;//1
-      if (nivelIndex == 3) vrAnteriorDaLinha = penC;//2
-      if (nivelIndex == 4) vrAnteriorDaLinha = penD;//3
-      if (nivelIndex == 5) vrAnteriorDaLinha = penE;//3
+      if (nivelIndex == 0) vrAnteriorDaLinha = valorBase; //3
+      if (nivelIndex == 1) vrAnteriorDaLinha = penA; //tava 0
+      if (nivelIndex == 2) vrAnteriorDaLinha = penB; //1
+      if (nivelIndex == 3) vrAnteriorDaLinha = penC; //2
+      if (nivelIndex == 4) vrAnteriorDaLinha = penD; //3
+      if (nivelIndex == 5) vrAnteriorDaLinha = penE; //3
 
       for (int coluna = 1; coluna <= cargaHoraria; coluna++) {
         double valorAtual;
@@ -165,8 +164,9 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
             primeiroValorTabela = valorAtual;
           }
         } else {
-          double percCalc=double.parse(_percEntreColunas.text);
-          valorAtual = ((vrAnteriorDaLinha * percCalc)/100)+vrAnteriorDaLinha;
+          double percCalc = _percEntreColunas;
+          valorAtual =
+              ((vrAnteriorDaLinha * percCalc) / 100) + vrAnteriorDaLinha;
         }
 
         rowValues.add(valorAtual);
@@ -191,11 +191,14 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
 
     if (primeiroValorTabela != 0) {
       // Dispersão Horizontal: (última coluna da primeira linha - primeira coluna da primeira linha) / primeira coluna da primeira linha
-      calcDispersaoHorizontal = ((ultimaColunaPrimeiraLinha - primeiroValorTabela) / primeiroValorTabela) * 100;
+      calcDispersaoHorizontal =
+          ((ultimaColunaPrimeiraLinha - primeiroValorTabela) /
+              primeiroValorTabela) * 100;
 
       // Dispersão Total: (última coluna da última linha - primeira coluna da primeira linha) / primeira coluna da primeira linha
-     // print('primeiroValorTabela : $primeiroValorTabela ultimaColunaUltimaLinha : $ultimaColunaUltimaLinha');
-      calcDispersaoTotal = ((ultimaColunaUltimaLinha - primeiroValorTabela) / primeiroValorTabela) * 100;
+      // print('primeiroValorTabela : $primeiroValorTabela ultimaColunaUltimaLinha : $ultimaColunaUltimaLinha');
+      calcDispersaoTotal = ((ultimaColunaUltimaLinha - primeiroValorTabela) /
+          primeiroValorTabela) * 100;
     }
 
     setState(() {
@@ -221,62 +224,64 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               /// Cabeçalho, carga horário. dispersão horizontal e dispersão total
-              Container(
-                  color: Colors.blue.shade200,
-                child: Row(
+              Row(
                 children: [
-                  Texto(tit:'Carga Horária:',right: 10,left: 10,),
-                  ///Quantidade de colunas
-                  SizedBox(
-                    width: 60,
-                    child: CustomTextFiel(
-                      controller: _cargaHorariaController,
-                      label: '',
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      onChanged: (value) {
-                        int? newCargaHoraria = int.tryParse(value);
-                        if (newCargaHoraria != null && newCargaHoraria > 0) {
-                          setState(() {
-                            cargaHoraria = newCargaHoraria;
-                            _calculateTableAndDispersions(); // Recalcula ao mudar a carga horária
-                          });
-                        }
-                      },
-                    )
-                  ),
-
-                  Texto(tit:'% de progressão entre colunas',left: 10,right: 10,),
-                  SizedBox(
-                      width: 60,
-                      child: CustomTextFiel(
-                        controller: _percEntreColunas,
-                        label: '',
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        onChanged: (value) {
-                          int? newCargaHoraria = int.tryParse(value);
-                          if (newCargaHoraria != null && newCargaHoraria > 0) {
+                  Texto(
+                      tit: 'Carga Horária: $cargaHoraria',
+                      exibirIcone: true,
+                      aoClicarIcone: () {
+                        Utils.mostrarDialogoEditarValor(
+                          context: context,
+                          titulo: 'Editar Carga Horária',
+                          labelCampo: 'Horas',
+                          valorInicial: cargaHoraria.toString(),
+                          aoSalvar: (novoValor) {
                             setState(() {
-                             // cargaHoraria = newCargaHoraria;
-                              _calculateTableAndDispersions(); // Recalcula ao mudar a carga horária
+                              cargaHoraria = int.tryParse(novoValor)!;
+                              _calculateTableAndDispersions();
                             });
-                          }
-                        },
-                      )
-                  ),
-                //  const Text(' h'),
-                  const SizedBox(width: 40),
-                  const Text('Dispersão Horizontal (NE):'), // Especifique que é da última linha
-                  const SizedBox(width: 10),
-                  Texto(tit: '$_dispersaoHorizontal%',cor: Colors.blue,negrito: true,tam: 16,),
-                  const SizedBox(width: 40),
-                  const Text('Dispersão Total:'),
-                  const SizedBox(width: 10),
-                  Texto(tit: '$_dispersaoTotal%',cor: Colors.blue,negrito: true,tam: 16,right: 10,),
-                ],
-              ),
-              ),
-              const SizedBox(height: 20),
+                          },
+                        );
+                      },
+                    ),
 
+                    SizedBox(width: 10,),
+                    Texto(tit: '% de progressão entre colunas $_percEntreColunas', left: 10, right: 10,
+                      exibirIcone: true,
+                      aoClicarIcone: () {
+                        Utils.mostrarDialogoEditarValor(
+                          context: context,
+                          titulo: 'Editar Progressão Entre Colunas',
+                          labelCampo: 'Colunas',
+                          valorInicial: _percEntreColunas.toString(),
+                          aoSalvar: (novoValor) {
+                            setState(() {
+                              _percEntreColunas = double.tryParse(novoValor)!;
+                              _calculateTableAndDispersions();
+                            });
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 40),
+                    const Text('Dispersão Horizontal (NE):'),
+                    // Especifique que é da última linha
+                    const SizedBox(width: 10),
+                    Texto(tit: '$_dispersaoHorizontal%',
+                      cor: Colors.blue,
+                      negrito: true,
+                      tam: 16,),
+                    const SizedBox(width: 40),
+                    const Text('Dispersão Total:'),
+                    const SizedBox(width: 10),
+                    Texto(tit: '$_dispersaoTotal%',
+                      cor: Colors.blue,
+                      negrito: true,
+                      tam: 16,
+                      right: 10,),
+                  ],
+                ),
+              const SizedBox(height: 20),
               /// Nível e Classe
               const Row(
                 children: [
@@ -287,16 +292,21 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
               const SizedBox(height: 10),
 
               /// Classes header row (dynamic columns)
-             Container(
-               color: Colors.grey.shade200,
-               child: Row(
-                 children: [
-                   const SizedBox(width: 40), // Empty space for level column
-                   for (int i = 1; i <= cargaHoraria; i++)
-                     Line(tex: i.toString(), tam: 109, cor: Colors.black, alin: Alignment.center, negrito: true,fontSize: 16,),
-                 ],
-               )
-             ),
+              Container(
+                  color: Colors.grey.shade200,
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 40), // Empty space for level column
+                      for (int i = 1; i <= cargaHoraria; i++)
+                        Line(tex: i.toString(),
+                          tam: 109,
+                          cor: Colors.black,
+                          alin: Alignment.center,
+                          negrito: true,
+                          fontSize: 16,),
+                    ],
+                  )
+              ),
               const SizedBox(height: 10),
 
               /// Níveis rows (NB, NC, ND, NE)
@@ -305,30 +315,47 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                   children: [
                     SizedBox(
                       width: 40,
-                      child: Texto(tit:niveis[nivelIndex],negrito: true,cor: nivelIndex==0?Colors.blue:Colors.black,),
+                      child: Texto(tit: niveis[nivelIndex],
+                        negrito: true,
+                        cor: nivelIndex == 0 ? Colors.blue : Colors.black,),
                     ),
-                    for (int coluna = 0; coluna < _calculatedTableValues[nivelIndex].length; coluna++)
+                    for (int coluna = 0; coluna <
+                        _calculatedTableValues[nivelIndex].length; coluna++)
                       GestureDetector(
                         onTap: () => _handleCellSelection(nivelIndex, coluna),
                         child: Container(
-                            color: selectedRow == nivelIndex && selectedColumn == coluna
+                            color: selectedRow == nivelIndex &&
+                                selectedColumn == coluna
                                 ? Colors.blue
                                 : Colors.transparent,
                             child: Tooltip(
-                              message: '${quantidadeDeProfessores(niveis[nivelIndex], coluna + 1)} professores',
+                                message: '${quantidadeDeProfessores(
+                                    niveis[nivelIndex],
+                                    coluna + 1)} professores',
                                 child:
                                 Row(
                                   children: [
-                                    Line(tex: Utils.formatVr.format(_calculatedTableValues[nivelIndex][coluna]),tam: 90,alin:Alignment.centerRight,
-                                      fontSize: coluna == 0 ? 16 : 13,cor: coluna == 0 ? Colors.blue : Colors.black,negrito: true,
+                                    Line(
+                                      tex: Utils.formatVr.format(
+                                          _calculatedTableValues[nivelIndex][coluna]),
+                                      tam: 90,
+                                      alin: Alignment.centerRight,
+                                      fontSize: coluna == 0 ? 16 : 13,
+                                      cor: coluna == 0 ? Colors.blue : Colors
+                                          .black,
+                                      negrito: true,
                                     ),
 
-                                    Line(tex: '(${quantidadeDeProfessores(niveis[nivelIndex], coluna + 1)})',tam: 19,fontSize: 9,cor: Colors.black54,
-                                      alin: Alignment.centerLeft,negrito: true,),
+                                    Line(
+                                      tex: '(${quantidadeDeProfessores(
+                                          niveis[nivelIndex], coluna + 1)})',
+                                      tam: 19,
+                                      fontSize: 9,
+                                      cor: Colors.black54,
+                                      alin: Alignment.centerLeft,
+                                      negrito: true,),
                                   ],
                                 )
-
-
                             )
                         ),
                       ),

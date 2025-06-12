@@ -214,6 +214,7 @@ class _Section extends StatelessWidget {
       ],
     );
   }
+
   updateValor(var computed,var ordem)async{
     await ApiMySql.executaSql('UPDATE $table set valor=$computed where ordem=$ordem');
   }

@@ -122,23 +122,24 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> {
   final _currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: '');
 
   // Constantes de texto, declaradas como static const para melhor performance.
-  static const List<String> _vantagensLabels = [
-    '1. Valor da folha de vencimentos básicos - mensal - R/\$',
-    '2. Valor das vantagens pecuniárias - mensal - R/\$',
-    '3. Percentual das vantagens pecuniárias sobre a folha de vencimento',
-    '4. Custo total da folha de pagamento líquida mensal',
-    '5. Encargos previdenciários',
-    '6. Encargos previdenciários (14%)', // Label ajustado para clareza
-    '7. Valor do décimo terceiro 1/12',
-    '8. Valor 1/3 férias (proporcional)',
-    '9. Total folha mensal',
-    '10. Total folha bruta anual',
+
+  static final List<Texto> _vantagensLabels = [
+    Texto(tit: '1. Valor da folha de vencimentos básicos - mensal - R/\$', icone: Icons.help),
+    Texto(tit: '2. Valor das vantagens pecuniárias - mensal - R/\$', icone: Icons.help),
+    Texto(tit: '3. Percentual das vantagens pecuniárias sobre a folha de vencimento', icone: Icons.help),
+    Texto(tit: '4. Custo total da folha de pagamento líquida mensal', icone: Icons.help),
+    Texto(tit: '5. Encargos previdenciários', icone: Icons.help),
+    Texto(tit: '6. Encargos previdenciários (14%)', icone: Icons.help),
+    Texto(tit: '7. Valor do décimo terceiro 1/12', icone: Icons.help),
+    Texto(tit: '8. Valor 1/3 férias (proporcional)', icone: Icons.help),
+    Texto(tit: '9. Total folha mensal', icone: Icons.help),
+    Texto(tit: '10. Total folha bruta anual', icone: Icons.help),
   ];
 
-  static const List<String> _fundebLabels = [
-    'Receita estimado do FUNDEB para o exercício',
-    'Impacto financeiro da folha de pagamento(ano) sobre os recursos do FUNDEB(%)',
-    'Impacto financeiro da folha de pagamento(ano) sobre os recursos da receita MDE(%)',
+  static final List<Texto> _fundebLabels = [
+    Texto(tit: 'Receita estimado do FUNDEB para o exercício', icone: Icons.help),
+    Texto(tit: 'Impacto financeiro da folha de pagamento(ano) sobre os recursos do FUNDEB(%)', icone: Icons.help),
+    Texto(tit: 'Impacto financeiro da folha de pagamento(ano) sobre os recursos da receita MDE(%)', icone: Icons.help),
   ];
 
   @override
@@ -211,7 +212,8 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> {
       children: List.generate(_vantagensLabels.length, (index) {
         final bool isTotal = index >= 8;
         return _HoverableDataRow(
-          label: _vantagensLabels[index],
+          label: _vantagensLabels[index].tit,
+          icon: _vantagensLabels[index].icone,
           value: values[index],
           isHighlighted: isTotal,
         );
@@ -232,7 +234,8 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> {
          Texto(tit:'RECEITA ESTIMADO DO EXERCÍCIO', negrito: true, top: 10, bottom: 10),
         ...List.generate(_fundebLabels.length, (index) {
           return _HoverableDataRow(
-            label: _fundebLabels[index],
+            label: _vantagensLabels[index].tit,
+            icon: _vantagensLabels[index].icone,
             value: values[index],
             isHighlighted: true, // Todas as linhas do fundeb são destacadas
           );
@@ -244,15 +247,18 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> {
 
 // WIDGET OTIMIZADO PARA A LINHA COM HOVER
 // Gerencia o próprio estado de hover, evitando reconstruções desnecessárias da tela inteira.
+
 class _HoverableDataRow extends StatefulWidget {
   final String label;
   final String value;
   final bool isHighlighted;
+  final IconData? icon;
 
   const _HoverableDataRow({
     required this.label,
     required this.value,
     this.isHighlighted = false,
+    this.icon,
     Key? key,
   }) : super(key: key);
 
@@ -278,7 +284,7 @@ class __HoverableDataRowState extends State<_HoverableDataRow> {
         ),
         child: Row(
           children: [
-            // Usando seu widget `Line`
+            ///DESCRIÇão
             Line(
               tex: widget.label,
               tam: 600,
@@ -286,7 +292,10 @@ class __HoverableDataRowState extends State<_HoverableDataRow> {
               fontSize: 14,
               cor: textColor,
               negrito: widget.isHighlighted,
+              exibirIcone: true,
+              icone: widget.icon!,
             ),
+            ///VALOR
             Line(
               tex: widget.value,
               tam: 150, // Aumentei um pouco para acomodar valores maiores

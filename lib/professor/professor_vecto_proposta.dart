@@ -68,19 +68,6 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
     var infantil = await ApiMySql.get('sim_edu_infantil', null, 'ordem');
     await carregaMatriz(profs,'P');
     await carregaMatriz(infantil,'I');
-    /*
-     valorBase = double.parse(profs[0]['valor']); ///PISO
-     penA = double.parse(profs[2]['valor']);
-     penB = double.parse(profs[3]['valor']);
-     penC = double.parse(profs[4]['valor']);
-     penD = double.parse(profs[5]['valor']);
-     penE = double.parse(profs[6]['valor']);
-     perc=double.parse(profs[1]['percentual']); ///Percentual de cálculo entre as colunas
-  
-    matrizProfessor = [valorBase, penA, penB, penC, penD, penE];
-    matrizInfantil = [valorBase, penA, penB, penC, penD, penE];
-
-     */
 
     listaCompleta = await ApiMySql.getProfessor(); // Salva a lista completa
     lista = listaCompleta; // Inicialmente, lista exibida é igual à completa
@@ -186,7 +173,29 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
                 children: [
                   Row(
                     children: [
-                      Texto(tit:'Cálculos feitos com $percP% de progressão entre níveis de Professor e de $percI% Infantil'),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Texto(tit:'Progressão Entre Níveis Professor $percP%',exibirIcone: true,
+                            aoClicarIcone: () {
+                              Utils.mostrarDialogoEditarValor(
+                                context: context,
+                                titulo: 'Progressão Entre Níveis Professor',
+                                labelCampo: 'Percentual',
+                                valorInicial: percP.toString(),
+                                aoSalvar: (novoValor) {
+                                  setState(() {
+                                    percP = double.tryParse(novoValor)!;
+                                    //_calculateTableAndDispersions();
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                          Texto(tit:'Progressão Entre Níveis Infantil $percI%',exibirIcone: true,),
+                        ],
+                      ),
+                      SizedBox(width: 50,),
                       Expanded(
                           child: CustomTextFiel(
                             controller: controller,

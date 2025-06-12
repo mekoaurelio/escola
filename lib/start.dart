@@ -129,7 +129,7 @@ class _StartState extends State<Start> {
       if (_currentPage == 'Tabela Professor') return SimuladorTabelaProfessor();
       if (_currentPage == 'Professor Infantil') return TabelaProfessorInfantil();
       if (_currentPage == 'Vecto X Proposto') return ProfessorVectoProposta();
-      if (_currentPage == 'Home') return FundebChartSelector();
+      if (_currentPage == 'Home') return Home();
       return Container();
 
     }

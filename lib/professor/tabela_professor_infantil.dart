@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import para FilteringTextInputFormatter
 
@@ -17,6 +16,8 @@ class TabelaProfessorInfantil extends StatefulWidget {
 
 class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
   int cargaHoraria = 20;
+  double _percEntreColunas=0;
+
   final List<String> niveis = ['BASE','NA','NB', 'NC', 'ND', 'NE'];
 
   var profs; // Dados brutos da API
@@ -35,9 +36,6 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
   String _dispersaoHorizontal = '0.00%'; // Valor inicial como string formatada
   String _dispersaoTotal = '0.00%'; // Valor inicial como string formatada
 
-  // Controladores para os campos de texto
-  late TextEditingController _cargaHorariaController;
-  late TextEditingController _percEntreColunas;
 
   int? selectedRow;
   int? selectedColumn;
@@ -48,15 +46,11 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
   @override
   void initState() {
     super.initState();
-    _percEntreColunas=TextEditingController(text:'');
-    _cargaHorariaController = TextEditingController(text: cargaHoraria.toString());
     _loadDataAndCalculate(); // Método para carregar dados e calcular tudo
   }
 
   @override
   void dispose() {
-    _percEntreColunas.dispose();
-    _cargaHorariaController.dispose();
     super.dispose();
   }
 // Método para carregar dados e iniciar os cálculos
@@ -89,7 +83,7 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
       penC = double.parse(profs[4]['valor']);
       penD = double.parse(profs[5]['valor']);
       penE = double.parse(profs[6]['valor']);
-      _percEntreColunas.text=profs[1]['percentual']; ///Percentual de cálculo entre as colunas
+      _percEntreColunas=double.parse(profs[1]['percentual']); ///Percentual de cálculo entre as colunas
 
       _calculateTableAndDispersions(); // Calcula a tabela e dispersões
     } catch (e) {
@@ -163,7 +157,7 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
             primeiroValorTabela = valorAtual;
           }
         } else {
-          double percCalc=double.parse(_percEntreColunas.text);
+          double percCalc=_percEntreColunas;
           valorAtual = ((vrAnteriorDaLinha * percCalc)/100)+vrAnteriorDaLinha;
         }
 
@@ -219,47 +213,45 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               /// Cabeçalho, carga horário. dispersão horizontal e dispersão total
-              Container(
-                color: Colors.blue.shade200,
-                child: Row(
+              Row(
                   children: [
-                    Texto(tit:'Carga Horária:',right: 10,left: 10,),
-                    SizedBox(
-                      width: 60,
-                      child: CustomTextFiel(
-                        controller: _cargaHorariaController,
-                        label: '',
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        onChanged: (value) {
-                          int? newCargaHoraria = int.tryParse(value);
-                          if (newCargaHoraria != null && newCargaHoraria > 0) {
+                    Texto(
+                      tit: 'Carga Horária: $cargaHoraria',
+                      exibirIcone: true,
+                      aoClicarIcone: () {
+                        Utils.mostrarDialogoEditarValor(
+                          context: context,
+                          titulo: 'Editar Carga Horária',
+                          labelCampo: 'Horas',
+                          valorInicial: cargaHoraria.toString(),
+                          aoSalvar: (novoValor) {
                             setState(() {
-                              cargaHoraria = newCargaHoraria;
-                              _calculateTableAndDispersions(); // Recalcula ao mudar a carga horária
+                              cargaHoraria = int.tryParse(novoValor)!;
+                              _calculateTableAndDispersions();
                             });
-                          }
-                        },
-                      )
-                    ),
-                    const Text(' h'),
-                    Texto(tit:'% de progressão entre colunas',left: 10,right: 10,),
-                    SizedBox(
-                        width: 60,
-                        child: CustomTextFiel(
-                          controller: _percEntreColunas,
-                          label: '',
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          onChanged: (value) {
-                            int? newCargaHoraria = int.tryParse(value);
-                            if (newCargaHoraria != null && newCargaHoraria > 0) {
-                              setState(() {
-                                // cargaHoraria = newCargaHoraria;
-                                _calculateTableAndDispersions(); // Recalcula ao mudar a carga horária
-                              });
-                            }
                           },
-                        )
+                        );
+                      },
                     ),
+                    SizedBox(width: 10,),
+                    Texto(tit: '% de progressão entre colunas $_percEntreColunas', left: 10, right: 10,
+                      exibirIcone: true,
+                      aoClicarIcone: () {
+                        Utils.mostrarDialogoEditarValor(
+                          context: context,
+                          titulo: 'Editar Progressão Entre Colunas',
+                          labelCampo: 'Colunas',
+                          valorInicial: _percEntreColunas.toString(),
+                          aoSalvar: (novoValor) {
+                            setState(() {
+                              _percEntreColunas = double.tryParse(novoValor)!;
+                              _calculateTableAndDispersions();
+                            });
+                          },
+                        );
+                      },
+                    ),
+
                     const SizedBox(width: 40),
                     const Text('Dispersão Horizontal (NE):'), // Especifique que é da última linha
                     const SizedBox(width: 10),
@@ -270,7 +262,7 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
                     Texto(tit: '$_dispersaoTotal%',cor: Colors.blue,negrito: true,tam: 16,right: 10),
                   ],
                 ),
-              ),
+
               const SizedBox(height: 20),
 
               /// Nível e Classe

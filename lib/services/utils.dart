@@ -23,6 +23,76 @@ class Utils {
   static var formatterD =  DateFormat('dd/MM/yyyy');
   static var formatterh =  DateFormat('hh:mm');
 
+
+  static Future<void> mostrarDialogoEditarValor({
+    required BuildContext context,
+    required String titulo,
+    required String labelCampo,
+    required String valorInicial,
+    required void Function(String novoValor) aoSalvar,
+  }) async {
+    final TextEditingController controller = TextEditingController(text: valorInicial);
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Center(child: Text(titulo)),
+          content: SizedBox(
+            width: 300,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: labelCampo,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actionsPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          actionsAlignment: MainAxisAlignment.spaceBetween,
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black54,
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: Text('Voltar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black54,
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+              onPressed: () {
+                aoSalvar(controller.text.trim());
+                Navigator.pop(context);
+              },
+              child: Text('Salvar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   static double somaVantagens(var partes){
     String valorStr='0';
     for (final parte in partes) {
