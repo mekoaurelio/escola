@@ -48,8 +48,10 @@ class SimuladorAlt extends StatelessWidget {
         onBack: () => Get.back(),
         onSave: (formValues) async {
           if (data == null || data!['id'] == null) {
-            // await ApiMySql.insertDynamic(formValues, table);
+            print('NOVO');
+             await ApiMySql.insertDynamic(formValues, tb);
           } else {
+            print('EDITANDO');
             await ApiMySql.updateDynamic(tb,formValues,idValue: data!['id']);
             Get.back();
             //Utils.snak('congra'.tr, 'success'.tr, false, Colors.green);

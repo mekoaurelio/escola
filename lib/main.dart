@@ -3,10 +3,21 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'lang/translation_service.dart';
+import 'services/ano_bimestre_controller.dart';
+import 'services/utils.dart';
 import 'start.dart';
 
 void main()async {
   WidgetsFlutterBinding.ensureInitialized();
+  final ano = Utils.getAno() ?? '25';
+  final bimestre = Utils.getBimestre() ?? "Primeiro Bimestre";
+
+  Get.put(AnoBimestreController(
+    anoInicial: ano,
+    bimestreInicial: bimestre,
+  ));
+
+
   await Firebase.initializeApp(
     // Replace with actual values
     options: FirebaseOptions(

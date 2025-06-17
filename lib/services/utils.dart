@@ -2,12 +2,16 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:intl/intl.dart';
 import 'package:universal_html/html.dart' as html;
 
 import 'package:flutter/material.dart';
 import 'package:get/route_manager.dart';
+import '../const/nome_tabelas.dart';
+import '../data/api_my_sql.dart';
+import '../widgets/formFieldData.dart';
 import '../widgets/texto.dart';
 
 class Utils {
@@ -23,7 +27,40 @@ class Utils {
   static var formatterD =  DateFormat('dd/MM/yyyy');
   static var formatterh =  DateFormat('hh:mm');
 
+  static Widget vazio(var texto){
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(
+            "assets/images/indisponivel.png",
+            width: 150,
+            height: 150,
+            fit: BoxFit.cover,
+          ),
+          const SizedBox(height: 10),
+          Texto(tit: texto, cor: Colors.grey, tam: 18,),
+        ],
+      ),
+    );
+  }
 
+  static limpaBanco()async{
+   // String van=await ApiMySql.executaSql('delete from  $TBVantagens');
+    //if(van.contains('ERRO AO EXECUTAR')){
+      //snak('Atenção', 'Não foi possível deletar a tabela de vantagens', false, Colors.red);
+      //return;
+   // }
+  //  await ApiMySql.executaSql('delete from  $TBVantagens');
+    await ApiMySql.executaSql('delete from  $TBFolha');
+    await ApiMySql.executaSql('delete from $TBTotalProfessor');
+    await ApiMySql.executaSql('delete from $TBReceitaFundeb');
+    await ApiMySql.executaSql('delete from $TBInfantil');
+    await ApiMySql.executaSql('delete from $TBExercicio');
+    await ApiMySql.executaSql('delete from $TBProfessor');
+    await ApiMySql.executaSql('delete from $TBReceitaFundebSimulador');
+
+  }
   static Future<void> mostrarDialogoEditarValor({
     required BuildContext context,
     required String titulo,
@@ -31,58 +68,63 @@ class Utils {
     required String valorInicial,
     required void Function(String novoValor) aoSalvar,
   }) async {
-    final TextEditingController controller = TextEditingController(text: valorInicial);
+    final controller = TextEditingController(text: valorInicial);
+    final formKey = GlobalKey<FormState>();
 
-    await showDialog(
+    return await showDialog(
       context: context,
-      builder: (context) {
+      barrierDismissible: false,
+      builder: (dialogContext) {
         return AlertDialog(
           title: Center(child: Text(titulo)),
-          content: SizedBox(
-            width: 300,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: controller,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: labelCampo,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
+          content: Form(
+            key: formKey,
+            child: SizedBox(
+              width: 300,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: controller,
+                    keyboardType: TextInputType.number,
+                    inputFormatters:  [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt'),],
+                    decoration: InputDecoration(
+                      labelText: labelCampo,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor insira um valor';
+                      }
+                      return null;
+                    },
                   ),
-                ),
-              ],
+
+                  /*
+                  TextFormFieldData(controllerName: 'valor', label: 'Valor',
+                      inputFormatters: [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt'),],
+                      tipo:'string'):
+
+                   */
+
+
+                ],
+              ),
             ),
           ),
-          actionsPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          actionsAlignment: MainAxisAlignment.spaceBetween,
           actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black54,
-                elevation: 3,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-              onPressed: () => Navigator.pop(context),
-              child: Text('Voltar'),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text('Cancelar'),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black54,
-                elevation: 3,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
               onPressed: () {
-                aoSalvar(controller.text.trim());
-                Navigator.pop(context);
+                if (formKey.currentState!.validate()) {
+                  aoSalvar(controller.text.trim());
+                  Navigator.pop(dialogContext);
+                }
               },
               child: Text('Salvar'),
             ),
@@ -91,7 +133,6 @@ class Utils {
       },
     );
   }
-
 
   static double somaVantagens(var partes){
     String valorStr='0';
@@ -251,6 +292,31 @@ class Utils {
     sl=sl.replaceAll(',', '.');
     return sl;
   }
+
+  static getAno(){
+    return html.window.localStorage['ano'];
+  }
+
+  static void setAno(var ano) {
+    html.window.localStorage['ano'] = ano;
+  }
+
+  static getPagina(){
+    return html.window.localStorage['pagina'];
+  }
+
+  static void setPagina(var pagina) {
+    html.window.localStorage['pagina'] = pagina;
+  }
+
+  static getBimestre(){
+    return html.window.localStorage['bimestre'];
+  }
+
+  static void setBimestre(var bimestre) {
+    html.window.localStorage['bimestre'] = bimestre;
+  }
+
 
   static getIdEntidade(){
     return html.window.localStorage['idEntidade'];

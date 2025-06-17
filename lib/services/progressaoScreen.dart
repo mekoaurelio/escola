@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:psycostatattoo/const/nome_tabelas.dart';
+import 'package:get/get.dart';
 import '../data/api_my_sql.dart';
 import '../simulador/simulador_alt.dart';
 import '../widgets/line.dart';
 import '../widgets/painel.dart';
 import '../widgets/texto.dart';
+import 'anoBimestreListenerMixin.dart';
+import 'ano_bimestre_controller.dart';
 import 'utils.dart';
 
 class ProgressaoScreen extends StatefulWidget {
@@ -13,15 +17,21 @@ class ProgressaoScreen extends StatefulWidget {
   _ProgressaoScreenState createState() => _ProgressaoScreenState();
 }
 
-class _ProgressaoScreenState extends State<ProgressaoScreen> {
+class _ProgressaoScreenState extends State<ProgressaoScreen> with AnoBimestreListenerMixin {
   List<Map<String, dynamic>> prof = [];
   List<Map<String, dynamic>> infantil = [];
   List<Map<String, dynamic>> fundeb = [];
   List<Map<String, dynamic>> exercicio = [];
+  final anoBimestreController = Get.find<AnoBimestreController>();
 
   double? fundebBase; // Valor da ordem 1 do FUNDEB RECEITA
 
   bool loading = true;
+
+  @override
+  void onAnoBimestreMudou(String ano, String bimestre) {
+    _atualizaTela(ano,bimestre);
+  }
 
   @override
   void initState() {
@@ -29,13 +39,23 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> {
     _loadAll();
   }
 
+  _atualizaTela(var ano,var bimestre){
+    setState(() {
+      TBProfessor='a_professor$ano$bimestre';
+      TBInfantil='a_infantil$ano$bimestre';
+      TBReceitaFundebSimulador='a_receita_fundeb_simulador$ano$bimestre';
+      TBExercicio='a_exercicio$ano$bimestre';
+      _loadAll();
+    });
+  }
+
   Future<void> _loadAll() async {
     setState(() => loading = true);
 
-    final f = await ApiMySql.get('sim_prof', null, 'ordem');
-    final i = await ApiMySql.get('sim_edu_infantil', null, 'ordem');
-    final g = await ApiMySql.get('sim_fundeb_receita', null, 'ordem');
-    final h = await ApiMySql.get('sim_exercicio', null, 'ordem');
+    final f = await ApiMySql.get(TBProfessor, null, 'ordem');
+    final i = await ApiMySql.get(TBInfantil, null, 'ordem');
+    final g = await ApiMySql.get(TBReceitaFundebSimulador, null, null);
+    final h = await ApiMySql.get(TBExercicio, null, 'ordem');
 
     fundebBase = double.tryParse(
         g.firstWhere((e) => e['ordem'] == '1', orElse: () => {'valor': 0})['valor'].toString());
@@ -54,7 +74,9 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> {
     if (loading) return const Center(child: CircularProgressIndicator());
 
     return Center(
-      child: FractionallySizedBox(
+      child: prof.isEmpty?Utils.vazio('Nenhum dado para esse ano/bimestre'):
+
+      FractionallySizedBox(
         widthFactor: 0.7,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -62,21 +84,21 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> {
             children: [
               _Section(
                 title: 'SIMULADOR PCRM – PROFESSORES',
-                table: 'sim_prof',
+                table: TBProfessor,
                 items: prof,
                 onEdited: _loadAll,
               ),
               const SizedBox(height: 24),
               _Section(
                 title: 'SIMULADOR PCRM – EDUCADOR INFANTIL (40h)',
-                table: 'sim_edu_infantil',
+                table: TBInfantil,
                 items: infantil,
                 onEdited: _loadAll,
               ),
               const SizedBox(height: 24),
               _SectionFundebExercio(
                 title: 'FUNDEB RECEITA',
-                table: 'sim_fundeb_receita',
+                table: TBReceitaFundebSimulador,
                 items: fundeb,
                 fundeb: [],
                 onEdited: _loadAll,
@@ -85,7 +107,7 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> {
               const SizedBox(height: 24),
               _SectionFundebExercio(
                 title: 'EXERCÍCIO',
-                table: 'sim_exercicio',
+                table: TBExercicio,
                 items: exercicio,
                 fundeb: fundeb,
                 onEdited: _loadAll,
@@ -144,8 +166,6 @@ class _Section extends StatelessWidget {
       }
 
       lastValue = computed;
-      print('TITULO : $title ORDEM : '+data['ordem']+' VALOR :$computed PERCENTUAL : $perc TABELA : $table');
-
       if(data['ordem']=='3'){
         updateValor(firstValue,data['ordem']);
       }
@@ -198,7 +218,8 @@ class _Section extends StatelessWidget {
                       child: SimuladorAlt(
                         data: null,
                         tb: table,
-                        tipo: 'percentual',
+                        tipo: 'valor',
+                        //tipo: 'percentual',
                       ),
                       onClose: () => Navigator.of(context).pop(),
                     ),
@@ -466,10 +487,8 @@ class _SectionFundebExercio extends StatelessWidget {
       double computed = rawValor;
       double perc = 0;
       if(fundeb.isNotEmpty) {
-        if(x<=6) {
+        if(x<=5) {
           vrFundeb=double.tryParse(fundeb[x]['valor'].toString()) ?? 0;
-         // print('VALOR DA FUNDEB $x');
-          print(fundeb[x]['valor']);
         }
       }
 
@@ -482,8 +501,6 @@ class _SectionFundebExercio extends StatelessWidget {
       } else if (referencia != null) {
         /// PEGA TODOS OS VALORES
           perc = (rawValor/vrFundeb)*100;
-          //print('VALOR FUNDEB  $vrFundeb VALOR EXERCICIO $rawValor PERCENTUAL $perc');
-
           computed = rawValor;
       }
 

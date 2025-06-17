@@ -153,10 +153,10 @@ class Fire {
 
     if (snapshot.docs.isNotEmpty) {
       final maiorOrdem = snapshot.docs.first.get('ordem');
-      print('MAIOR $maiorOrdem');
+
       return maiorOrdem is int ? maiorOrdem : 0;
     } else {
-      print('VAZIO');
+
       return 0; // Se não houver documentos, começa do zero
     }
   }

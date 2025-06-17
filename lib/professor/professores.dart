@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
+import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
+import '../services/anoBimestreListenerMixin.dart';
+import '../services/ano_bimestre_controller.dart';
 import '../services/screenSize.dart';
 import '../services/utils.dart';
 import '../widgets/custom_text_field.dart';
@@ -14,8 +18,7 @@ class Professores extends StatefulWidget {
   @override
   State<Professores> createState() => _ProfessoresState();
 }
-
-class _ProfessoresState extends State<Professores> {
+class _ProfessoresState extends State<Professores> with AnoBimestreListenerMixin{
   final TextEditingController controller = TextEditingController();
   List<dynamic> lista = [];
   List<dynamic> listaCompleta = [];
@@ -23,15 +26,29 @@ class _ProfessoresState extends State<Professores> {
   int pageSize = 10;
   bool isLoading = true;
   String? errorMessage;
+  final anoBimestreController = Get.find<AnoBimestreController>();
 
-  // 1. VARIÁVEL DE ESTADO _isHovered FOI REMOVIDA DAQUI
-  // bool _isHovered = false; // <-- REMOVIDO
+  @override
+  void onAnoBimestreMudou(String ano, String bimestre) {
+    atualizaTela(ano,bimestre);
+  }
 
   @override
   void initState() {
     super.initState();
     _loadData();
   }
+
+  atualizaTela(var ano,var bimestre){
+    setState(() {
+      TBFolha='a$ano$bimestre';
+      TBVantagens='a_vantagens$ano$bimestre';
+      listaCompleta=[];
+      lista=[];
+      _loadData();
+    });
+  }
+
 
   Future<void> _loadData() async {
     try {
@@ -114,7 +131,7 @@ class _ProfessoresState extends State<Professores> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: lista.isEmpty
-                  ? const Center(child: Text('Nenhum professor encontrado.'))
+                  ?  Utils.vazio('Nenhum Professor Encontrado para esse ano/bimestre')
                   : Column(
                 children: [
                   _buildHeader(),

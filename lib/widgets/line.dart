@@ -10,8 +10,9 @@ class Line extends StatelessWidget {
   final double top;
   final double bottom;
   final double fontSize;
-  final IconData icone;
+  final IconData? icone;
   final bool exibirIcone;
+  final tooltip;
 
   const Line({
     Key? key,
@@ -23,8 +24,10 @@ class Line extends StatelessWidget {
     this.top = 0,
     this.bottom = 0,
     this.fontSize = 12,
-    this.icone = Icons.edit,
+    this.icone,
     this.exibirIcone = false,
+    this.tooltip='Editar',
+
   }) : super(key: key);
 
   @override
@@ -39,8 +42,8 @@ class Line extends StatelessWidget {
         top: top,
         bottom: bottom,
         negrito: negrito,
-        exibirIcone: exibirIcone,
         icone: icone,
+        tooltip: tooltip,
       ),
     );
   }

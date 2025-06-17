@@ -8,10 +8,9 @@ class Texto extends StatelessWidget {
   final TextAlign? alin;
   final int linhas;
   final double top, bottom, left, right;
-
-  final bool exibirIcone;
-  final IconData icone;
+  final IconData? icone;  // Alterado para nullable
   final VoidCallback? aoClicarIcone;
+  final String? tooltip;  // Alterado para nullable
 
   Texto({
     required this.tit,
@@ -24,15 +23,20 @@ class Texto extends StatelessWidget {
     this.bottom = 0,
     this.left = 0,
     this.right = 0,
-    this.exibirIcone = false,
-    this.icone = Icons.edit,
+    this.icone,  // Removido o valor padrão
     this.aoClicarIcone,
+    this.tooltip = 'Editar',
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(top: top, bottom: bottom, left: left, right: right),
+      padding: EdgeInsets.only(
+          top: top,
+          bottom: bottom,
+          left: left,
+          right: right
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -49,15 +53,16 @@ class Texto extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(width: 5,),
-          if (exibirIcone)
+          if (icone != null) ...[  // Verificação simplificada
+            SizedBox(width: 5),
             IconButton(
-              icon: Icon(icone, size: tam + 2),
+              icon: Icon(icone, size: tam + 2, color: Colors.grey),
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(),
               onPressed: aoClicarIcone,
-              tooltip: 'Editar',
+              tooltip: tooltip,
             ),
+          ],
         ],
       ),
     );

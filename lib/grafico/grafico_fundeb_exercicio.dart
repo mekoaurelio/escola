@@ -1,9 +1,11 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:psycostatattoo/const/nome_tabelas.dart';
 
 
 import '../data/api_my_sql.dart';
+import '../services/utils.dart';
 import '../widgets/texto.dart';
 
 class FundebChartSelector extends StatefulWidget {
@@ -24,27 +26,30 @@ class _FundebChartSelectorState extends State<FundebChartSelector> {
 
 
   start()async {
-    final f = await ApiMySql.get('sim_fundeb_receita', null, 'ordem');
-    final e = await ApiMySql.get('sim_exercicio', null, 'ordem');
+    try {
+      final f = await ApiMySql.get(TBReceitaFundebSimulador, null, 'ordem');
+      final e = await ApiMySql.get(TBExercicio, null, 'ordem');
 
-    receitaFundeb = [
-      double.parse(f[1]['valor']),
-      double.parse(f[2]['valor']),
-      double.parse(f[3]['valor']),
-      double.parse(f[4]['valor']),
-      double.parse(f[5]['valor']),
-      double.parse(f[6]['valor'])
-    ];
-
-    exercicioFundeb = [
-      double.parse(e[1]['valor']),
-      double.parse(e[2]['valor']),
-      double.parse(e[3]['valor']),
-      double.parse(e[4]['valor']),
-      double.parse(e[5]['valor']),
-      double.parse(e[6]['valor'])
-    ];
-    setState(() => _isLoading = false);
+      receitaFundeb = [
+        double.parse(f[1]['valor']),
+        double.parse(f[2]['valor']),
+        double.parse(f[3]['valor']),
+        double.parse(f[4]['valor']),
+        double.parse(f[5]['valor']),
+        double.parse(f[6]['valor'])
+      ];
+      exercicioFundeb = [
+        double.parse(e[1]['valor']),
+        double.parse(e[2]['valor']),
+        double.parse(e[3]['valor']),
+        double.parse(e[4]['valor']),
+        double.parse(e[5]['valor']),
+        double.parse(e[6]['valor'])
+      ];
+      setState(() => _isLoading = false);
+      
+    }catch (e) {
+    }
   }
 
   @override
@@ -84,7 +89,7 @@ class _FundebChartSelectorState extends State<FundebChartSelector> {
           )
 
         ],
-      ),
+      )
     );
   }
 

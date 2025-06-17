@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Import para FilteringTextInputFormatter
+import 'package:psycostatattoo/const/nome_tabelas.dart';
 
 import '../data/api_my_sql.dart';
 import '../services/utils.dart'; // Assumindo que Utils.formatVr existe
-import '../widgets/custom_text_field.dart';
 import '../widgets/line.dart';
 import '../widgets/texto.dart';
 
@@ -76,7 +75,7 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
     });
 
     try {
-      profs = await ApiMySql.get('sim_edu_infantil', null, 'ordem');
+      profs = await ApiMySql.get(TBInfantil, null, 'ordem');
       valorBase = double.parse(profs[0]['valor']); ///PISO INFANTIL
       penA = double.parse(profs[2]['valor']); ///PROGRESSÃO ENTRE NÍVEIS
       penB = double.parse(profs[3]['valor']);
@@ -217,7 +216,7 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
                   children: [
                     Texto(
                       tit: 'Carga Horária: $cargaHoraria',
-                      exibirIcone: true,
+
                       aoClicarIcone: () {
                         Utils.mostrarDialogoEditarValor(
                           context: context,
@@ -235,7 +234,7 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
                     ),
                     SizedBox(width: 10,),
                     Texto(tit: '% de progressão entre colunas $_percEntreColunas', left: 10, right: 10,
-                      exibirIcone: true,
+
                       aoClicarIcone: () {
                         Utils.mostrarDialogoEditarValor(
                           context: context,

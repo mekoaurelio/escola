@@ -6,6 +6,7 @@ import 'auxiliares/cargo_lista.dart';
 import 'auxiliares/encargo_social_lista.dart';
 import 'auxiliares/fonte_receita_lista.dart';
 import 'auxiliares/lista_cod_descri.dart';
+import 'const/nome_tabelas.dart';
 import 'grafico/grafico_fundeb_exercicio.dart';
 import 'grafico/home.dart';
 import 'impacto/impacto_grid2.dart';
@@ -15,6 +16,8 @@ import 'professor/professor_vecto_proposta.dart';
 import 'professor/professores.dart';
 import 'professor/tabela_professor.dart';
 import 'professor/tabela_professor_infantil.dart';
+import 'services/ano_bimestre_controller.dart';
+import 'services/utils.dart';
 import 'simulador/executa_simulador.dart';
 import 'widgets/texto.dart';
 
@@ -26,112 +29,202 @@ class Start extends StatefulWidget {
 }
 
 class _StartState extends State<Start> {
-  // Constants
-  static const _initialPage = 'Home';
-  static const _initialLanguage = 'pt';
-  static const _initialTabIndex = 0;
-  Color appBarColorCrypto = Color(0xFF2459A9);
+  final Color appBarColorCrypto = const Color(0xFF2459A9);
+  String _currentPage = 'Home';
+  int _currentTabIndex = 0;
+  String _currentAno = '00';
+  String _currentBimestre = '00';
+  bool temAnoBimestre=false;
+  final anoBimestreController = Get.find<AnoBimestreController>();
 
-  // State variables
-  String _currentPage = _initialPage;
-  int _currentTabIndex = _initialTabIndex;
-  String _currentLanguage = _initialLanguage;
 
-  // Language options
-  final List<Map<String, String>> _languages = [
-    {'code': 'pt', 'country': 'BR', 'name': 'Português'},
-    {'code': 'en', 'country': 'AU', 'name': 'English'},
-    {'code': 'es', 'country': 'ES', 'name': 'Español'},
+  final List<Map<String, String>> _anos = [
+    {'code': '00','name': 'Escolha o Ano'},
+    {'code': '20', 'name': '2020'},
+    {'code': '21', 'name': '2021'},
+    {'code': '22', 'name': '2022'},
+    {'code': '23', 'name': '2023'},
+    {'code': '24', 'name': '2024'},
+    {'code': '25', 'name': '2025'},
   ];
 
-  // Navigation items
+  final List<Map<String, String>> _bimestres = [
+    {'code': '00','name': 'Escolha o Bimestre'},
+    {'code': '01','name': 'Primeiro Bimestre'},
+    {'code': '02','name': 'Segundo Bimestre'},
+    {'code': '03','name': 'Terceiro Bimestre'},
+    {'code': '04','name': 'Quarto Bimestre'},
+    {'code': '05','name': 'Quinto Bimestre'},
+    {'code': '06','name': 'Sexto Bimestre'},
+  ];
+
   final List<Map<String, dynamic>> _mainNavigationItems = [
-    {'title': 'professores'.tr, 'icon': Icons.perm_contact_cal_sharp, 'index': 0},
     {'title': 'Simulador', 'icon': Icons.swap_vertical_circle_rounded, 'index': 1},
+   // {'title': 'Impacto', 'icon': Icons.lightbulb_outline, 'index': 2},
     {'title': 'Impacto', 'icon': Icons.lightbulb_outline, 'index': 2},
-    {'title': 'Impacto2', 'icon': Icons.lightbulb_outline, 'index': 14},
-    {'title': 'Extracao', 'icon': Icons.archive_outlined, 'index': 3},
-    {'title': 'Tabela Professor', 'icon': Icons.person, 'index': 11},
-    {'title': 'Professor Infantil', 'icon': Icons.face_unlock_outlined, 'index': 12},// Note que este é 11
-    {'title': 'Vecto X Proposto', 'icon': Icons.auto_graph_outlined, 'index': 13},
-    {'title': 'Home', 'icon': Icons.auto_graph_outlined, 'index': 15},
+    {'title': 'Extracao'.tr, 'icon': Icons.archive_outlined, 'index': 3},
+    {'title': 'Vecto X Proposto', 'icon': Icons.auto_graph_outlined, 'index': 4},
+    {'title': 'Home', 'icon': Icons.home, 'index': 5},
   ];
 
-  final List<Map<String, dynamic>> _auxiliaryNavigationItems = [
-    {'title': 'cargos'.tr, 'index': 4},
-    {'title': 'encargos_sociais'.tr, 'index': 5},
-    {'title': 'fonte_receita'.tr, 'index': 6},
-    {'title': 'formacao'.tr, 'index': 7},
-    {'title': 'regime_contratacao'.tr, 'index': 8},
-    {'title': 'secretaria'.tr, 'index': 9},
-    {'title': 'area_atuacao'.tr, 'index': 10},
+  ///SUB-MENUS DE AUXILIARES
+  final List<Map<String, dynamic>> _auxiliaryItems = [
+    {'title': 'cargos'.tr, 'table': 'cargo'},
+    {'title': 'encargos_sociais'.tr, 'table': 'encargos_sociais'},
+    {'title': 'fonte_receita'.tr, 'table': 'fonte_receita'},
+    {'title': 'formacao'.tr, 'table': 'formacao'},
+    {'title': 'regime_contratacao'.tr, 'table': 'regime_contratacao'},
+    {'title': 'secretaria'.tr, 'table': 'secretaria'},
+    {'title': 'area_atuacao'.tr, 'table': 'area_atuacao'},
   ];
+  ///SUB-MENUS DE PROFESSORES
+  final List<Map<String, dynamic>> _professorItems = [
+    {'title': 'Professores', 'table': 'cargo','icon': Icons.person},
+    {'title': 'Tabela Professor', 'table': 'encargos_sociais'},
+    {'title': 'Professor Infantil', 'table': 'fonte_receita'},
+  ];
+  ///SUB-MENUS DE GRÁFICOS
+  final List<Map<String, dynamic>> _graficosItems = [
+    {'title': 'FUNDEB e execução', 'table': 'cargo','icon': Icons.person},
+    {'title': 'Comparativo Fundeb e execuçao', 'table': 'encargos_sociais'},
+
+  ];
+
+  Widget _getContent() {
+    final title = _currentPage;
+
+    final auxItem = _auxiliaryItems.firstWhereOrNull((item) => item['title'] == title);
+    if (auxItem != null) {
+      final table = auxItem['table'];
+      switch (table) {
+        case 'cargo':
+          return CargoLista(table: table, title: '');
+        case 'encargos_sociais':
+          return EncargoSocialLista(table: table);
+        case 'fonte_receita':
+          return FonteReceitaLista(table: table);
+        default:
+          return ListaCodDescri(key: ValueKey(table), table: table, title: '');
+      }
+    }
+
+    final pageMap = <String, Widget>{
+      'professores'.tr: Professores(),
+      'Simulador': SimuladorExecuta(),
+    //  'Impacto': ImpactoMain(),
+      'Impacto': ImpactoGrid2(),
+      'Extracao'.tr: PdfExtractorPage(),
+      'Tabela Professor': SimuladorTabelaProfessor(),
+      'Professor Infantil': TabelaProfessorInfantil(),
+      'Vecto X Proposto': ProfessorVectoProposta(),
+      'Comparativo Fundeb e execuçao': FundebChartSelector(),
+      'FUNDEB e execução': Home(),
+      'Home': FundebChartSelector(),
+    };
+
+    return pageMap[title] ?? Container();
+  }
+
+  void _changeAno(String? ano) {
+    if (ano != null && ano != '00') {
+      var bimestre=Utils.getBimestre()?? 'Primeiro Bimestre';
+      final controller = Get.find<AnoBimestreController>();
+      controller.atualizaAnoEBimestre(ano,bimestre); // atualiza o controller
+     // Utils.snak('NO START MUDOU ANO', 'ANO $ano BISMESTRE $bimestre', false, Colors.green);
+      atualizaNomeDasTabelas();
+      setState(() {
+        _currentAno = ano;
+      });
+    }
+  }
+
+  void _changeBimestre(String? bimestre) {
+    if (bimestre != null && bimestre != '00') {
+     var ano=Utils.getAno() ?? "25";
+      final controller = Get.find<AnoBimestreController>();
+      controller.atualizaAnoEBimestre(ano,bimestre); // atualiza o controller
+     //Utils.snak('NO  MUDOU BOMESTRE', 'ANO $ano BISMESTRE $bimestre', false, Colors.green);
+     // Utils.setBimestre(bimestre);
+      atualizaNomeDasTabelas();
+
+      setState(() {
+        _currentBimestre = bimestre;
+      });
+    }
+  }
+
+  atualizaNomeDasTabelas(){
+    try{
+    String ano=Utils.getAno();
+    String bimestre=Utils.getBimestre();
+
+     TBFolha='a$ano$bimestre';
+     TBVantagens='a_vantagens$ano$bimestre';
+     TBTotalProfessor='a_total_professor$ano$bimestre';
+     TBReceitaFundeb='a_receita_fundeb$ano$bimestre';
+
+    ///USADAS NO SIMMULADOR
+     TBInfantil='a_infantil$ano$bimestre';
+     TBExercicio='a_exercicio$ano$bimestre';
+     TBProfessor='a_professor$ano$bimestre';
+     TBReceitaFundebSimulador='a_receita_fundeb_simulador$ano$bimestre';
+    }catch (e) {
+      Utils.snak('Atenção', 'Não tem imposrtação', false, Colors.red);
+    }
+  }
+
+  /*
+  void _onNavigationItemSelected(int index, [String? overrideTitle]) {
+    //setState(() {
+      //_currentTabIndex = index;
+      //_currentPage = overrideTitle ?? _getPageFromIndex(index);
+
+      final title = overrideTitle ?? _getPageFromIndex(index);
+      setState(() {
+        _currentTabIndex = index;
+        _currentPage = title;
+      });
+      storage.write('lastPage', title); // <--- salva a última página
+
+    //});
+  }
+
+   */
+
+  void _onNavigationItemSelected(int index, [String? overrideTitle]) {
+    final title = overrideTitle ?? _getPageFromIndex(index);
+    setState(() {
+      _currentTabIndex = index;
+      _currentPage = title;
+    });
+    Utils.setPagina(title);
+  }
+
+  String _getPageFromIndex(int index) {
+    final item = _mainNavigationItems.firstWhereOrNull((item) => item['index'] == index);
+    return item?['title'] ?? 'Home';
+  }
+
+  start(){
+    try {
+      String ano = Utils.getAno();
+      String bimestr = Utils.getBimestre();
+      setState(() => temAnoBimestre = true);
+    }catch (e) {
+      setState(() => temAnoBimestre = false);
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _initializeApp();
-  }
-
-  Future<void> _initializeApp() async {
-
-  }
-
-  // Supondo que você já tenha recebido do seu endpoint uma variável `rawText` (String)
-// com todo o conteúdo que você mostrou:
-
-  /// Maps page names to database table names
-  String _getTableFromPage(String page) {
-    final pageToTableMap = {
-      'cargos'.tr: 'cargo',
-      'encargos_sociais'.tr: 'encargos_sociais',
-      'fonte_receita'.tr: 'fonte_receita',
-      'formacao'.tr: 'formacao',
-      'regime_contratacao'.tr: 'regime_contratacao',
-      'secretaria'.tr: 'secretaria',
-      'area_atuacao'.tr: 'area_atuacao',
-    };
-    return pageToTableMap[page] ?? '';
-  }
-
-  /// Gets the appropriate content widget for the current page
-  Widget _getContent() {
-    final isAuxiliaryPage = _auxiliaryNavigationItems.any(
-          (item) => item['title'] == _currentPage,
-    );
-    var tb=_getTableFromPage(_currentPage);
-    if (isAuxiliaryPage) {
-      ///mesmo sendo uma tabela auxiliar não é do tipo código e descrição
-      if (_currentPage == 'cargos'.tr) {
-        return CargoLista(table: tb,title: '',);
-      }
-      if (_currentPage == 'encargos_sociais'.tr) {
-        return EncargoSocialLista(table: tb,);
-      }
-      if (_currentPage == 'fonte_receita'.tr) {
-        return FonteReceitaLista(table: tb,);
-      }
-
-      /// Aqui são todas as tabelas que são código e descrição
-      return  ListaCodDescri(
-        key: ValueKey(tb), // <-- isso força o rebuild com base no nome da tabela
-        table: tb,
-        title: '',
-      );
-      /// QUEM NÃO É CÓDIGO E DESCRIÇÃO
-    }else {
-
-      if (_currentPage == 'professores'.tr) return Professores();
-      if (_currentPage == 'Simulador') return SimuladorExecuta();
-      if (_currentPage == 'Impacto') return ImpactoMain();
-      if (_currentPage == 'Impacto2') return ImpactoGrid2();
-      if (_currentPage == 'Extracao') return PdfExtractorPage();
-      if (_currentPage == 'Tabela Professor') return SimuladorTabelaProfessor();
-      if (_currentPage == 'Professor Infantil') return TabelaProfessorInfantil();
-      if (_currentPage == 'Vecto X Proposto') return ProfessorVectoProposta();
-      if (_currentPage == 'Home') return Home();
-      return Container();
-
+    start();
+    // Recupera última página usada
+    String? last = Utils.getPagina();
+    if (last != null) {
+      setState(() {
+        _currentPage = last;
+      });
     }
   }
 
@@ -140,18 +233,16 @@ class _StartState extends State<Start> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: LayoutBuilder(
-        builder: (context, constraints) {
-          return constraints.maxWidth < 600
-              ? _buildMobileLayout()
-              : _buildDesktopLayout();
-        },
+        builder: (context, constraints) =>
+        constraints.maxWidth < 600 ? _buildMobileLayout() : _buildDesktopLayout(),
       ),
     );
   }
 
-  /// Builds the layout for mobile devices
   Widget _buildMobileLayout() {
-    return Column(
+
+    return !temAnoBimestre?Utils.vazio('aaaaa'):
+      Column(
       children: [
         _buildAppBar(),
         Expanded(child: _getContent()),
@@ -160,9 +251,32 @@ class _StartState extends State<Start> {
     );
   }
 
-  /// Builds the layout for desktop devices
   Widget _buildDesktopLayout() {
-    return Row(
+    return  !temAnoBimestre?Row(
+      children: [
+        _buildNavigationDrawer(),
+        Expanded(
+          child: Column(
+            children: [
+              _buildAppBar(),
+              _currentPage=='Extracao'?
+              Expanded(
+                child: Column(
+                  children: [
+                   // _buildAppBar(),
+                    Expanded(child: _getContent()),
+                  ],
+                ),
+              ):
+              Expanded(child: Utils.vazio('Nenhum dados extraído para esse Ano/Bimestre')),
+            ],
+          ),
+        ),
+      ],
+    )://Utils.vazio('bbbbb'):
+          
+    
+    Row(
       children: [
         _buildNavigationDrawer(),
         Expanded(
@@ -177,66 +291,51 @@ class _StartState extends State<Start> {
     );
   }
 
-  /// Builds the app bar with language selector
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: appBarColorCrypto,
-      title: Texto(tit:_currentPage,cor:Colors.white),
+      title: Texto(tit: _currentPage, cor: Colors.white),
       actions: [
-        _buildLanguageDropdown(),
+        _anosDropdown(),
+        const SizedBox(width: 16),
+        _bimestreDropdown(),
         const SizedBox(width: 16),
       ],
     );
   }
 
-  /// Builds the language dropdown selector
-  Widget _buildLanguageDropdown() {
+  Widget _anosDropdown() {
     return DropdownButtonHideUnderline(
       child: DropdownButton<String>(
-        value: _currentLanguage,
-        dropdownColor: Colors.white,
-        onChanged: (String? value) {
-          if (value != null) {
-            _changeLanguage(value);
-          }
-        },
-        items: _languages.map((lang) {
+        value: _currentAno,
+        dropdownColor: Colors.grey,
+        onChanged: _changeAno,
+        items: _anos.map((ano) {
           return DropdownMenuItem<String>(
-            value: lang['code'],
-            child: Row(
-              children: [
-                CountryFlag.fromCountryCode(
-                  lang['country']!,
-                  height: 20,
-                  width: 30,
-                ),
-                const SizedBox(width: 8),
-                Text(lang['name']!),
-              ],
-            ),
+            value: ano['code'],
+            child: Texto(tit:ano['name']!,cor:Colors.white),
           );
         }).toList(),
       ),
     );
   }
 
-  /// Handles language change
-  void _changeLanguage(String languageCode) {
-    final countryCode = languageCode == 'en'
-        ? 'AU'
-        : languageCode == 'pt'
-        ? 'BR'
-        : 'ES';
-
-    Get.updateLocale(Locale(languageCode, countryCode));
-    setState(() {
-      _currentLanguage = languageCode;
-      // Update page title after language change
-      _currentPage = _getPageFromIndex(_currentTabIndex);
-    });
+  Widget _bimestreDropdown() {
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        value: _currentBimestre,
+        dropdownColor: Colors.grey,
+        onChanged: _changeBimestre,
+        items: _bimestres.map((bim) {
+          return DropdownMenuItem<String>(
+            value: bim['code'],
+            child: Texto(tit:bim['name']!,cor: Colors.white,),
+          );
+        }).toList(),
+      ),
+    );
   }
 
-  /// Builds the bottom navigation bar for mobile
   Widget _buildBottomNavigationBar() {
     return BottomNavigationBar(
       currentIndex: _currentTabIndex,
@@ -250,117 +349,84 @@ class _StartState extends State<Start> {
     );
   }
 
-  /// Builds the navigation drawer for desktop
   Widget _buildNavigationDrawer() {
     return Container(
       width: 240,
       color: Colors.grey[100],
-      child: Column(
+      child: ListView(
         children: [
           const SizedBox(height: 20),
           Image.asset('assets/images/Xmktec_logo.jpeg', height: 105),
-          Texto(tit: 'title'.tr+' V.009', cor: Colors.black54),
+          Texto(tit: 'title'.tr + ' V.010', cor: Colors.black54),
           const SizedBox(height: 20),
-          ..._mainNavigationItems.map((item) => _buildDrawerItem(
-            item['title'],
-            item['icon'],
-            item['index'],
-          )),
-          _buildDrawerItem(
-            'auxiliar'.tr,
-            Icons.settings,
-            3,
-            subItems: _auxiliaryNavigationItems,
-          ),
+          _buildProfessoresExpansionTile(),
+          _buildGraficosExpansionTile(),
+          ..._mainNavigationItems.map((item) => _buildDrawerItem(item['title'], item['icon'], item['index'])),
+          _buildAuxiliaryExpansionTile(),
         ],
       ),
     );
   }
 
-  /// Builds a drawer navigation item (can have sub-items)
-  Widget _buildDrawerItem(
-      String title,
-      IconData icon,
-      int index, {
-        List<Map<String, dynamic>>? subItems,
-      }) {
-    final bool isSelected = _currentPage == title;
-
-    if (subItems == null || subItems.isEmpty) {
-      return ListTile(
-        leading: Icon(icon, color: isSelected ? Colors.black : Colors.grey),
-        title: Text(
-          title,
-          style: TextStyle(color: isSelected ? Colors.black : Colors.grey),
-        ),
-        selected: isSelected,
-        onTap: () => _onNavigationItemSelected(index),
-      );
-    }
-
-    return ExpansionTile(
+  Widget _buildDrawerItem(String title, IconData icon, int index) {
+    final isSelected = _currentPage == title;
+    return ListTile(
       leading: Icon(icon, color: isSelected ? Colors.black : Colors.grey),
-      title: Text(
-        title,
-        style: TextStyle(color: isSelected ? Colors.black : Colors.grey),
-      ),
-      children: subItems.map((subItem) {
+      title: Text(title, style: TextStyle(color: isSelected ? Colors.black : Colors.grey)),
+      selected: isSelected,
+      onTap: () => _onNavigationItemSelected(index),
+    );
+  }
+
+  ///MENU AUXILIARES
+  Widget _buildAuxiliaryExpansionTile() {
+    return ExpansionTile(
+      leading: const Icon(Icons.settings,color: Colors.grey,),
+      title: Texto(tit:'auxiliar'.tr, cor: Colors.grey),
+      children: _auxiliaryItems.map((item) {
+        final title = item['title'];
+        final isSelected = _currentPage == title;
         return ListTile(
-          contentPadding: const EdgeInsets.only(left: 72.0),
-          title: Text(
-            subItem['title'],
-            style: TextStyle(
-              color: _currentPage == subItem['title']
-                  ? Colors.black
-                  : Colors.grey,
-            ),
-          ),
-          selected: _currentPage == subItem['title'],
-          onTap: () => _onNavigationItemSelected(subItem['index']),
+          contentPadding: const EdgeInsets.only(left: 50.0),
+          title: Texto(tit:title, cor: isSelected ? Colors.black : Colors.grey),
+          selected: isSelected,
+          onTap: () => _onNavigationItemSelected(999, title),
         );
       }).toList(),
     );
   }
-
-  /// Handles navigation item selection
-  void _onNavigationItemSelected(int index) {
-    setState(() {
-      _currentTabIndex = index;
-      _currentPage = _getPageFromIndex(index);
-    });
+  ///MENU PROFESSORES
+  Widget _buildProfessoresExpansionTile() {
+    return ExpansionTile(
+      leading: const Icon(Icons.perm_contact_cal_sharp,color: Colors.grey,),
+      title: Text('Professores', style: const TextStyle(color: Colors.grey)),
+      children: _professorItems.map((item) {
+        final title = item['title'];
+        final isSelected = _currentPage == title;
+        return ListTile(
+          contentPadding: const EdgeInsets.only(left: 50.0),
+          title: Text(title, style: TextStyle(color: isSelected ? Colors.black : Colors.grey)),
+          selected: isSelected,
+          onTap: () => _onNavigationItemSelected(999, title),
+        );
+      }).toList(),
+    );
   }
-
-  /// Maps index to page title
-  /// Maps index to page title
-  String _getPageFromIndex(int index) {
-    // Verifica se é um índice auxiliar (4 a 10)
-    if (index >= 4 && index <= 10) {
-      final auxiliaryIndex = index - 4;
-      if (auxiliaryIndex < _auxiliaryNavigationItems.length) {
-        return _auxiliaryNavigationItems[auxiliaryIndex]['title'];
-      }
-    }
-
-    // Índices principais
-    switch (index) {
-      case 0:
-        return 'professores'.tr;
-      case 1:
-        return 'Simulador';
-      case 2:
-        return 'Impacto';
-      case 3:
-        return 'Extracao'.tr;
-      case 11:
-        return 'Tabela Professor';
-      case 12:
-        return 'Professor Infantil';
-      case 13:
-        return "Vecto X Proposto";
-      case 14:
-        return 'Impacto2';
-      default:
-        return 'Home'; // Retorna um valor padrão seguro
-    }
+  ///MENU PROFESSORES
+  Widget _buildGraficosExpansionTile() {
+    return ExpansionTile(
+      leading: const Icon(Icons.auto_graph_outlined),
+      title: Texto(tit:'Gráficos', cor:Colors.grey ,),
+      children: _graficosItems.map((item) {
+        final title = item['title'];
+        final isSelected = _currentPage == title;
+        return ListTile(
+          contentPadding: const EdgeInsets.only(left: 50.0),
+          title: Texto(tit:title, cor: isSelected ? Colors.black : Colors.grey),
+          selected: isSelected,
+          onTap: () => _onNavigationItemSelected(999, title),
+        );
+      }).toList(),
+    );
   }
 }

@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
+import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
 import '../services/screenSize.dart';
 import '../services/utils.dart';
 import '../widgets/line.dart';
+import '../widgets/paginationFooter.dart';
 import '../widgets/vantagens.dart';
 
 class PdfExtractorPage extends StatefulWidget {
@@ -27,7 +29,11 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
 
   /// === UPLOAD + EXTRAÇÃO ===
   Future<void> selecionarEEnviarArquivo() async {
-   // uploadPdf('folha.pdf');
+    Utils.limpaBanco();///NÃO DELETE AS TABELAS APENAS OS DADOS
+    ///CRIA A ESTRUTURA DAS TABELAS
+    setState(() =>  status = 'Criando a estrutura das tabelas');
+    await criaStruturaDasTabelas();
+    setState(() =>  status = 'Fazendo upLoad do arquivo');
 
     final html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
     uploadInput.accept = '.pdf';
@@ -43,10 +49,110 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
 
       reader.onLoadEnd.listen((e) async {
         final data = reader.result as Uint8List;
+        ///FAZ O UPLOAD DO ARQUIVO E INICIA A EXTRAÇÃO
         await uploadFile(file.name, data);
-
       });
     });
+  }
+
+  Future<void> criaStruturaDasTabelas()async{
+    String ano='';
+    String bimestre='';
+    try{
+
+      ///PEGA ANO E BIMESTRE
+      ano=Utils.getAno();
+      bimestre=Utils.getBimestre();
+
+      ///VERIFICA SE A TABELA EXISTE NO BANCO DE DADOS
+      //var result=await ApiMySql.tabelaExiste('a$ano$bimestre');
+      //bool tabelaExiste=result.toString().contains('1');
+      //if(!tabelaExiste){
+        ///SE A TABELA NÃO EXISTE CRIA
+        try{
+          await ApiMySql.seNaoExistirCriaTabela(TBFolha);
+          await ApiMySql.criaIndice(TBFolha);
+          await ApiMySql.addAutoIncremento(TBFolha);
+        } catch (e) {
+          print("Erro ao criar TBFolha: $e");
+        }
+
+        ///CRIA A TABELA DE VANTAGENS
+        await ApiMySql.seNaoExistirCriaTabelaVantagens(TBVantagens);
+        await ApiMySql.criaIndice(TBVantagens);
+        await ApiMySql.addAutoIncremento(TBVantagens);
+        await ApiMySql.addChaveEStrangeira(TBVantagens,TBFolha);
+
+        ///CRIA TABELA DOS TOTAIS DOS PROFESSORES
+        await ApiMySql.seNaoExistirCriaProfessorTotal(TBTotalProfessor);
+        await ApiMySql.criaIndice(TBTotalProfessor);
+        await ApiMySql.addAutoIncremento(TBTotalProfessor);
+
+        ///CRIA AS TABELAS AUXILIARES
+        await criaTabela(TBInfantil);
+        await criaTabela(TBProfessor);
+        await criaTabela(TBExercicio);
+
+        await criaTabela(TBReceitaFundeb);
+        await criaTabela(TBReceitaFundebSimulador);
+
+     // }else{
+       // print('TABELA EXISTE');
+     // }
+    } catch (e) {
+      Utils.snak('Atenção', 'Escolha o Ano e o Bimestre $e', false, Colors.red);
+      //return;
+    }
+  }
+
+  Future<void> insereDadosIniciais(String tb)async{
+    ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('Piso Incial', 0,10,0 )");
+    ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('Progressão entre Classes',010,0,1 )");
+    ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('Progressão entre níveis A-MAG.',0,10,2 )");
+    ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('Progressão entre Níveis B - PISO SUP.', 0,10,3)");
+    ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('Progressão entre Níveis NB e NC', 0,10,4 )");
+    ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('Progressão entre Níveis NC e NDl', 0,10,5 )");
+    ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('Progressão entre Níveis ND e NE', 0,10,6 )");
+    ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('Encargos Sociais - Estatutário', 14,10,7 )");
+  }
+
+  Future<void> insereReceitaFundebSimulador(String tb)async{
+    ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('FUNDEB - 2020', 0,10,1 )");
+    ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('FUNDEB - 2021', 0,10,2 )");
+    ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('FUNDEB - 2022', 0,10,3 )");
+    ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('FUNDEB - 2023', 0,10,4 )");
+    ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('FUNDEB - 2024', 0,10,5 )");
+    ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('FUNDEB - 2025 - ESTIMATIVA', 0,10,6 )");
+  }
+
+  Future<void> insereExercicio(String tb)async {
+    ApiMySql.insereSql("insert INTO $tb (descricao,percentual,valor,ordem) values('xxx', 0,0,0 )");
+    ApiMySql.insereSql("insert INTO $tb (descricao,percentual,valor,ordem) values('FOLHA FUNDEB 60% - 2020', 2,10,1 )");
+    ApiMySql.insereSql("insert INTO $tb (descricao,percentual,valor,ordem) values('FOLHA FUNDEB 60% - 2021', 0,10,3 )");
+    ApiMySql.insereSql("insert INTO $tb (descricao,percentual,valor,ordem) values('FOLHA FUNDEB 60% - 2022', 10,10,4 )");
+    ApiMySql.insereSql("insert INTO $tb (descricao,percentual,valor,ordem) values('FOLHA FUNDEB 60% - 2023', 10,10,5 )");
+    ApiMySql.insereSql("insert INTO $tb (descricao,percentual,valor,ordem) values('FOLHA FUNDEB 60% - 2024', 10,10,6 )");
+    ApiMySql.insereSql("insert INTO $tb (descricao,percentual,valor,ordem) values('FOLHA FUNDEB 60% - 2025 - ESTIMATIVA ', 80,10,7 )");
+
+  }
+
+  Future<void> insereReceitaFundeb(String tb)async{
+    ApiMySql.insereSql("insert INTO $tb (ano,valor,percentual_crescimento) values(2020,18469352.07,0)");
+    ApiMySql.insereSql("insert INTO $tb (ano,valor,percentual_crescimento) values(2021,10,0)");
+    ApiMySql.insereSql("insert INTO $tb (ano,valor,percentual_crescimento) values(2022,10,0)");
+    ApiMySql.insereSql("insert INTO $tb (ano,valor,percentual_crescimento) values(2023',10,0)");
+    ApiMySql.insereSql("insert INTO $tb (ano,valor,percentual_crescimento) values(2024,10,0)");
+    ApiMySql.insereSql("insert INTO $tb (ano,valor,percentual_crescimento) values(2025,10,0)");
+  }
+
+  criaTabela(String tb)async{
+    if(tb==TBReceitaFundeb){
+      await ApiMySql.seNaoExistirCriaTabelaFundeb(tb);
+    }else {
+      await ApiMySql.seNaoExistirCriaTabelaGenerica(tb);
+    }
+    await ApiMySql.criaIndice(tb);
+    await ApiMySql.addAutoIncremento(tb);
   }
 
   Future<void> uploadFile(String fileName, Uint8List fileBytes) async {
@@ -76,24 +182,16 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
       },
       onDone: () async {
         if (streamedResponse.statusCode == 200) {
-          setState(() {
-            status = 'Extraindo dados...';
-          });
-         // Utils.snak('Atenção', 'SUCESSO', false, Colors.green);
+          setState(() => status = 'Extraindo dados...');
           await iniciaExtracao();
         } else {
           Utils.snak('Atenção', 'Erro ao extrair dados. Tente novamente', false, Colors.red);
-          setState(() {
-            status = 'Erro no upload ❌';
-          });
+          setState(() => status = 'Extraindo dados...');
         }
       },
       onError: (e) {
         Utils.snak('Atenção', 'Erro ao extrair dados. Tente novamente $e', false, Colors.red);
-        print(e);
-        setState(() {
-          status = 'Erro no upload ❌';
-        });
+        setState(() => status = 'Erro no upload ❌');
       },
       cancelOnError: true,
     );
@@ -101,20 +199,17 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
 
   /// === EXTRAÇÃO + CARREGAMENTO ===
   Future<void> iniciaExtracao() async {
-    await ApiMySql.executaSql('delete from detalhe_vantagens');
-    await ApiMySql.executaSql('delete from folha');
-
-    setState(() {
-      status = 'Processando PDF...';
-    });
-
+    setState(() =>  status = 'Limpando o Banco de Dados...');
+    Utils.limpaBanco();///NÃO DELETE AS TABELAS APENAS OS DADOS
+    setState(() =>  status = 'Processando PDF...');
     final dados = await ApiMySql.fetchPdfText();
+    setState(() =>  status = 'Extraindo os dados da folha...');
     processPdfText(dados);
+    setState(() =>  status = 'Carregando os dados...');
     await carregarFolha();
   }
 
   void processPdfText(String rawText) async {
-   // print(rawText);
     final lines = rawText.split(RegExp(r'\r?\n'));
     final totalLines = lines.length;
     int processed = 0;
@@ -132,7 +227,7 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
     final List<Map<String, String>> vantagens = [];
     int totReg=0;
     int totERrr=0;
-
+    ///INSERE TODOS OS PROFESSORES
     for (var line in lines) {
       line = line.trim();
       processed++;
@@ -168,9 +263,6 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
         // print('Sumário → Vant: $vant, Desc: $desc, Liq: $liq, FGTS: $fgts');
         continue;
       }
-
-      // Qualquer outra linha:
-      // print('Linha: $line');
 
       ///CARGO E NÍVEL
       if(index==1){
@@ -222,17 +314,21 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
           if(idProf.toString().contains('ERRO')){
             totERrr++;
           }else {
+            ///insere as vantagens
             for (var v in vantagens) {
               // supondo que você tenha idProf já definido
               await ApiMySql.insertVantagens(idProf, v['codigo'], v['descricao'], v['valor'],v['percentual']!);
-              // print('Vantagens: ${v['codigo']}, ${v['descricao']}, ${v['valor']}');
+              //await Future.wait(vantagens.map((v) =>
+                //  ApiMySql.insertVantagens(idProf, v['codigo'], v['descricao'], v['valor'], v['percentual']!)
+              //));
+
             }
+
           }
           vantagens.clear();
         }
         continue;
       }
-      //print('LINHA=> $line');
 
       final patternCodigo = RegExp(r'^(\d{5})');
       final patternValor = RegExp(r'\d{1,3}(?:\.\d{3})*,\d{2}');
@@ -318,23 +414,35 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
             'valor': valorStr,
             'percentual': percentual,
           });
-          print('VANTAGEM → código: $codigo | desc: "$descricao" | valor: $valorStr percentual: $percentual');
           continue;
         }
       }
       index++;
     }
+
+    setState(() => status = 'Inserindo Exercícios');
+    await insereExercicio(TBExercicio);
+
+    setState(() => status = 'Inserindo Infantil');
+    await insereDadosIniciais(TBInfantil);
+
+    setState(() => status = 'Inserindo Professor');
+    await insereDadosIniciais(TBProfessor);
+
+    setState(() => status = 'Inserindo Receita FUNDEB');
+    await insereReceitaFundeb(TBReceitaFundeb);
+
+    setState(() => status = 'Inserindo Receita FUNDEB Simuulador');
+    await insereReceitaFundebSimulador(TBReceitaFundebSimulador);
+
     await carregarFolha();
+    setState(() => status = 'Dados carregados!');
     Utils.snak('Parabéns', 'Dados extraidos com sucesso', false, Colors.green);
-    print('TOTAL REGISTROS LIDOS $totReg');
-    print('TOTAL REGISTROS COM ERROS $totERrr');
+
   }
 
   Future<void> carregarFolha() async {
     lista = await ApiMySql.getProfessor();
-    setState(() {
-      status = 'Dados carregados!';
-    });
   }
 
   parseLine(String line) {
@@ -358,37 +466,6 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
     final start = (currentPage - 1) * pageSize;
     final end = start + pageSize;
     return lista.sublist(start, end > lista.length ? lista.length : end);
-  }
-
-  Widget _buildFooter(int totalPages, ScreenSizeConfig screenSizeConfig) {
-    return Container(
-      color: Colors.grey[200],
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          IconButton(
-            onPressed: currentPage > 1 ? () => setState(() => currentPage = 1) : null,
-            icon: Icon(Icons.first_page, color: Colors.black54, size: screenSizeConfig.getFooterIconSize()),
-          ),
-          IconButton(
-            onPressed: currentPage > 1 ? () => setState(() => currentPage--) : null,
-            icon: Icon(Icons.arrow_back, color: Colors.black54, size: screenSizeConfig.getFooterIconSize()),
-          ),
-          Text('Página $currentPage de $totalPages',
-              style: TextStyle(fontSize: screenSizeConfig.getBodyFontSize(), color: Colors.black54)),
-          IconButton(
-            onPressed: currentPage < totalPages ? () => setState(() => currentPage++) : null,
-            icon: Icon(Icons.arrow_forward, color: Colors.black54, size: screenSizeConfig.getFooterIconSize()),
-          ),
-          IconButton(
-            onPressed: currentPage < totalPages ? () => setState(() => currentPage = totalPages) : null,
-            icon: Icon(Icons.last_page, color: Colors.black54, size: screenSizeConfig.getFooterIconSize()),
-          ),
-          Text('${lista.length} Itens',
-              style: TextStyle(fontSize: screenSizeConfig.getBodyFontSize(), color: Colors.black54)),
-        ],
-      ),
-    );
   }
 
   Widget cabecalho() {
@@ -426,18 +503,8 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
             ElevatedButton.icon(
               icon: const Icon(Icons.upload_file),
               label: const Text('Selecionar PDF e Carregar folha'),
-              onPressed: selecionarEEnviarArquivo,
+              onPressed: selecionarEEnviarArquivo, //iniciaExtracao
             ),
-            /*
-            const SizedBox(height: 10),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.upload_file),
-              label: const Text('Carrega folha'),
-              onPressed: carregarFolha,
-            ),
-
-             */
-
             const SizedBox(height: 20),
             ValueListenableBuilder<double>(
               valueListenable: progresso,
@@ -454,7 +521,7 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
             Text(status),
             const SizedBox(height: 20),
             lista.isEmpty
-                ? const Text('Nenhum dado carregado ainda.')
+                ? const Text('')
                 : Expanded(
               child: Column(
                 children: [
@@ -503,7 +570,15 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
                       },
                     ),
                   ),
-                  _buildFooter(totalPages, screenSizeConfig),
+                  PaginationFooter(
+                    currentPage: currentPage,
+                    totalPages: totalPages,
+                    totalItems: lista.length,
+                    onPageChanged: (newPage) {
+                      // A lógica de atualização do estado permanece no widget pai.
+                      setState(() => currentPage = newPage);
+                    },
+                  ),
                 ],
               ),
             ),

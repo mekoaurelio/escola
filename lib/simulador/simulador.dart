@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:psycostatattoo/const/nome_tabelas.dart';
 import 'simulador_lista.dart';
 
 class Simulador extends StatelessWidget {
@@ -9,10 +10,10 @@ class Simulador extends StatelessWidget {
   Widget build(BuildContext context) {
     // Defina aqui suas 4 tabelas e títulos
     final tabs = [
-      {'table': 'sim_prof',         'title': 'Professor'},
-      {'table': 'sim_edu_infantil', 'title': 'Educação Infantil'},
-      {'table': 'sim_fundeb_receita','title': 'Fundeb Receita'},
-      {'table': 'sim_exercicio',    'title': 'Exercício'},
+      {'table': TBProfessor,         'title': 'Professor'},
+      {'table': TBInfantil, 'title': 'Educação Infantil'},
+      {'table': TBReceitaFundebSimulador,'title': 'Fundeb Receita'},
+      {'table': TBExercicio,    'title': 'Exercício'},
     ];
 
     return DefaultTabController(

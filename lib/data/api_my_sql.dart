@@ -4,12 +4,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../const/nome_tabelas.dart';
 import '../services/utils.dart';
 
 class ApiMySql {
   static String pathDados = 'https://www.xmktech.net/dados/';
 
- static Future<String> fetchPdfText() async {
+  static Future<String> fetchPdfText() async {
     final resp = await http.get(Uri.parse('https://www.xmktech.net/dados/extra.php'));
     if (resp.statusCode != 200) {
       throw Exception('Falha ao chamar API: ${resp.statusCode}');
@@ -20,7 +21,6 @@ class ApiMySql {
     }
     return data['text'] as String;
   }
-
 
   ///**********************************************************************
   static get(var table, var id, var orderBy) async {
@@ -34,37 +34,52 @@ class ApiMySql {
     if(orderBy!=null){
       sql+=' order by $orderBy';
     }
-   // print(sql);
+    if(table==TBReceitaFundeb){
+    //  print(sql);
+
+    }
+     print(sql);
     return executaSql(sql);
   }
 
   static Future<dynamic> executaSql(String sql) async {
+    String cleanSql = sql.replaceAll(r'\"', '"');
+    if(sql.contains('$TBExercicio')){
+      //print('yyyyyy');
+      //print(sql);
+      //print('yyyyyy');
+    }
     List<Map<String, dynamic>> dados = [];
-    var url = 'https://www.xmktech.net/dados/get.php?sql=$sql';
+    var url = 'https://www.xmktech.net/dados/get.php?sql=$cleanSql';
     try {
       final response = await http.get(Uri.parse(url));
-       // print(response.body);
+     //  print(response.body);
       if (response.statusCode == 200) {
         String volta = response.body.trim();
         if (volta.contains('NENHUM')) {
           return dados;
         } else {
           dados = List<Map<String, dynamic>>.from(json.decode(volta));
-        //  print('NO EXECUTA $dados');
+          //  print('NO EXECUTA $dados');
           return dados;
         }
       } else {
         return dados;
       }
     } catch (e) {
-      print('ERRO AO EXECUTAR ==> ');
-      print(e.toString());
+    //  print('ERRO AO EXECUTAR ==> $e');
       return dados;
     }
   }
 
   static Future<dynamic> insereSql(String sql) async {
-    var url = pathDados + 'insert.php?sql=$sql';
+    String cleanSql = sql.replaceAll(r'\"', '"');
+    if(sql.contains('$TBExercicio')) {
+      //print('Inserindo Exercico');
+      //print(sql);
+      //print('Inserindo Exercico');
+    }
+    var url = pathDados + 'insert.php?sql=$cleanSql';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -73,7 +88,7 @@ class ApiMySql {
         return 'ERRO DE CONEXÃO';
       }
     } catch (e) {
-     // Utils.snak('ERRO AO INSERIR', e.toString(), false, Colors.red);
+      // Utils.snak('ERRO AO INSERIR', e.toString(), false, Colors.red);
       return 'ERRO AO INSERIR $sql';
     }
   }
@@ -85,6 +100,105 @@ class ApiMySql {
   }
   ///************************************************************************
 
+  static seNaoExistirCriaTabela(String tb)async{
+    var sql='CREATE TABLE IF NOT EXISTS $tb (';
+    sql+='id int(11) NOT NULL,';
+    sql+="id_municipio int(11) NOT NULL DEFAULT '0',";
+    sql+='matricula varchar(20) NOT NULL,';
+    sql+='nome varchar(255) NOT NULL,';
+    sql+='cpf varchar(14) DEFAULT NULL,';
+    sql+='unidade varchar(255) DEFAULT NULL,';
+    sql+='local_lotacao varchar(255) DEFAULT NULL,';
+    sql+='cargo varchar(255) DEFAULT NULL,';
+    sql+='nivel varchar(50) DEFAULT NULL,';
+    sql+='admissao date DEFAULT NULL,';
+    sql+='competencia_mes varchar(20) DEFAULT NULL,';
+    sql+='vantagens_total decimal(10,2) DEFAULT NULL,';
+    sql+='descontos_total decimal(10,2) DEFAULT NULL,';
+    sql+='liquido_total decimal(10,2) DEFAULT NULL,';
+    sql+='fgts_total decimal(10,2) DEFAULT NULL,';
+    sql+='created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP);';
+    await executaSql(sql);
+  }
+
+  static Future<void> criaIndice(String tb)async{
+    await executaSql("ALTER TABLE $tb ADD PRIMARY KEY (id)");
+  }
+
+  static Future<void> addAutoIncremento(String tb)async{
+    if(tb==TBVantagens){
+     // print('ALTER TABLE $tb MODIFY id int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=0');
+    }
+    await executaSql('ALTER TABLE $tb MODIFY id int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=0');
+  }
+
+  static Future<void> seNaoExistirCriaTabelaVantagens(String tb)async{
+    var sql='CREATE TABLE IF NOT EXISTS $tb (';
+    sql+='id int(11) NOT NULL,';
+    sql+='folha_id int(11) NOT NULL,';
+    sql+='codigo varchar(10) NOT NULL,';
+    sql+='descricao varchar(255) NOT NULL,';
+    sql+='valor decimal(10,2) NOT NULL,';
+    sql+='percentual decimal(4,2) NOT NULL)';
+  //  print(sql);
+    await executaSql(sql);
+  }
+
+  static seNaoExistirCriaProfessorTotal(String tb)async{
+    var sql='CREATE TABLE IF NOT EXISTS $tb (';
+    sql+='id int(11) NOT NULL,';
+    sql+='id_municipio int(11) NOT NULL DEFAULT 0 ,';
+    sql+='tot_basico_atual decimal(10,2) NOT NULL,';
+    sql+='tot_complementacao_piso decimal(10,2) NOT NULL,';
+    sql+='tot_jornada_suplementar decimal(10,2) NOT NULL,';
+    sql+='tot_adicional_ats decimal(10,2) NOT NULL,';
+    sql+='tot_abono_permanencia decimal(5,2) NOT NULL,';
+    sql+='tot_gratificacao_direcao decimal(10,2) NOT NULL,';
+    sql+='tot_adicionais_especiais decimal(10,2) NOT NULL,';
+    sql+='tot_gratificacao_orientacao decimal(10,2) NOT NULL,';
+    sql+='tot_diferenca_enquadramento decimal(10,2) NOT NULL,';
+    sql+='tot_encargos_sociais decimal(10,2) NOT NULL)';
+    await executaSql(sql);
+  }
+
+  static seNaoExistirCriaTabelaGenerica(String tb)async{
+    var sql='CREATE TABLE IF NOT EXISTS $tb (';
+    sql+='id int(11) NOT NULL,';
+    sql+='id_municipio int(11) NOT NULL DEFAULT "0",';
+    sql+='descricao varchar(100) NOT NULL,';
+    sql+='valor decimal(10,2) NOT NULL,';
+    sql+='percentual decimal(4,2) NOT NULL,';
+    sql+='ordem int(11) NOT NULL)';
+    await executaSql(sql);
+  }
+
+  static seNaoExistirCriaTabelaFundeb(String tb)async{
+    var sql='CREATE TABLE IF NOT EXISTS $tb (';
+    sql+='id int(11) NOT NULL,';
+    sql+='id_municipio int(11) NOT NULL DEFAULT "0",';
+    sql+='ano int(11) NOT NULL,';
+    sql+='valor decimal(10,2) NOT NULL DEFAULT "0",';
+    sql+='percentual_crescimento decimal(5,2) NOT NULL DEFAULT "0")';
+    await executaSql(sql);
+  }
+
+  static criaIndiceVantagem(String tb)async{
+    await executaSql('ALTER TABLE $tb ADD PRIMARY KEY (id),ADD KEY folha_id (folha_id)');
+  }
+
+  static Future<void> addChaveEStrangeira(String tb,String tbPai)async{
+    var sql='ALTER TABLE $tb ADD CONSTRAINT $tb';
+    sql+="_fk1 FOREIGN KEY (folha_id) REFERENCES $tbPai (id) ON DELETE CASCADE";
+    await executaSql(sql);
+  }
+
+  static tabelaExiste(String tb)async{
+    var sql='SELECT COUNT(*) as table_exists FROM information_schema.tables';
+    sql+=" WHERE table_schema = DATABASE() AND table_name = '$tb'";
+    return await executaSql(sql);
+  }
+
+
   static getProfessor() async {
     var sql2 = "SELECT f.id AS folha_id,f.id_municipio,f.matricula,f.nome,f.cpf,f.unidade,f.local_lotacao,";
     sql2+="f.cargo,f.nivel,DATE_FORMAT(f.admissao, '%d/%m/%Y') AS admissao,f.competencia_mes,f.vantagens_total,";
@@ -92,7 +206,7 @@ class ApiMySql {
     sql2+="dv.percentual, ':',' R/\$ ', FORMAT(dv.valor, 2)) SEPARATOR ' | ') AS vantagens_detalhadas,";
     sql2+=" SUM(CASE WHEN dv.codigo NOT IN ('21003', '21019') THEN dv.valor ELSE 0  END) AS soma_vantagens,";
     sql2+=" SUM(CASE WHEN dv.codigo IN ('21019') THEN dv.valor ELSE 0  END) AS soma_apts";
-    sql2+=" FROM folha f LEFT JOIN detalhe_vantagens dv ON f.id = dv.folha_id GROUP BY f.id ORDER BY f.id";
+    sql2+=" FROM $TBFolha f LEFT JOIN $TBVantagens dv ON f.id = dv.folha_id GROUP BY f.id ORDER BY f.id";
 
     //print(sql2);
     List lista = await executaSql(sql2);
@@ -100,13 +214,13 @@ class ApiMySql {
   }
 
   static insertProf(var matricula,var nome, var cpf,var cargo,var local_lotacao,var unidade,var nivel,var admissao ) async {
-  //  var idCompany=Utils.getIdEntidade();
+    //  var idCompany=Utils.getIdEntidade();
     var idCompany=0;
     var dt='';
     if(admissao!=null){
       dt=Utils.dtToMysql(admissao);
     }
-    String sql = 'INSERT INTO folha (matricula,nome, cpf,unidade,local_lotacao,cargo,nivel,admissao) VALUES (';
+    String sql = 'INSERT INTO $TBFolha (matricula,nome, cpf,unidade,local_lotacao,cargo,nivel,admissao) VALUES (';
     sql += '"$matricula", ';
     sql += '"$nome", ';
     sql += '"$cpf", ';
@@ -116,7 +230,7 @@ class ApiMySql {
     sql += '"$nivel", ';
     sql += '"$dt" ';
     sql += ')';
-   // print(sql);
+    // print(sql);
     return await insereSql(sql);
   }
 
@@ -126,17 +240,15 @@ class ApiMySql {
     var vr=Utils.saldoToSave(valor);
     var perc=percentual.replaceAll('%', '');
     perc=perc.replaceAll(',', '.');
-    String sql = 'INSERT INTO detalhe_vantagens (folha_id,codigo,descricao,valor,percentual) VALUES (';
+    String sql = 'INSERT INTO $TBVantagens (folha_id,codigo,descricao,valor,percentual) VALUES (';
     sql += '"$matricula", ';
     sql += '"$codigo", ';
     sql += '"$descricao", ';
     sql += '$vr, ';
     sql += '$perc ';
     sql += ')';
-   // print(sql);
-    return await insereSql(sql);
+    return await executaSql(sql);
   }
-
 
   /// Dentro de ApiMySql
   static Future<void> updateTotalProfessor({
@@ -146,17 +258,14 @@ class ApiMySql {
     // Escapa aspas simples
     final escaped = valor.replaceAll("'", "''");
     final sql = '''
-    UPDATE professor_total 
+    UPDATE $TBTotalProfessor 
     SET $campo = '${escaped.contains('R\$')
         ? Utils.saldoToSave(escaped)
-        : escaped.replaceAll(',', '.')}'
-   
+        : escaped.replaceAll(',', '.')}'   
   ''';
     await executaSql(sql);
   }
 
-
-  //area_atuacao_id
 
   static getGrid() async {
     /// usei o PLUS_OPERATOR as vezes o PHP não reconhece o sinal de mais
@@ -179,27 +288,13 @@ class ApiMySql {
       PLUS_OPERATOR adicional_especial_25
     ) AS soma_adicionais_especiais FROM professor
 ''';
-   // print(sql);
+    // print(sql);
     return  executaSql(sql);
-   // return lista;
+    // return lista;
   }
 
   static Future getUserByEmailPassword(String idUser, String password,) async {
     String sql = 'Select * from vo_user where id_user="$idUser" and password="$password"';
-    return executaSql(sql);
-  }
-
-  static getProdutos(var id,) async {
-    String sql = "SELECT p.id AS product_id,p.id_entidade AS entity_id, p.nome AS product_name,p.id_categoria AS category_id,";
-    sql += "p.valor AS product_value,p.foto AS foto,";
-    sql += "e.id AS company_id,e.fantasia AS company_name";
-    sql += " FROM vo_produto p JOIN vo_empresa e ON e.id = p.id_entidade ";
-
-    // sql += "WHERE a.id_entidade =$idEntidade ";
-    if (id != null) {
-      sql += "AND p.id =$id";
-    }
-    sql += " GROUP BY p.id";
     return executaSql(sql);
   }
 
@@ -234,7 +329,7 @@ class ApiMySql {
       ..write('INSERT INTO $tb (')..write(campos.join(', '))..write(
           ') VALUES (')..write(valores.join(', '))..write(')');
 
-   // print(sql);
+    // print(sql);
     return await insereSql(sql.toString());
   }
 
@@ -268,8 +363,7 @@ class ApiMySql {
     final sql = StringBuffer()
       ..write('UPDATE $tb SET ')..write(sets.join(', '))..write(
           ' WHERE $idField = \'${idValue.replaceAll("'", "''")}\'');
-
-   // print(sql);
+  //  print(sql.toString());
     return await executaSql(sql.toString());
   }
 }

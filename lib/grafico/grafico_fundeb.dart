@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 
+import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
+import '../services/anoBimestreListenerMixin.dart';
 import '../widgets/texto.dart'; // OTIMIZADO: Usando o pacote intl para formatação.
 
 /// Classe de modelo para os dados do FUNDEB.
@@ -30,12 +32,12 @@ String formatCurrency(double value) {
 }
 
 class FundebChart extends StatefulWidget {
-  final String table;
+ // final String table;
   final String title;
 
   const FundebChart({
     Key? key,
-    required this.table,
+  //  required this.table,
     required this.title,
   }) : super(key: key);
 
@@ -43,10 +45,25 @@ class FundebChart extends StatefulWidget {
   State<FundebChart> createState() => _FundebChartState();
 }
 
-class _FundebChartState extends State<FundebChart> {
+class _FundebChartState extends State<FundebChart> with AnoBimestreListenerMixin{
   List<FundebData> fundebData =[];
   bool _isLoading=true;
   var maxYValue;
+
+  @override
+  void onAnoBimestreMudou(String ano, String bimestre) {
+    print('ywywywywywywywywywywy');
+    var TB='';
+    TBExercicio='a_exercicio$ano$bimestre';
+    TBReceitaFundeb='a_receita_fundeb$ano$bimestre';
+    fundebData.clear();
+    if(widget.title.contains('Evolução')){
+      TB=TBExercicio;
+    }else{
+      TB=TBExercicio;
+    }
+    start(TB);
+  }
 
   // Função auxiliar para encurtar os valores no eixo Y (ex: 20M, 10M)
   String formatShortCurrency(double value) {
@@ -59,10 +76,10 @@ class _FundebChartState extends State<FundebChart> {
     return value.toStringAsFixed(0);
   }
 
-  start()async{
-    print(widget.table);
-    final f = await ApiMySql.get(widget.table, null,'ordem');
-
+  start(var table)async{
+    print('KKKKKKKKKKKKKKKKKKK');
+    print(table);
+    final f = await ApiMySql.get(table, null,'ordem');
     fundebData = [
       FundebData(year: getDescri(f[1]['descricao']), value: double.parse(f[1]['valor']), growth: null),
       FundebData(year: getDescri(f[2]['descricao']), value: double.parse(f[2]['valor']), growth: 26.37),
@@ -75,20 +92,27 @@ class _FundebChartState extends State<FundebChart> {
   }
   
   getDescri(String descri){
-    
     return descri.substring(descri.length-4,descri.length);
   }
 
   @override
   void initState() {
-    start();
+    var TB='';
+    TBExercicio='a_exercicio$ano$bimestre';
+    TBReceitaFundeb='a_receita_fundeb$ano$bimestre';
+    if(widget.title.contains('Evolução')){
+      TB=TBExercicio;
+    }else{
+      TB=TBExercicio;
+    }
+    start(TB);
   }
 
   @override
   Widget build(BuildContext context) {
     // Encontrar o valor máximo para definir a altura do eixo Y.
     if(!_isLoading)
-    maxYValue = fundebData.map((e) => e.value).reduce((a, b) => a > b ? a : b);
+      maxYValue = fundebData.map((e) => e.value).reduce((a, b) => a > b ? a : b);
 
     return _isLoading
         ? const Center(child: CircularProgressIndicator())

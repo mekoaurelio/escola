@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:psycostatattoo/const/nome_tabelas.dart';
+import 'package:get/get.dart';
 
 import '../data/api_my_sql.dart';
+import '../services/ano_bimestre_controller.dart';
 import '../services/utils.dart'; // Assumindo que Utils.formatVr existe
 import '../widgets/line.dart';
 import '../widgets/texto.dart';
@@ -13,6 +16,7 @@ class SimuladorTabelaProfessor extends StatefulWidget {
 }
 
 class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
+  final anoBimestreController = Get.find<AnoBimestreController>();
   int cargaHoraria = 20;
   double _percEntreColunas=0;
   final List<String> niveis = ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'];
@@ -79,7 +83,29 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   @override
   void initState() {
     super.initState();
+    ever(anoBimestreController.ano, (novoAno) {
+      var bimestre=anoBimestreController.bimestre;
+      _atualizaTela(novoAno,bimestre);
+    });
+
+    ever(anoBimestreController.bimestre, (novoBimestre) {
+      var ano=anoBimestreController.ano;
+      _atualizaTela(ano,novoBimestre);
+    });
+
     _loadDataAndCalculate(); // Método para carregar dados e calcular tudo
+  }
+
+  _atualizaTela(var ano,var bimestre){
+    setState(() {
+      TBFolha='a$ano$bimestre';
+      TBProfessor='a_professor$ano$bimestre';
+      professores=[];
+      profs=[];
+      valorBase=0;
+      _calculatedTableValues=[];
+      _loadDataAndCalculate();
+    });
   }
 
   @override
@@ -89,7 +115,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
 
   // Método para carregar dados e iniciar os cálculos
   Future<void> _loadDataAndCalculate() async {
-    professores = await ApiMySql.executaSql('select * from folha');
+    professores = await ApiMySql.executaSql('select * from $TBFolha');
 
     // Pré-processa a contagem de professores por nível
     _professoresPorNivel = {};
@@ -110,7 +136,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
     });
 
     try {
-      profs = await ApiMySql.get('sim_prof', null, 'ordem');
+      profs = await ApiMySql.get(TBProfessor, null, 'ordem');
       valorBase = double.parse(profs[0]['valor']);
 
       ///PISO INFANTIL
@@ -228,8 +254,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                 children: [
                   Texto(
                       tit: 'Carga Horária: $cargaHoraria',
-                      exibirIcone: true,
-                      aoClicarIcone: () {
+                    aoClicarIcone: () {
                         Utils.mostrarDialogoEditarValor(
                           context: context,
                           titulo: 'Editar Carga Horária',
@@ -244,10 +269,8 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                         );
                       },
                     ),
-
-                    SizedBox(width: 10,),
-                    Texto(tit: '% de progressão entre colunas $_percEntreColunas', left: 10, right: 10,
-                      exibirIcone: true,
+                  SizedBox(width: 10,),
+                  Texto(tit: '% de progressão entre colunas $_percEntreColunas', left: 10, right: 10,
                       aoClicarIcone: () {
                         Utils.mostrarDialogoEditarValor(
                           context: context,
@@ -263,24 +286,24 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                         );
                       },
                     ),
-                    const SizedBox(width: 40),
-                    const Text('Dispersão Horizontal (NE):'),
-                    // Especifique que é da última linha
-                    const SizedBox(width: 10),
-                    Texto(tit: '$_dispersaoHorizontal%',
+                  const SizedBox(width: 40),
+                  const Text('Dispersão Horizontal (NE):'),
+                  // Especifique que é da última linha
+                  const SizedBox(width: 10),
+                  Texto(tit: '$_dispersaoHorizontal%',
                       cor: Colors.blue,
                       negrito: true,
                       tam: 16,),
-                    const SizedBox(width: 40),
-                    const Text('Dispersão Total:'),
-                    const SizedBox(width: 10),
-                    Texto(tit: '$_dispersaoTotal%',
+                  const SizedBox(width: 40),
+                  const Text('Dispersão Total:'),
+                  const SizedBox(width: 10),
+                  Texto(tit: '$_dispersaoTotal%',
                       cor: Colors.blue,
                       negrito: true,
                       tam: 16,
                       right: 10,),
-                  ],
-                ),
+                ],
+              ),
               const SizedBox(height: 20),
               /// Nível e Classe
               const Row(

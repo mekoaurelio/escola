@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:psycostatattoo/const/nome_tabelas.dart';
 
 import '../data/api_my_sql.dart';
 import '../services/progressaoScreen.dart';
@@ -23,8 +24,8 @@ class _SimuladorExecutaState extends State<SimuladorExecuta> with TickerProvider
 
   Future<void> start() async {
     // recupera o JSArray dinâmico
-     fundebRaw = await ApiMySql.get('sim_fundeb_receita', null,null);
-     infantilRaw = await ApiMySql.get('sim_edu_infantil', null,null);
+     fundebRaw = await ApiMySql.get(TBReceitaFundebSimulador, null,null);
+     infantilRaw = await ApiMySql.get(TBInfantil, null,null);
     setState(() => isLoading = false);
   }
 

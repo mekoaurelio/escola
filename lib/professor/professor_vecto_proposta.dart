@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:psycostatattoo/const/nome_tabelas.dart';
+import 'package:get/get.dart';
 
 import '../data/api_my_sql.dart';
+import '../services/ano_bimestre_controller.dart';
 import '../services/screenSize.dart';
 import '../services/utils.dart';
 import '../widgets/custom_text_field.dart';
@@ -37,11 +40,41 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
   List<double> matrizInfantil =[];
   double percP=0,percI=0;
   int hoverIndex = -1;
+  final anoBimestreController = Get.find<AnoBimestreController>();
+
+  @override
+  void dispose() {
+    anoBimestreController.dispose(); // Cancela o ouvinte quando o widget for destruído
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
+
+    ever(anoBimestreController.ano, (novoAno) {
+      var bimestre=anoBimestreController.bimestre;
+      atualizaTela(novoAno,bimestre);
+    });
+
+    ever(anoBimestreController.bimestre, (novoBimestre) {
+      var ano=anoBimestreController.ano;
+      atualizaTela(ano,novoBimestre);
+    });
+
     carregarFolha();
+  }
+
+  atualizaTela(var ano,var bimestre){
+    setState(() {
+      TBProfessor='a_professor$ano$bimestre';
+      TBInfantil='a_infantil$ano$bimestre';
+      TBFolha='a$ano$bimestre';
+      TBVantagens='a_vantagens$ano$bimestre';
+      listaCompleta=[];
+      lista=[];
+      carregarFolha();
+    });
   }
 
   Future<void> carregaMatriz(var tb,String tipo) async {
@@ -64,8 +97,8 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
   }
 
   Future<void> carregarFolha() async {
-    var profs = await ApiMySql.get('sim_prof', null, 'ordem');
-    var infantil = await ApiMySql.get('sim_edu_infantil', null, 'ordem');
+    var profs = await ApiMySql.get(TBProfessor, null, 'ordem');
+    var infantil = await ApiMySql.get(TBInfantil, null, 'ordem');
     await carregaMatriz(profs,'P');
     await carregaMatriz(infantil,'I');
 
@@ -167,7 +200,7 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
         child: Column(
           children: [
             lista.isEmpty
-                ? const Text('Nenhum dado carregado ainda.')
+                ? Utils.vazio('Nenhum Dado para esse ano/bimestre')
                 : Expanded(
               child: Column(
                 children: [
@@ -176,7 +209,7 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Texto(tit:'Progressão Entre Níveis Professor $percP%',exibirIcone: true,
+                          Texto(tit:'Progressão Entre Níveis Professor $percP%',
                             aoClicarIcone: () {
                               Utils.mostrarDialogoEditarValor(
                                 context: context,
@@ -192,7 +225,7 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
                               );
                             },
                           ),
-                          Texto(tit:'Progressão Entre Níveis Infantil $percI%',exibirIcone: true,),
+                          Texto(tit:'Progressão Entre Níveis Infantil $percI%',),
                         ],
                       ),
                       SizedBox(width: 50,),
@@ -218,7 +251,6 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
                         final item = currentItems[index];
                         ///Acha o valor do salário base ********************
                         String vantagensDetalhadas=currentItems[index]['vantagens_detalhadas'];
-                        print(vantagensDetalhadas);
                         final vantagens = vantagensDetalhadas.split(' | ');
                         String vencimento=vantagens[0];
                         int pos=vencimento.indexOf('\$');
@@ -305,6 +337,7 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
       ),
     );
   }
+
   void onChange(String text) {
     setState(() {
       if (text.isEmpty) {
