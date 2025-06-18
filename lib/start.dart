@@ -16,6 +16,7 @@ import 'professor/professor_vecto_proposta.dart';
 import 'professor/professores.dart';
 import 'professor/tabela_professor.dart';
 import 'professor/tabela_professor_infantil.dart';
+import 'services/anoBimestreListenerMixin.dart';
 import 'services/ano_bimestre_controller.dart';
 import 'services/utils.dart';
 import 'simulador/executa_simulador.dart';
@@ -28,7 +29,7 @@ class Start extends StatefulWidget {
   State<Start> createState() => _StartState();
 }
 
-class _StartState extends State<Start> {
+class _StartState extends State<Start> with AnoBimestreListenerMixin{
   final Color appBarColorCrypto = const Color(0xFF2459A9);
   String _currentPage = 'Home';
   int _currentTabIndex = 0;
@@ -36,6 +37,11 @@ class _StartState extends State<Start> {
   String _currentBimestre = '00';
   bool temAnoBimestre=false;
   final anoBimestreController = Get.find<AnoBimestreController>();
+
+  @override
+  void onAnoBimestreMudou(String ano, String bimestre) {
+    //atualizaTela(ano,bimestre);
+  }
 
 
   final List<Map<String, String>> _anos = [
@@ -111,7 +117,6 @@ class _StartState extends State<Start> {
     final pageMap = <String, Widget>{
       'professores'.tr: Professores(),
       'Simulador': SimuladorExecuta(),
-    //  'Impacto': ImpactoMain(),
       'Impacto': ImpactoGrid2(),
       'Extracao'.tr: PdfExtractorPage(),
       'Tabela Professor': SimuladorTabelaProfessor(),
@@ -161,7 +166,6 @@ class _StartState extends State<Start> {
      TBFolha='a$ano$bimestre';
      TBVantagens='a_vantagens$ano$bimestre';
      TBTotalProfessor='a_total_professor$ano$bimestre';
-     TBReceitaFundeb='a_receita_fundeb$ano$bimestre';
 
     ///USADAS NO SIMMULADOR
      TBInfantil='a_infantil$ano$bimestre';
@@ -172,24 +176,6 @@ class _StartState extends State<Start> {
       Utils.snak('Atenção', 'Não tem imposrtação', false, Colors.red);
     }
   }
-
-  /*
-  void _onNavigationItemSelected(int index, [String? overrideTitle]) {
-    //setState(() {
-      //_currentTabIndex = index;
-      //_currentPage = overrideTitle ?? _getPageFromIndex(index);
-
-      final title = overrideTitle ?? _getPageFromIndex(index);
-      setState(() {
-        _currentTabIndex = index;
-        _currentPage = title;
-      });
-      storage.write('lastPage', title); // <--- salva a última página
-
-    //});
-  }
-
-   */
 
   void _onNavigationItemSelected(int index, [String? overrideTitle]) {
     final title = overrideTitle ?? _getPageFromIndex(index);

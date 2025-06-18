@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 
 import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
 import '../services/anoBimestreListenerMixin.dart';
+import '../services/ano_bimestre_controller.dart';
+import '../services/utils.dart';
 import '../widgets/texto.dart'; // OTIMIZADO: Usando o pacote intl para formatação.
 
 /// Classe de modelo para os dados do FUNDEB.
@@ -32,12 +35,12 @@ String formatCurrency(double value) {
 }
 
 class FundebChart extends StatefulWidget {
- // final String table;
+  final String tipo;
   final String title;
 
   const FundebChart({
     Key? key,
-  //  required this.table,
+    required this.tipo,
     required this.title,
   }) : super(key: key);
 
@@ -49,20 +52,27 @@ class _FundebChartState extends State<FundebChart> with AnoBimestreListenerMixin
   List<FundebData> fundebData =[];
   bool _isLoading=true;
   var maxYValue;
+  final anoBimestreController = Get.find<AnoBimestreController>();
 
   @override
   void onAnoBimestreMudou(String ano, String bimestre) {
-    print('ywywywywywywywywywywy');
     var TB='';
-    TBExercicio='a_exercicio$ano$bimestre';
-    TBReceitaFundeb='a_receita_fundeb$ano$bimestre';
-    fundebData.clear();
-    if(widget.title.contains('Evolução')){
-      TB=TBExercicio;
-    }else{
-      TB=TBExercicio;
-    }
-    start(TB);
+    Utils.snak('Grafico', 'grafico fundeb', false, Colors.green);
+    /*
+    Utils.snak('MUDANDO', 'grafico fundeb', false, Colors.green);
+    setState(() {
+      TBExercicio='a_exercicio$ano$bimestre';
+      TBReceitaFundebSimulador='a_receita_fundeb_simulador$ano$bimestre';
+      fundebData.clear();
+      if(widget.title.contains('Evolução')){
+        TB=TBExercicio;
+      }else{
+        TB=TBReceitaFundebSimulador;
+      }
+      start(TB)  ;
+    });
+
+     */
   }
 
   // Função auxiliar para encurtar os valores no eixo Y (ex: 20M, 10M)
@@ -76,10 +86,16 @@ class _FundebChartState extends State<FundebChart> with AnoBimestreListenerMixin
     return value.toStringAsFixed(0);
   }
 
-  start(var table)async{
-    print('KKKKKKKKKKKKKKKKKKK');
-    print(table);
-    final f = await ApiMySql.get(table, null,'ordem');
+  start()async{
+    String TB='';
+    if(widget.tipo=='receita'){
+      TB=TBReceitaFundebSimulador;
+    }else{
+      TB=TBExercicio;
+    }
+    Utils.snak('GRAFICO FUNDEB', 'TABELA : $TB', false, Colors.green);
+    final f = await ApiMySql.get(TB, null,'ordem');
+    print(f);
     fundebData = [
       FundebData(year: getDescri(f[1]['descricao']), value: double.parse(f[1]['valor']), growth: null),
       FundebData(year: getDescri(f[2]['descricao']), value: double.parse(f[2]['valor']), growth: 26.37),
@@ -97,15 +113,21 @@ class _FundebChartState extends State<FundebChart> with AnoBimestreListenerMixin
 
   @override
   void initState() {
+    super.initState();
+    /*
     var TB='';
     TBExercicio='a_exercicio$ano$bimestre';
-    TBReceitaFundeb='a_receita_fundeb$ano$bimestre';
+    TBReceitaFundebSimulador='a_receita_fundeb_simulador$ano$bimestre';
     if(widget.title.contains('Evolução')){
       TB=TBExercicio;
     }else{
       TB=TBExercicio;
     }
-    start(TB);
+    */
+
+    start();
+
+
   }
 
   @override

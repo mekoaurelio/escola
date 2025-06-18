@@ -13,8 +13,6 @@ class AnoBimestreController extends GetxController {
     bimestre.value = bimestreInicial;
 
     ano.listen((novoAno) {
-      print('Ano mudou para $novoAno');
-      // Snackbar opcional aqui
     });
 
     bimestre.listen((novoBimestre) {

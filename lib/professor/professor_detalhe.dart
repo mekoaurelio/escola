@@ -58,7 +58,6 @@ class ProfessorDetalhe extends StatelessWidget {
    // DateTime parsedDate = Utils.parseDate(dateString);
    // int yearsDifference = Utils.calculateYearsDifference(parsedDate);
 
-    print('KKKKKKKKKK');
     String vantagensDetalhadas=professor?['vantagens_detalhadas'];
     var vatagens=vantagensDetalhadas.split('|');
     var v;

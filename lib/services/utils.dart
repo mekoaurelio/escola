@@ -54,7 +54,6 @@ class Utils {
   //  await ApiMySql.executaSql('delete from  $TBVantagens');
     await ApiMySql.executaSql('delete from  $TBFolha');
     await ApiMySql.executaSql('delete from $TBTotalProfessor');
-    await ApiMySql.executaSql('delete from $TBReceitaFundeb');
     await ApiMySql.executaSql('delete from $TBInfantil');
     await ApiMySql.executaSql('delete from $TBExercicio');
     await ApiMySql.executaSql('delete from $TBProfessor');

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:psycostatattoo/const/nome_tabelas.dart';
 
 import '../data/api_my_sql.dart';
+import '../services/anoBimestreListenerMixin.dart';
 import '../services/utils.dart'; // Assumindo que Utils.formatVr existe
 import '../widgets/line.dart';
 import '../widgets/texto.dart';
@@ -13,7 +14,7 @@ class TabelaProfessorInfantil extends StatefulWidget {
   State<TabelaProfessorInfantil> createState() => _TabelaProfessorInfantilState();
 }
 
-class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
+class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> with AnoBimestreListenerMixin {
   int cargaHoraria = 20;
   double _percEntreColunas=0;
 
@@ -27,20 +28,30 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
   double penD = 0; // Diferença ND-NE (ou valor inicial de NE)
   double penE = 0; // Diferença ND-NE (ou valor inicial de NE)
   bool isLoading = true;
-
   // Variáveis para armazenar os resultados calculados
   List<List<double>> _calculatedTableValues = [];
   Map<String, int> _professoresPorNivel = {};
-
   String _dispersaoHorizontal = '0.00%'; // Valor inicial como string formatada
   String _dispersaoTotal = '0.00%'; // Valor inicial como string formatada
-
-
   int? selectedRow;
   int? selectedColumn;
   String selectedValue = 'Nenhuma célula selecionada';
   String nivel='',coluna='';
   var professores;
+
+  @override
+  void onAnoBimestreMudou(String ano, String bimestre) {
+    _atualizaTela(ano,bimestre);
+  }
+  _atualizaTela(var ano,var bimestre){
+    setState(() {
+      TBFolha='a$ano$bimestre';
+      TBProfessor='a_professor$ano$bimestre';
+      _calculatedTableValues=[];
+      professores=null;
+      _loadDataAndCalculate();
+    });
+  }
 
   @override
   void initState() {
@@ -54,7 +65,10 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
   }
 // Método para carregar dados e iniciar os cálculos
   Future<void> _loadDataAndCalculate() async {
-    professores=await ApiMySql.executaSql('select * from folha');
+    professores=await ApiMySql.executaSql('select * from  $TBFolha');
+    if(professores.length==0){
+      return;
+    }
 
     // Pré-processa a contagem de professores por nível
     _professoresPorNivel = {};
@@ -199,12 +213,13 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return professores==null?Utils.vazio('Sem Dados de Progressão Para Esse Ano Bimestre'): const Center(child: CircularProgressIndicator());
     }
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
+      body: professores==null?Utils.vazio('Sem Dados de Progressão Para Esse Ano Bimestre'):
+      SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Padding(
           padding: const EdgeInsets.all(16.0),

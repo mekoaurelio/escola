@@ -43,9 +43,7 @@ class _LoginPageState extends State<LoginPage> {
       // Redireciona para a home usando GetX
       Get.offAllNamed('/home');
     } else {
-      setState(() {
-        _errorMessage = "E-mail ou senha inválidos.";
-      });
+      setState(() => _errorMessage = "E-mail ou senha inválidos.");
     }
 
     setState(() {

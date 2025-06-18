@@ -56,8 +56,6 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
   }
 
   Future<void> criaStruturaDasTabelas()async{
-    String ano='';
-    String bimestre='';
     try{
 
       ///PEGA ANO E BIMESTRE
@@ -93,7 +91,6 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
         await criaTabela(TBProfessor);
         await criaTabela(TBExercicio);
 
-        await criaTabela(TBReceitaFundeb);
         await criaTabela(TBReceitaFundebSimulador);
 
      // }else{
@@ -146,11 +143,7 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
   }
 
   criaTabela(String tb)async{
-    if(tb==TBReceitaFundeb){
-      await ApiMySql.seNaoExistirCriaTabelaFundeb(tb);
-    }else {
-      await ApiMySql.seNaoExistirCriaTabelaGenerica(tb);
-    }
+    await ApiMySql.seNaoExistirCriaTabelaGenerica(tb);
     await ApiMySql.criaIndice(tb);
     await ApiMySql.addAutoIncremento(tb);
   }
@@ -225,8 +218,6 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
     var admissao;
     var idProf;
     final List<Map<String, String>> vantagens = [];
-    int totReg=0;
-    int totERrr=0;
     ///INSERE TODOS OS PROFESSORES
     for (var line in lines) {
       line = line.trim();
@@ -290,7 +281,7 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
 
       if (line.startsWith('Matrícula') ) {
         // print('NOVO REGISTRO');
-        totReg++;
+        //totReg++;
         index=0;
         ///GRAVA UM NOVO REGISTRO
         final regex = RegExp(r'''Matrícula:\s*(\d+)\s+(.+?)\s+CPF:\s*([\d\.\-]+)''');
@@ -312,7 +303,7 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
           idProf=await ApiMySql.insertProf(matricula, nome, cpf, unidade, local, cargo, nivel, admissao);
 
           if(idProf.toString().contains('ERRO')){
-            totERrr++;
+            //totERrr++;
           }else {
             ///insere as vantagens
             for (var v in vantagens) {
@@ -428,9 +419,6 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
 
     setState(() => status = 'Inserindo Professor');
     await insereDadosIniciais(TBProfessor);
-
-    setState(() => status = 'Inserindo Receita FUNDEB');
-    await insereReceitaFundeb(TBReceitaFundeb);
 
     setState(() => status = 'Inserindo Receita FUNDEB Simuulador');
     await insereReceitaFundebSimulador(TBReceitaFundebSimulador);

@@ -2,30 +2,46 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:psycostatattoo/const/nome_tabelas.dart';
-
+import 'package:get/get.dart';
 
 import '../data/api_my_sql.dart';
+import '../services/anoBimestreListenerMixin.dart';
+import '../services/ano_bimestre_controller.dart';
 import '../services/utils.dart';
 import '../widgets/texto.dart';
 
 class FundebChartSelector extends StatefulWidget {
-  const FundebChartSelector({super.key});
+  const FundebChartSelector({Key? key}) : super(key: key);
 
   @override
   State<FundebChartSelector> createState() => _FundebChartSelectorState();
 }
 
-class _FundebChartSelectorState extends State<FundebChartSelector> {
+class _FundebChartSelectorState extends State<FundebChartSelector> with AnoBimestreListenerMixin{
   String chartType = 'linha';
   final realFormat = NumberFormat.simpleCurrency(locale: 'pt_BR');
   var receitaFundeb=[];
   var exercicioFundeb=[];
   bool _isLoading=true;
-
   final anos = ['2020', '2021', '2022', '2023', '2024', '2025'];
+  final anoBimestreController = Get.find<AnoBimestreController>();
 
+
+  @override
+  void onAnoBimestreMudou(String ano, String bimestre) {
+   // Utils.snak('KKKKKKKKK', 'TABELA : ', false, Colors.green);
+
+    Utils.snak('GRAFICO', 'Ano $ano  Bimestre : $bimestre', false, Colors.green);
+    setState(() {
+      TBReceitaFundebSimulador='a_receita_fundeb_simulador$ano$bimestre';
+      TBExercicio='a_exercicio$ano$bimestre';
+      start();
+    });
+
+  }
 
   start()async {
+   /// Utils.snak('titulo','grafico fundeb exercicio  TABELA : ', false, Colors.green);
     try {
       final f = await ApiMySql.get(TBReceitaFundebSimulador, null, 'ordem');
       final e = await ApiMySql.get(TBExercicio, null, 'ordem');
@@ -38,6 +54,7 @@ class _FundebChartSelectorState extends State<FundebChartSelector> {
         double.parse(f[5]['valor']),
         double.parse(f[6]['valor'])
       ];
+
       exercicioFundeb = [
         double.parse(e[1]['valor']),
         double.parse(e[2]['valor']),
@@ -47,13 +64,14 @@ class _FundebChartSelectorState extends State<FundebChartSelector> {
         double.parse(e[6]['valor'])
       ];
       setState(() => _isLoading = false);
-      
     }catch (e) {
+      print('ERRO $e');
     }
   }
 
   @override
   void initState() {
+    super.initState();
     start();
   }
 
@@ -336,5 +354,4 @@ class _FundebChartSelectorState extends State<FundebChartSelector> {
       ],
     );
   }
-
 }

@@ -6,7 +6,6 @@ String bimestre=Utils.getBimestre();
 String TBFolha='a$ano$bimestre';
 String TBVantagens='a_vantagens$ano$bimestre';
 String TBTotalProfessor='a_total_professor$ano$bimestre';
-String TBReceitaFundeb='a_receita_fundeb$ano$bimestre';
 
 ///USADAS NO SIMMULADOR
 String TBInfantil='a_infantil$ano$bimestre';

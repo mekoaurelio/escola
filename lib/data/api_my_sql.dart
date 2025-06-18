@@ -34,11 +34,7 @@ class ApiMySql {
     if(orderBy!=null){
       sql+=' order by $orderBy';
     }
-    if(table==TBReceitaFundeb){
-    //  print(sql);
-
-    }
-     print(sql);
+    // print(sql);
     return executaSql(sql);
   }
 

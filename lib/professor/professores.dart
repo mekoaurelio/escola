@@ -28,7 +28,6 @@ class _ProfessoresState extends State<Professores> with AnoBimestreListenerMixin
   String? errorMessage;
   final anoBimestreController = Get.find<AnoBimestreController>();
 
-/// novo
   @override
   void onAnoBimestreMudou(String ano, String bimestre) {
     atualizaTela(ano,bimestre);
@@ -194,43 +193,6 @@ class _ProfessoresState extends State<Professores> with AnoBimestreListenerMixin
       ),
     );
   }
-/*
-  Widget _buildFooter(int totalPages, ScreenSizeConfig screenSizeConfig) {
-    // Conteúdo do rodapé permanece o mesmo...
-    return Container(
-      color: Colors.grey[200],
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          IconButton(
-            onPressed: currentPage > 1 ? () => setState(() => currentPage = 1) : null,
-            icon: Icon(Icons.first_page, color: Colors.black54, size: screenSizeConfig.getFooterIconSize()),
-          ),
-          IconButton(
-            onPressed: currentPage > 1 ? () => setState(() => currentPage--) : null,
-            icon: Icon(Icons.arrow_back, color: Colors.black54, size: screenSizeConfig.getFooterIconSize()),
-          ),
-          Text('Página $currentPage de $totalPages',
-              style: TextStyle(fontSize: screenSizeConfig.getBodyFontSize(), color: Colors.black54)),
-          IconButton(
-            onPressed: currentPage < totalPages ? () => setState(() => currentPage++) : null,
-            icon: Icon(Icons.arrow_forward, color: Colors.black54, size: screenSizeConfig.getFooterIconSize()),
-          ),
-          IconButton(
-            onPressed: currentPage < totalPages ? () => setState(() => currentPage = totalPages) : null,
-            icon: Icon(Icons.last_page, color: Colors.black54, size: screenSizeConfig.getFooterIconSize()),
-          ),
-          Text('${lista.length} Itens',
-              style: TextStyle(fontSize: screenSizeConfig.getBodyFontSize(), color: Colors.black54)),
-        ],
-      ),
-    );
-  }
-
- */
-
-
-
 }
 
 // 3. O NOVO WIDGET STATEFUL PARA O ITEM DA LISTA

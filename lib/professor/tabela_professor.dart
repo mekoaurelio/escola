@@ -3,6 +3,7 @@ import 'package:psycostatattoo/const/nome_tabelas.dart';
 import 'package:get/get.dart';
 
 import '../data/api_my_sql.dart';
+import '../services/anoBimestreListenerMixin.dart';
 import '../services/ano_bimestre_controller.dart';
 import '../services/utils.dart'; // Assumindo que Utils.formatVr existe
 import '../widgets/line.dart';
@@ -15,7 +16,7 @@ class SimuladorTabelaProfessor extends StatefulWidget {
   State<SimuladorTabelaProfessor> createState() => _SimuladorTabelaProfessorState();
 }
 
-class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
+class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> with AnoBimestreListenerMixin {
   final anoBimestreController = Get.find<AnoBimestreController>();
   int cargaHoraria = 20;
   double _percEntreColunas=0;
@@ -33,17 +34,19 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   // Variáveis para armazenar os resultados calculados
   List<List<double>> _calculatedTableValues = [];
   Map<String, int> _professoresPorNivel = {};
-
   String _dispersaoHorizontal = '0.00%'; // Valor inicial como string formatada
   String _dispersaoTotal = '0.00%'; // Valor inicial como string formatada
-
-
   int? selectedRow;
   int? selectedColumn;
   String selectedValue = 'Nenhuma célula selecionada';
   String nivel = '',
       coluna = '';
   var professores;
+
+  @override
+  void onAnoBimestreMudou(String ano, String bimestre) {
+    _atualizaTela(ano,bimestre);
+  }
 
 // Adicione este método para lidar com a seleção
   void _handleCellSelection(int row, int column) async {
@@ -83,27 +86,16 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   @override
   void initState() {
     super.initState();
-    ever(anoBimestreController.ano, (novoAno) {
-      var bimestre=anoBimestreController.bimestre;
-      _atualizaTela(novoAno,bimestre);
-    });
-
-    ever(anoBimestreController.bimestre, (novoBimestre) {
-      var ano=anoBimestreController.ano;
-      _atualizaTela(ano,novoBimestre);
-    });
-
     _loadDataAndCalculate(); // Método para carregar dados e calcular tudo
   }
 
   _atualizaTela(var ano,var bimestre){
     setState(() {
       TBFolha='a$ano$bimestre';
+      TBVantagens='a_vantagens$ano$bimestre';
       TBProfessor='a_professor$ano$bimestre';
-      professores=[];
-      profs=[];
-      valorBase=0;
       _calculatedTableValues=[];
+      professores=null;
       _loadDataAndCalculate();
     });
   }
@@ -116,7 +108,10 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   // Método para carregar dados e iniciar os cálculos
   Future<void> _loadDataAndCalculate() async {
     professores = await ApiMySql.executaSql('select * from $TBFolha');
-
+    if(professores.length==0){
+      return;
+    }
+    setState(() => isLoading = true);
     // Pré-processa a contagem de professores por nível
     _professoresPorNivel = {};
     for (var item in professores) {
@@ -130,10 +125,6 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       final nivel = item['nivel']?.toString() ?? '';
       _professoresPorNivel[nivel] = (_professoresPorNivel[nivel] ?? 0) + 1;
     }
-
-    setState(() {
-      isLoading = true; // Mostra o indicador de carregamento
-    });
 
     try {
       profs = await ApiMySql.get(TBProfessor, null, 'ordem');
@@ -156,9 +147,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       print('Erro ao carregar dados ou calcular: $e');
       // Tratar erro, talvez mostrar uma mensagem ao usuário
     } finally {
-      setState(() {
-        isLoading = false; // Esconde o indicador de carregamento
-      });
+      setState(() => isLoading = false);
     }
   }
 
@@ -237,12 +226,14 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return professores==null?Utils.vazio('Sem Dados de Progressão Para Esse Ano Bimestre'): const Center(child: CircularProgressIndicator());
     }
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
+      body: professores==null?Utils.vazio('Sem Dados de Progressão Para Esse Ano Bimestre'):
+
+      SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
