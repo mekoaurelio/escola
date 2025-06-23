@@ -3,7 +3,6 @@ import 'package:intl/intl.dart'; // Adicionado para formatação
 import 'package:psycostatattoo/const/nome_tabelas.dart';
 import '../const/const.dart';
 import '../data/api_my_sql.dart';
-// import '../services/utils.dart'; // Substituído por Intl para demonstração
 import '../services/anoBimestreListenerMixin.dart';
 import '../services/utils.dart';
 import '../widgets/texto.dart';

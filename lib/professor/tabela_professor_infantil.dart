@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:psycostatattoo/const/nome_tabelas.dart';
 
 import '../data/api_my_sql.dart';
@@ -231,9 +232,10 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> with 
                   children: [
                     Texto(
                       tit: 'Carga Horária: $cargaHoraria',
-
+                      icone: Icons.edit,
                       aoClicarIcone: () {
                         Utils.mostrarDialogoEditarValor(
+                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]'))],
                           context: context,
                           titulo: 'Editar Carga Horária',
                           labelCampo: 'Horas',

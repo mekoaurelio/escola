@@ -10,7 +10,6 @@ import 'const/nome_tabelas.dart';
 import 'grafico/grafico_fundeb_exercicio.dart';
 import 'grafico/home.dart';
 import 'impacto/impacto_grid2.dart';
-import 'impacto/impacto_main.dart';
 import 'import/pdfExtractorPage.dart';
 import 'professor/professor_vecto_proposta.dart';
 import 'professor/professores.dart';
@@ -42,7 +41,6 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
   void onAnoBimestreMudou(String ano, String bimestre) {
     //atualizaTela(ano,bimestre);
   }
-
 
   final List<Map<String, String>> _anos = [
     {'code': '00','name': 'Escolha o Ano'},
@@ -119,8 +117,16 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
       'Simulador': SimuladorExecuta(),
       'Impacto': ImpactoGrid2(),
       'Extracao'.tr: PdfExtractorPage(),
-      'Tabela Professor': SimuladorTabelaProfessor(),
-      'Professor Infantil': TabelaProfessorInfantil(),
+      'Tabela Professor': SimuladorTabelaProfessor(
+        key: ValueKey('SimuladorTabelaProfessor_normal'), // Chave única
+        table: 'a_professor',
+      ),
+      'Professor Infantil': SimuladorTabelaProfessor(
+        key: ValueKey('SimuladorTabelaProfessor_infantil'), // Chave única
+        table: 'a_infantil',
+      ),
+
+      //  'Professor Infantil': TabelaProfessorInfantil(),
       'Vecto X Proposto': ProfessorVectoProposta(),
       'Comparativo Fundeb e execuçao': FundebChartSelector(),
       'FUNDEB e execução': Home(),
@@ -144,12 +150,10 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
   }
 
   void _changeBimestre(String? bimestre) {
-    if (bimestre != null && bimestre != '00') {
+    if (bimestre != null && bimestre != '01') {
      var ano=Utils.getAno() ?? "25";
       final controller = Get.find<AnoBimestreController>();
       controller.atualizaAnoEBimestre(ano,bimestre); // atualiza o controller
-     //Utils.snak('NO  MUDOU BOMESTRE', 'ANO $ano BISMESTRE $bimestre', false, Colors.green);
-     // Utils.setBimestre(bimestre);
       atualizaNomeDasTabelas();
 
       setState(() {
@@ -193,8 +197,9 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
 
   start(){
     try {
-      String ano = Utils.getAno();
-      String bimestr = Utils.getBimestre();
+      final controller = Get.find<AnoBimestreController>();
+      controller.atualizaAnoEBimestre('25','01'); // atualiza o controller
+      atualizaNomeDasTabelas();
       setState(() => temAnoBimestre = true);
     }catch (e) {
       setState(() => temAnoBimestre = false);
@@ -226,9 +231,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
   }
 
   Widget _buildMobileLayout() {
-
-    return !temAnoBimestre?Utils.vazio('aaaaa'):
-      Column(
+    return Column(
       children: [
         _buildAppBar(),
         Expanded(child: _getContent()),
@@ -238,30 +241,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
   }
 
   Widget _buildDesktopLayout() {
-    return  !temAnoBimestre?Row(
-      children: [
-        _buildNavigationDrawer(),
-        Expanded(
-          child: Column(
-            children: [
-              _buildAppBar(),
-              _currentPage=='Extracao'?
-              Expanded(
-                child: Column(
-                  children: [
-                   // _buildAppBar(),
-                    Expanded(child: _getContent()),
-                  ],
-                ),
-              ):
-              Expanded(child: Utils.vazio('Nenhum dados extraído para esse Ano/Bimestre')),
-            ],
-          ),
-        ),
-      ],
-    )://Utils.vazio('bbbbb'):
-          
-    
+    return
     Row(
       children: [
         _buildNavigationDrawer(),

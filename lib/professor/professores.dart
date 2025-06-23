@@ -49,7 +49,6 @@ class _ProfessoresState extends State<Professores> with AnoBimestreListenerMixin
     });
   }
 
-
   Future<void> _loadData() async {
     try {
       listaCompleta = await ApiMySql.getProfessor();
@@ -217,7 +216,7 @@ class __ProfessorListItemState extends State<_ProfessorListItem> {
     final double somaVantagens = double.tryParse(item['soma_vantagens'] ?? '0.0') ?? 0.0;
 
     return MouseRegion(
-      // Atualiza o estado APENAS deste widget
+
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: Container(

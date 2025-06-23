@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:psycostatattoo/const/nome_tabelas.dart';
 import 'package:get/get.dart';
 
@@ -6,9 +7,11 @@ import '../data/api_my_sql.dart';
 import '../services/ano_bimestre_controller.dart';
 import '../services/screenSize.dart';
 import '../services/utils.dart';
+import '../simulador/simulador_alt.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/line.dart';
 import '../widgets/paginationFooter.dart';
+import '../widgets/painel.dart';
 import '../widgets/texto.dart';
 
 class ProfessorVectoProposta extends StatefulWidget {
@@ -41,10 +44,10 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
   double percP=0,percI=0;
   int hoverIndex = -1;
   final anoBimestreController = Get.find<AnoBimestreController>();
+  var _anoLocal='',_bimestreLocal='';
 
   @override
   void dispose() {
-    anoBimestreController.dispose(); // Cancela o ouvinte quando o widget for destruído
     super.dispose();
   }
 
@@ -53,13 +56,15 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
     super.initState();
 
     ever(anoBimestreController.ano, (novoAno) {
-      var bimestre=anoBimestreController.bimestre;
-      atualizaTela(novoAno,bimestre);
+      _bimestreLocal=anoBimestreController.bimestre.toString();
+      Utils.setAno(novoAno);
+      atualizaTela(novoAno,_bimestreLocal);
     });
 
     ever(anoBimestreController.bimestre, (novoBimestre) {
-      var ano=anoBimestreController.ano;
-      atualizaTela(ano,novoBimestre);
+      _anoLocal=anoBimestreController.ano.toString();
+      Utils.setBimestre(novoBimestre);
+      atualizaTela(_anoLocal,novoBimestre);
     });
 
     carregarFolha();
@@ -274,45 +279,89 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
                         );
                        ///Veririca quem tem a proposta Menor do que o vencimento
                        String vecto=vencimento.replaceAll(',', '');
-                        bool propostaMenorVecto=double.parse(vecto)<double.parse(vrP.toString());
+
+                       bool propostaMenorVecto=double.parse(vecto)<double.parse(vrP.toString());
 
                         String proposta=Utils.formatVr.format(vrP).toString();
                         String atps=item['soma_apts'].toString().replaceAll('-', '');
                         double sumVantagem=double.parse(item['soma_vantagens']);
                         double total=double.parse(atps)+sumVantagem+double.parse(vecto);
 
-                       // bool propostaMenorVecto=total<double.parse(vrP.toString());
+                        Color cor=Colors.black;
+                        bool negrito=false;
+                        String tootip='';
+
+                        if(!propostaMenorVecto){
+                          cor=Colors.red;
+                          negrito=true;
+                        }
+                        if(proposta=='0,00' || !descriVantagem.contains('Vencimento')) {
+                          if(proposta=='0,00'){
+                            tootip='Nivel inválido $mk';
+                          }else {
+                            tootip = descriVantagem;
+                          }
+                          cor = Colors.blue;
+                          negrito=true;
+                        }
 
                         return MouseRegion(
                             onEnter: (_) => setState(() => hoverIndex = index),
                             onExit: (_) => setState(() => hoverIndex = -1),
-                          child: Container(
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  bottom: BorderSide(
-                                    color: Colors.grey.shade300,
-                                    width: 1.0,         // Espessura da linha
+                          child: Tooltip(
+                            message: tootip, // Mensagem dinâmica
+                            preferBelow: false, // Opcional: controla a posição
+                            padding: EdgeInsets.all(8), // Opcional: espaçamento interno
+                            decoration: BoxDecoration( // Opcional: estilo do tooltip
+                              color: Colors.blue[700],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            textStyle: TextStyle( // Opcional: estilo do texto
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
+                            child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Colors.grey.shade300,
+                                      width: 1.0,         // Espessura da linha
+                                    ),
                                   ),
+                                  color: hoverIndex == index ? Colors.blue.shade50 : Colors.transparent,
                                 ),
-                                color: hoverIndex == index ? Colors.blue.shade50 : Colors.transparent,
-                              ),
-                            child: Row(
-                              children: [
-                                Line(tex: item['matricula'], tam: 90, alin: Alignment.centerLeft,cor: propostaMenorVecto?Colors.black:Colors.red,negrito: true,fontSize: 13,top: 10,),
-                                Line(tex: item['nome'], tam: 250, alin: Alignment.centerLeft,cor: propostaMenorVecto?Colors.black:Colors.red,negrito: true,fontSize: 13),
-                                Line(tex: isInfante?'Normal':'Infantil', tam: 70, alin: Alignment.center,cor: Colors.black,fontSize: 13),
-                                Line(tex: item['nivel'], tam: 70, alin: Alignment.center,cor: propostaMenorVecto?Colors.black:Colors.red,negrito: true,fontSize: 13),
-                                Line(tex: vencimento, tam: 100, alin: Alignment.centerRight,cor: propostaMenorVecto?Colors.black:Colors.red,fontSize: 13),
-                                Line(tex: Utils.formatVr.format(double.parse(atps)), tam: 100, alin: Alignment.centerRight,cor: Colors.black,),
-                                Line(tex: Utils.formatVr.format(double.parse(item['soma_vantagens'])), tam: 100, alin: Alignment.centerRight,cor: Colors.black,),
-                                Line(tex: Utils.formatVr.format(total), tam: 100, alin: Alignment.centerRight,cor: Colors.black,negrito: true,),
+                                child: Row(
+                                  children: [
+                                    Line(tex: item['matricula'], tam: 90, alin: Alignment.centerLeft,cor: cor,negrito: negrito,top: 10,),
+                                    Line(tex: item['nome'], tam: 250, alin: Alignment.centerLeft,cor: cor,negrito: true),
+                                    Line(tex: isInfante?'Normal':'Infantil', tam: 70, alin: Alignment.center,cor: cor,negrito: negrito,),
+                                    Line(tex: item['nivel'], tam: 70, alin: Alignment.center,cor: cor,negrito: negrito,),
+                                    Line(tex: vencimento, tam: 100, alin: Alignment.centerRight,cor: cor,negrito: !propostaMenorVecto,),
+                                    ///adicional por tempo de serviço
+                                    Line(tex: Utils.formatVr.format(double.parse(atps)), tam: 100, alin: Alignment.centerRight,cor:cor,negrito: negrito,),
+                                    ///vantagens
+                                    Line(tex: Utils.formatVr.format(double.parse(item['soma_vantagens'])), tam: 100, alin: Alignment.centerRight,
+                                      cor: cor,negrito: negrito,),
+                                    ///total
+                                    Line(tex: Utils.formatVr.format(total), tam: 100, alin: Alignment.centerRight,cor: cor,negrito: negrito,),
+                                    ///valor proposto
+                                    Line(tex:proposta.toString(), tam: 100, alin: Alignment.centerRight,cor: cor,negrito: true,),
 
-                                Line(tex:proposta.toString(), tam: 100, alin: Alignment.centerRight,cor: propostaMenorVecto?Colors.black:Colors.red,negrito: true,fontSize: 13),
+                                    IconButton(
+                                      onPressed: () => edite('Alterando','nivel',item['nivel'],item['matricula']),
+                                      icon: Icon(Icons.edit, color: Colors.black54, size: 15),
+                                    ),
+                                    IconButton(
+                                      onPressed: () => delete(item['matricula'],item['nome']),
+                                      icon: Icon(Icons.delete, size: 15, color: Colors.black38,),
+                                    ),
 
-                                Line(tex:proposta=='0,00'?' Nível inválido $mk':descriVantagem.contains('Vencimento')?'':' $descriVantagem',
-                                    tam: 100, alin: Alignment.centerLeft,cor: Colors.red,negrito: true,fontSize: 11),
-                              ],
-                            )
+                                    ///apenas os nomes das licencas
+                                   // Line(tex:proposta=='0,00'?' Nível inválido $mk':descriVantagem.contains('Vencimento')?'':' $descriVantagem',
+                                     //   tam: 100, alin: Alignment.centerLeft,cor: Colors.red,negrito: true,fontSize: 11),
+                                  ],
+                                )
+                            ),
                           ),
                         );
                       },
@@ -324,9 +373,7 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
                     totalItems: lista.length,
                     onPageChanged: (newPage) {
                       // A lógica de atualização do estado permanece no widget pai.
-                      setState(() {
-                        currentPage = newPage;
-                      });
+                      setState(() => currentPage = newPage);
                     },
                   ),
                 ],
@@ -335,6 +382,35 @@ class _ProfessorVectoPropostaState extends State<ProfessorVectoProposta> {
           ],
         ),
       ),
+    );
+  }
+
+  delete(var matricula,var nome)async{
+    final bool confirmar = await Utils.showDlg('Atenção', 'Confirma a exclusão de \n$nome?', context, 'Sim', 'Não',
+    );
+    if (confirmar) {
+      String _a=Utils.getAno();
+      String _b=Utils.getBimestre();
+      await ApiMySql.executaSql("Update $TBFolha  set status='D' WHERE matricula=$matricula");
+      setState(() => atualizaTela(_a,_b));
+    }
+  }
+
+  edite(var title,var campo,vrInicial,var matricula )async{
+    await Utils.mostrarDialogoEditarValor(
+      context: context,
+      titulo: title,
+      labelCampo: campo,
+      valorInicial: vrInicial,
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]'))], // Permite apenas letras e números],
+      aoSalvar: (novoValor) async{
+        String _a=Utils.getAno();
+        String _b=Utils.getBimestre();
+        print("Update $TBFolha  set nivel='$novoValor' WHERE matricula=$matricula");
+        await ApiMySql.executaSql("Update $TBFolha  set nivel='$novoValor' WHERE matricula=$matricula");
+        setState(() => atualizaTela(_a,_b));
+
+      },
     );
   }
 

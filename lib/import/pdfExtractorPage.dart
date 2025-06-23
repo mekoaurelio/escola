@@ -300,7 +300,15 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
           print('NIVEL:     $nivel');
           print('Admissão:  $admissao');
  */
-          idProf=await ApiMySql.insertProf(matricula, nome, cpf, unidade, local, cargo, nivel, admissao);
+
+         ///PEGA O VENCIMENTO
+         var vencimento;
+          for (var v in vantagens) {
+            vencimento=v['valor']!;
+            break;
+          }
+
+          idProf=await ApiMySql.insertProf(matricula, nome, cpf, unidade, local, cargo, nivel, admissao,vencimento);
 
           if(idProf.toString().contains('ERRO')){
             //totERrr++;
@@ -312,7 +320,6 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
               //await Future.wait(vantagens.map((v) =>
                 //  ApiMySql.insertVantagens(idProf, v['codigo'], v['descricao'], v['valor'], v['percentual']!)
               //));
-
             }
 
           }

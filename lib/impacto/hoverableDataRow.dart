@@ -131,7 +131,6 @@ class _HoverableDataRowState extends State<HoverableDataRow> {
 
   @override
   Widget build(BuildContext context) {
-    final Color textColor = widget.isHighlighted ? Colors.blue : Colors.black;
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),

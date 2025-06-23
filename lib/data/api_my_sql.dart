@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../const/nome_tabelas.dart';
@@ -49,7 +48,9 @@ class ApiMySql {
     var url = 'https://www.xmktech.net/dados/get.php?sql=$cleanSql';
     try {
       final response = await http.get(Uri.parse(url));
-     //  print(response.body);
+
+     // if(sql.contains('Quantidade'))
+       // print(response.body);
       if (response.statusCode == 200) {
         String volta = response.body.trim();
         if (volta.contains('NENHUM')) {
@@ -63,7 +64,7 @@ class ApiMySql {
         return dados;
       }
     } catch (e) {
-    //  print('ERRO AO EXECUTAR ==> $e');
+      print('ERRO AO EXECUTAR ==> $e');
       return dados;
     }
   }
@@ -113,8 +114,35 @@ class ApiMySql {
     sql+='descontos_total decimal(10,2) DEFAULT NULL,';
     sql+='liquido_total decimal(10,2) DEFAULT NULL,';
     sql+='fgts_total decimal(10,2) DEFAULT NULL,';
+    sql+='vencimento decimal(10,2) DEFAULT NULL,';
+    sql+="status varchar(1) DEFAULT 'A',";
     sql+='created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP);';
     await executaSql(sql);
+  }
+/*
+  static totalSalariosPorNivel(var tb)async{
+   var sql=" SELECT nivel AS 'nivel', COUNT(*) AS 'Quantidade',";
+    sql+=" FORMAT(SUM(vencimento), 2) AS 'Total',";
+    sql+=" FORMAT(AVG(vencimento), 2) AS 'Media'";
+    sql+=" FROM $tb WHERE vencimento IS NOT NULL AND nivel IS NOT NULL";
+    sql+=" GROUP BY nivel ORDER BY nivel";
+   //print(sql);
+   return await executaSql(sql);
+  }
+
+ */
+
+  static getProfessor() async {
+    var sql2 = "SELECT  f.id AS folha_id,f.id_municipio,f.matricula,f.nome,f.cpf,f.unidade,f.local_lotacao,f.vencimento,";
+    sql2+="f.cargo,f.nivel,DATE_FORMAT(f.admissao, '%d/%m/%Y') AS admissao,f.competencia_mes,f.vantagens_total,";
+    sql2+="f.descontos_total,f.liquido_total,f.fgts_total,GROUP_CONCAT(CONCAT(dv.codigo, ':',dv.descricao, ':',";
+    sql2+="dv.percentual, ':',' R/\$ ', FORMAT(dv.valor, 2)) SEPARATOR ' | ') AS vantagens_detalhadas,";
+    sql2+=" SUM(CASE WHEN dv.codigo NOT IN ('21003', '21019') THEN dv.valor ELSE 0  END) AS soma_vantagens,";
+    sql2+=" SUM(CASE WHEN dv.codigo IN ('21019') THEN dv.valor ELSE 0  END) AS soma_apts,";
+    sql2+="(SELECT SUM(vencimento) FROM a2501 WHERE status = 'A') AS total_vencimentos_geral";
+    sql2+=" FROM $TBFolha f LEFT JOIN $TBVantagens dv ON f.id = dv.folha_id WHERE f.status = 'A'GROUP BY f.id ORDER BY f.id";
+    print(sql2);
+    return await executaSql(sql2);
   }
 
   static Future<void> criaIndice(String tb)async{
@@ -194,29 +222,15 @@ class ApiMySql {
     return await executaSql(sql);
   }
 
-
-  static getProfessor() async {
-    var sql2 = "SELECT f.id AS folha_id,f.id_municipio,f.matricula,f.nome,f.cpf,f.unidade,f.local_lotacao,";
-    sql2+="f.cargo,f.nivel,DATE_FORMAT(f.admissao, '%d/%m/%Y') AS admissao,f.competencia_mes,f.vantagens_total,";
-    sql2+="f.descontos_total,f.liquido_total,f.fgts_total,GROUP_CONCAT(CONCAT(dv.codigo, ':',dv.descricao, ':',";
-    sql2+="dv.percentual, ':',' R/\$ ', FORMAT(dv.valor, 2)) SEPARATOR ' | ') AS vantagens_detalhadas,";
-    sql2+=" SUM(CASE WHEN dv.codigo NOT IN ('21003', '21019') THEN dv.valor ELSE 0  END) AS soma_vantagens,";
-    sql2+=" SUM(CASE WHEN dv.codigo IN ('21019') THEN dv.valor ELSE 0  END) AS soma_apts";
-    sql2+=" FROM $TBFolha f LEFT JOIN $TBVantagens dv ON f.id = dv.folha_id GROUP BY f.id ORDER BY f.id";
-
-    //print(sql2);
-    List lista = await executaSql(sql2);
-    return lista;
-  }
-
-  static insertProf(var matricula,var nome, var cpf,var cargo,var local_lotacao,var unidade,var nivel,var admissao ) async {
-    //  var idCompany=Utils.getIdEntidade();
+  static insertProf(var matricula,var nome, var cpf,var cargo,var local_lotacao,var unidade,var nivel,var admissao,
+      var vencimento ) async {
+    var vr=Utils.saldoToSave(vencimento);
     var idCompany=0;
     var dt='';
     if(admissao!=null){
       dt=Utils.dtToMysql(admissao);
     }
-    String sql = 'INSERT INTO $TBFolha (matricula,nome, cpf,unidade,local_lotacao,cargo,nivel,admissao) VALUES (';
+    String sql = 'INSERT INTO $TBFolha (matricula,nome, cpf,unidade,local_lotacao,cargo,nivel,admissao,vencimento,status) VALUES (';
     sql += '"$matricula", ';
     sql += '"$nome", ';
     sql += '"$cpf", ';
@@ -224,15 +238,16 @@ class ApiMySql {
     sql += '"$local_lotacao", ';
     sql += '"$cargo", ';
     sql += '"$nivel", ';
-    sql += '"$dt" ';
+    sql += '"$dt", ';
+    sql += '$vr, ';
+    sql += '"A" ';
     sql += ')';
-    // print(sql);
+     print(sql);
     return await insereSql(sql);
   }
 
   static insertVantagens(var matricula,var codigo, var descricao,var valor,String percentual ) async {
     //  var idCompany=Utils.getIdEntidade();
-    var idCompany=0;
     var vr=Utils.saldoToSave(valor);
     var perc=percentual.replaceAll('%', '');
     perc=perc.replaceAll(',', '.');

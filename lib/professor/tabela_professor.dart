@@ -1,22 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:psycostatattoo/const/nome_tabelas.dart';
 import 'package:get/get.dart';
+import 'package:psycostatattoo/professor/professor_utils.dart';
 
 import '../data/api_my_sql.dart';
-import '../services/anoBimestreListenerMixin.dart';
 import '../services/ano_bimestre_controller.dart';
 import '../services/utils.dart'; // Assumindo que Utils.formatVr existe
 import '../widgets/line.dart';
 import '../widgets/texto.dart';
+import 'buildSummaryTable.dart';
 
 class SimuladorTabelaProfessor extends StatefulWidget {
-  const SimuladorTabelaProfessor({super.key});
+  final String table;
+
+  const SimuladorTabelaProfessor({
+    Key? key,
+    required this.table,
+  }) : super(key: key);
 
   @override
   State<SimuladorTabelaProfessor> createState() => _SimuladorTabelaProfessorState();
 }
 
-class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> with AnoBimestreListenerMixin {
+class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
+  // ... (mantenha todas as variáveis existentes)
+
+  // Adicione estas cores no início da classe
+  static const Color _primaryColor = Color(0xFF1976D2);
+  static const Color _secondaryColor = Color(0xFF42A5F5);
+  static const Color _accentColor = Color(0xFFFF9800);
+  static const Color _backgroundColor = Color(0xFFFAFAFA);
+  static const Color _textColor = Color(0xFF212121);
+  static const Color _borderColor = Color(0xFFE0E0E0);
   final anoBimestreController = Get.find<AnoBimestreController>();
   int cargaHoraria = 20;
   double _percEntreColunas=0;
@@ -30,7 +46,6 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> wit
   double penD = 0; // Diferença ND-NE (ou valor inicial de NE)
   double penE = 0; // Diferença ND-NE (ou valor inicial de NE)
   bool isLoading = true;
-
   // Variáveis para armazenar os resultados calculados
   List<List<double>> _calculatedTableValues = [];
   Map<String, int> _professoresPorNivel = {};
@@ -42,13 +57,24 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> wit
   String nivel = '',
       coluna = '';
   var professores;
+  int totProf=0;
+  var resultado;
+  bool _isHovered = false;
+  double totalFolha=0;
 
-  @override
-  void onAnoBimestreMudou(String ano, String bimestre) {
-    _atualizaTela(ano,bimestre);
+  _atualizaTela(var ano,var bimestre){
+    setState(() {
+      TBFolha='a$ano$bimestre';
+      var tb=widget.table;
+      TBVantagens='a_vantagens$ano$bimestre';
+      TBProfessor='$tb$ano$bimestre';
+      _calculatedTableValues=[];
+      professores=null;
+      _loadDataAndCalculate();
+    });
   }
 
-// Adicione este método para lidar com a seleção
+  // Adicione este método para lidar com a seleção
   void _handleCellSelection(int row, int column) async {
     setState(() {
       selectedRow = row;
@@ -79,77 +105,350 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> wit
     String nivelFormatado = nivel.substring(1); // Remove o "N" do início
     String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
     String chave = '$nivelFormatado$colunaFormatada';
-
     return _professoresPorNivel[chave] ?? 0;
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadDataAndCalculate(); // Método para carregar dados e calcular tudo
-  }
+  /*
+  double totalDeVencimentos(String nivel, int coluna) {
+    // Formata o nível/classe no formato esperado (ex: "B01" para NB coluna 1)
+    String nivelFormatado = nivel.substring(1); // Remove o "N" do início
+    String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
+    String chave = '$nivelFormatado$colunaFormatada';
 
-  _atualizaTela(var ano,var bimestre){
-    setState(() {
-      TBFolha='a$ano$bimestre';
-      TBVantagens='a_vantagens$ano$bimestre';
-      TBProfessor='a_professor$ano$bimestre';
-      _calculatedTableValues=[];
-      professores=null;
-      _loadDataAndCalculate();
-    });
-  }
+    double total = 0.0;
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  // Método para carregar dados e iniciar os cálculos
-  Future<void> _loadDataAndCalculate() async {
-    professores = await ApiMySql.executaSql('select * from $TBFolha');
-    if(professores.length==0){
-      return;
-    }
-    setState(() => isLoading = true);
-    // Pré-processa a contagem de professores por nível
-    _professoresPorNivel = {};
-    for (var item in professores) {
-      final nivel = item['nivel']?.toString() ?? '';
-      _professoresPorNivel[nivel] = (_professoresPorNivel[nivel] ?? 0) + 1;
+    for (var professor in professores) {
+      if (professor['nivel'] == chave && professor['vencimento'] != null) {
+        total += double.tryParse(professor['vencimento'].toString()) ?? 0.0;
+      }
     }
 
-    /// Pré-processa a contagem de professores por nível
-    _professoresPorNivel = {};
-    for (var item in professores) {
-      final nivel = item['nivel']?.toString() ?? '';
-      _professoresPorNivel[nivel] = (_professoresPorNivel[nivel] ?? 0) + 1;
-    }
-
-    try {
-      profs = await ApiMySql.get(TBProfessor, null, 'ordem');
-      valorBase = double.parse(profs[0]['valor']);
-
-      ///PISO INFANTIL
-      penA = double.parse(profs[2]['valor']);
-
-      ///PROGRESSÃO ENTRE NÍVEIS
-      penB = double.parse(profs[3]['valor']);
-      penC = double.parse(profs[4]['valor']);
-      penD = double.parse(profs[5]['valor']);
-      penE = double.parse(profs[6]['valor']);
-      _percEntreColunas = double.parse(profs[1]['percentual']);
-
-      ///Percentual de cálculo entre as colunas
-
-      _calculateTableAndDispersions(); // Calcula a tabela e dispersões
-    } catch (e) {
-      print('Erro ao carregar dados ou calcular: $e');
-      // Tratar erro, talvez mostrar uma mensagem ao usuário
-    } finally {
-      setState(() => isLoading = false);
-    }
+    return total;
   }
+
+   */
+
+  Widget _buildProfessorCountTable() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Texto(tit: 'Distribuição de Professores',cor:_textColor ,tam: 18,negrito: true,bottom: 8,),
+            Texto(tit: 'Quantidade de professores por nível e classe',cor: _textColor.withOpacity(0.6),tam: 14,bottom: 16,),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Column(
+                children: [
+                  // Header
+                  Container(
+                    decoration: BoxDecoration(
+                      color: _primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 80,
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Nível',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: _primaryColor,
+                            ),
+                          ),
+                        ),
+                        for (int i = 1; i <= cargaHoraria; i++)
+                          Container(
+                            width: 80,
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Classe $i',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: _primaryColor,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  // Rows
+                  for (int nivelIndex = 1; nivelIndex < niveis.length; nivelIndex++)
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: _borderColor,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: MouseRegion(
+                        onEnter: (_) => setState(() => _isHovered = true),
+                        onExit: (_) => setState(() => _isHovered = false),
+                        child: Material(
+                          color: _isHovered
+                              ? Colors.transparent
+                              : Colors.transparent,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 80,
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  niveis[nivelIndex],
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: _textColor,
+                                  ),
+                                ),
+                              ),
+                              for (int coluna = 0;
+                              coluna < _calculatedTableValues[nivelIndex].length;
+                              coluna++)
+                                GestureDetector(
+                                  onTap: () =>
+                                      _handleCellSelection(nivelIndex, coluna),
+                                  child: Container(
+                                    width: 80,
+                                    padding: EdgeInsets.symmetric(vertical: 12),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      quantidadeDeProfessores(
+                                          niveis[nivelIndex], coluna + 1) ==
+                                          0
+                                          ? '-'
+                                          : quantidadeDeProfessores(
+                                          niveis[nivelIndex], coluna + 1)
+                                          .toString(),
+                                      style: TextStyle(
+                                        color: _textColor,
+                                        fontWeight:
+                                        selectedRow == nivelIndex &&
+                                            selectedColumn == coluna
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  Widget _buildSalaryTotalsTable() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Totais de Vencimentos',
+              style: TextStyle(
+                color: _textColor,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Somatório de vencimentos por nível e classe',
+              style: TextStyle(
+                color: _textColor.withOpacity(0.6),
+                fontSize: 14,
+              ),
+            ),
+            SizedBox(height: 16),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Column(
+                children: [
+                  // Header
+                  Container(
+                    decoration: BoxDecoration(
+                      color: _primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 80,
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Nível',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: _primaryColor,
+                            ),
+                          ),
+                        ),
+                        for (int i = 1; i <= cargaHoraria; i++)
+                          Container(
+                            width: 100,
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Classe $i',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: _primaryColor,
+                              ),
+                            ),
+                          ),
+                        // Coluna para o total
+                        Container(
+                          width: 120,
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Total Nível',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: _primaryColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Rows
+                  for (int nivelIndex = 1; nivelIndex < niveis.length; nivelIndex++)
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: _borderColor,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: MouseRegion(
+                        onEnter: (_) => setState(() => _isHovered = true),
+                        onExit: (_) => setState(() => _isHovered = false),
+                        child: Material(
+                          color: _isHovered
+                              ? _primaryColor.withOpacity(0.05)
+                              : Colors.transparent,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 80,
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  niveis[nivelIndex],
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: _textColor,
+                                  ),
+                                ),
+                              ),
+                              for (int coluna = 0; coluna < _calculatedTableValues[nivelIndex].length; coluna++)
+                                Container(
+                                  width: 100,
+                                  padding: EdgeInsets.symmetric(vertical: 8),
+                                  alignment: Alignment.center,
+                                  child: Column(
+                                    children: [
+                                      if (quantidadeDeProfessores(niveis[nivelIndex], coluna + 1) != 0)
+                                        Text(
+                                          '${quantidadeDeProfessores(niveis[nivelIndex], coluna + 1)} Profs.',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: _textColor.withOpacity(0.8),
+                                          ),
+                                        ),
+                                      if (quantidadeDeProfessores(niveis[nivelIndex], coluna + 1) != 0)
+                                        Text(
+                                          Utils.formatVr.format(ProfessorUtils.totalDeVencimentos(niveis[nivelIndex], coluna + 1,professores)),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: _primaryColor,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              // Célula de total por nível
+                              Container(
+                                width: 120,
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                                alignment: Alignment.center,
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      'Total',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: _textColor.withOpacity(0.8),
+                                      ),
+                                    ),
+                                    Text(
+                                      Utils.formatVr.format(ProfessorUtils.calculateTotalForLevel(niveis[nivelIndex],professores,cargaHoraria),
+                                      ),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green.shade800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+// Método auxiliar para calcular o total por nível
+  /*
+  double _calculateTotalForLevel(String nivel) {
+    double total = 0.0;
+    for (int coluna = 0; coluna < cargaHoraria; coluna++) {
+      total += ProfessorUtils.totalDeVencimentos(nivel, coluna + 1,professores);
+      //ProfessorUtils.totalDeVencimentos(niveis[nivelIndex], coluna + 1,professores)),
+    }
+    return total;
+  }
+
+   */
 
   // Método para calcular todos os valores da tabela e as dispersões
   void _calculateTableAndDispersions() {
@@ -223,162 +522,456 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> wit
     });
   }
 
+  Future<void> _loadDataAndCalculate() async {
+    //professores = await ApiMySql.executaSql('select * from $TBFolha');
+    professores = await ApiMySql.getProfessor();
+    if(professores.length==0){
+      return;
+    }
+    totProf=professores.length;
+    setState(() => isLoading = true);
+    /// Pré-processa a contagem de professores por nível
+    _professoresPorNivel = {};
+    for (var item in professores) {
+      final nivel = item['nivel']?.toString() ?? '';
+      _professoresPorNivel[nivel] = (_professoresPorNivel[nivel] ?? 0) + 1;
+    }
+
+    totalFolha=double.parse(professores[0]['total_vencimentos_geral']);
+
+    try {
+      profs = await ApiMySql.get(TBProfessor, null, 'ordem');
+      valorBase = double.parse(profs[0]['valor']);
+
+      ///PISO INFANTIL
+      penA = double.parse(profs[2]['valor']);
+
+      ///PROGRESSÃO ENTRE NÍVEIS
+      penB = double.parse(profs[3]['valor']);
+      penC = double.parse(profs[4]['valor']);
+      penD = double.parse(profs[5]['valor']);
+      penE = double.parse(profs[6]['valor']);
+      _percEntreColunas = double.parse(profs[1]['percentual']);
+
+      ///Percentual de cálculo entre as colunas
+
+      _calculateTableAndDispersions(); // Calcula a tabela e dispersões
+    } catch (e) {
+      print('Erro ao carregar dados ou calcular: $e');
+      // Tratar erro, talvez mostrar uma mensagem ao usuário
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final controller = Get.find<AnoBimestreController>();
+    _atualizaTela(controller.ano, controller.bimestre);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return professores==null?Utils.vazio('Sem Dados de Progressão Para Esse Ano Bimestre'): const Center(child: CircularProgressIndicator());
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(_primaryColor),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Carregando dados...',
+              style: TextStyle(
+                color: _textColor,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: professores==null?Utils.vazio('Sem Dados de Progressão Para Esse Ano Bimestre'):
-
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
+      backgroundColor: _backgroundColor,
+      appBar: AppBar(
+        title: Text(
+          'Plano de Carreira Docente',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: _primaryColor,
+        elevation: 4,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () => _loadDataAndCalculate(),
+            tooltip: 'Atualizar dados',
+          ),
+        ],
+      ),
+      body: professores == null
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: Colors.red),
+            SizedBox(height: 16),
+            Text(
+              'Sem dados disponíveis para este período',
+              style: TextStyle(
+                color: _textColor,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+      )
+          : SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              /// Cabeçalho, carga horário. dispersão horizontal e dispersão total
-              Row(
-                children: [
-                  Texto(
-                      tit: 'Carga Horária: $cargaHoraria',
-                    aoClicarIcone: () {
-                        Utils.mostrarDialogoEditarValor(
-                          context: context,
-                          titulo: 'Editar Carga Horária',
-                          labelCampo: 'Horas',
-                          valorInicial: cargaHoraria.toString(),
-                          aoSalvar: (novoValor) {
-                            setState(() {
-                              cargaHoraria = int.tryParse(novoValor)!;
-                              _calculateTableAndDispersions();
-                            });
-                          },
-                        );
-                      },
-                    ),
-                  SizedBox(width: 10,),
-                  Texto(tit: '% de progressão entre colunas $_percEntreColunas', left: 10, right: 10,
-                      aoClicarIcone: () {
-                        Utils.mostrarDialogoEditarValor(
-                          context: context,
-                          titulo: 'Editar Progressão Entre Colunas',
-                          labelCampo: 'Colunas',
-                          valorInicial: _percEntreColunas.toString(),
-                          aoSalvar: (novoValor) {
-                            setState(() {
-                              _percEntreColunas = double.tryParse(novoValor)!;
-                              _calculateTableAndDispersions();
-                            });
-                          },
-                        );
-                      },
-                    ),
-                  const SizedBox(width: 40),
-                  const Text('Dispersão Horizontal (NE):'),
-                  // Especifique que é da última linha
-                  const SizedBox(width: 10),
-                  Texto(tit: '$_dispersaoHorizontal%',
-                      cor: Colors.blue,
-                      negrito: true,
-                      tam: 16,),
-                  const SizedBox(width: 40),
-                  const Text('Dispersão Total:'),
-                  const SizedBox(width: 10),
-                  Texto(tit: '$_dispersaoTotal%',
-                      cor: Colors.blue,
-                      negrito: true,
-                      tam: 16,
-                      right: 10,),
-                ],
-              ),
-              const SizedBox(height: 20),
-              /// Nível e Classe
-              const Row(
-                children: [
-                  SizedBox(width: 80, child: Text('Nível')),
-                  Text('CLASSE'),
-                ],
-              ),
-              const SizedBox(height: 10),
+              ///Cartão com cabecalho: Carga horária, progressão etc....
+              buildSummaryCards(),
+              SizedBox(height: 24),
+              ///valores calculados para cada nível e classe
+              dados1(),
+              SizedBox(height: 24),
+              ///Quantidade de professores por nível e classe
+              ///Acho que deveria sar
+              _buildProfessorCountTable(),
+              SizedBox(height: 24),
+              ///Quantidade de professores com as somas dos saários
+              ///Somatório de vencimentos por nível e classe
+              _buildSalaryTotalsTable(),
+              SizedBox(height: 24),
+              SummaryTable(
+                totalProfissionais: totProf,
+                custoMensal: totalFolha,
+                meses: 12,
+                ferias: 0.033,
+                remuneracaoTotal: 20993884.21,
+                encargosPercentual: 22,
+                totalEncargos: 6968798,
+                totalComEncargos: 0697079709
 
-              /// Classes header row (dynamic columns)
-              Container(
-                  color: Colors.grey.shade200,
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 40), // Empty space for level column
-                      for (int i = 1; i <= cargaHoraria; i++)
-                        Line(tex: i.toString(),
-                          tam: 109,
-                          cor: Colors.black,
-                          alin: Alignment.center,
-                          negrito: true,
-                          fontSize: 16,),
-                    ],
-                  )
-              ),
-              const SizedBox(height: 10),
+              )
 
-              /// Níveis rows (NB, NC, ND, NE)
-              for (int nivelIndex = 0; nivelIndex < niveis.length; nivelIndex++)
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 40,
-                      child: Texto(tit: niveis[nivelIndex],
-                        negrito: true,
-                        cor: nivelIndex == 0 ? Colors.blue : Colors.black,),
-                    ),
-                    for (int coluna = 0; coluna <
-                        _calculatedTableValues[nivelIndex].length; coluna++)
-                      GestureDetector(
-                        onTap: () => _handleCellSelection(nivelIndex, coluna),
-                        child: Container(
-                            color: selectedRow == nivelIndex &&
-                                selectedColumn == coluna
-                                ? Colors.blue
-                                : Colors.transparent,
-                            child: Tooltip(
-                                message: '${quantidadeDeProfessores(
-                                    niveis[nivelIndex],
-                                    coluna + 1)} professores',
-                                child:
-                                Row(
-                                  children: [
-                                    Line(
-                                      tex: Utils.formatVr.format(
-                                          _calculatedTableValues[nivelIndex][coluna]),
-                                      tam: 90,
-                                      alin: Alignment.centerRight,
-                                      fontSize: coluna == 0 ? 16 : 13,
-                                      cor: coluna == 0 ? Colors.blue : Colors
-                                          .black,
-                                      negrito: true,
-                                    ),
-
-                                    Line(
-                                      tex: '(${quantidadeDeProfessores(
-                                          niveis[nivelIndex], coluna + 1)})',
-                                      tam: 19,
-                                      fontSize: 9,
-                                      cor: Colors.black54,
-                                      alin: Alignment.centerLeft,
-                                      negrito: true,),
-                                  ],
-                                )
-                            )
-                        ),
-                      ),
-                  ],
-                ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget buildSummaryCards() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Primeira linha de itens
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: constraints.maxWidth * 0.45,
+                      ),
+                      child: _buildSummaryItem(
+                        'Carga Horária',
+                        '$cargaHoraria horas',
+                        Icons.access_time,
+                        onTap: () => _editWorkingHours(),
+                      ),
+                    ),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: constraints.maxWidth * 0.45,
+                      ),
+                      child: _buildSummaryItem(
+                        'Progressão',
+                        '${_percEntreColunas.toStringAsFixed(2)}%',
+                        Icons.trending_up,
+                        onTap: () => _editProgression(),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            SizedBox(height: 16),
+            // Segunda linha de itens
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: constraints.maxWidth * 0.45,
+                      ),
+                      child: _buildSummaryItem(
+                        'Dispersão Horizontal',
+                        '$_dispersaoHorizontal%',
+                        Icons.compare_arrows,
+                      ),
+                    ),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: constraints.maxWidth * 0.45,
+                      ),
+                      child: _buildSummaryItem(
+                        'Dispersão Total',
+                        '$_dispersaoTotal%',
+                        Icons.bar_chart,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+
+  Widget _buildSummaryItem(String title, String value, IconData icon, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.4,
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+          BoxShadow(
+          color: Colors.black12,
+          blurRadius: 4,
+          offset: Offset(0, 2),
+          ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 24, color: _primaryColor),
+            SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                color: _textColor.withOpacity(0.7),
+                fontSize: 12,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                color: _primaryColor,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget dados1() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Tabela Salarial',
+              style: TextStyle(
+                color: _textColor,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Valores calculados para cada nível e classe',
+              style: TextStyle(
+                color: _textColor.withOpacity(0.6),
+                fontSize: 14,
+              ),
+            ),
+            SizedBox(height: 16),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Column(
+                children: [
+                  // Header
+                  Container(
+                      decoration: BoxDecoration(
+                        color: _primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+                      ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 80,
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              alignment: Alignment.center,
+                              child: Text(
+                                'Nível',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: _primaryColor,
+                                ),
+                              ),
+                            ),
+                            for (int i = 1; i <= cargaHoraria; i++)
+                              Container(
+                                width: 90,
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  'Classe $i',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: _primaryColor,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      // Rows
+                      for (int nivelIndex = 0; nivelIndex < niveis.length; nivelIndex++)
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: _borderColor,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: MouseRegion(
+                      onEnter: (_) => setState(() => _isHovered = true),
+                      onExit: (_) => setState(() => _isHovered = false),
+                      child: Material(
+                        color: _isHovered
+                            ? _primaryColor.withOpacity(0.05)
+                            : Colors.transparent,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 80,
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              alignment: Alignment.center,
+                              child: Text(
+                                niveis[nivelIndex],
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: nivelIndex == 0 ? Colors.blue : _textColor,
+                                ),
+                              ),
+                            ),
+                            for (int coluna = 0; coluna < _calculatedTableValues[nivelIndex].length; coluna++)
+                              GestureDetector(
+                                onTap: () => _handleCellSelection(nivelIndex, coluna),
+                                child: Container(
+                                  width: 90,
+                                  padding: EdgeInsets.symmetric(vertical: 8),
+                                  color: selectedRow == nivelIndex && selectedColumn == coluna
+                                      ? Colors.blue.withOpacity(0.2)
+                                      : Colors.transparent,
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          Utils.formatVr.format(_calculatedTableValues[nivelIndex][coluna]),
+                                          textAlign: TextAlign.right,
+                                          style: TextStyle(
+                                            fontSize: coluna == 0 ? 16 : 13,
+                                            color: coluna == 0 ? Colors.blue : _textColor,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        '(${quantidadeDeProfessores(niveis[nivelIndex], coluna + 1)})',
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _editWorkingHours() {
+    Utils.mostrarDialogoEditarValor(
+      context: context,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      titulo: 'Editar Carga Horária',
+      labelCampo: 'Horas',
+      valorInicial: cargaHoraria.toString(),
+      aoSalvar: (novoValor) {
+        setState(() {
+          cargaHoraria = int.tryParse(novoValor)!;
+          _calculateTableAndDispersions();
+        });
+      },
+    );
+  }
+
+  void _editProgression() {
+    Utils.mostrarDialogoEditarValor(
+      context: context,
+      titulo: 'Editar Progressão',
+      labelCampo: 'Percentual',
+      valorInicial: _percEntreColunas.toString(),
+      aoSalvar: (novoValor) {
+        setState(() {
+          _percEntreColunas = double.tryParse(novoValor)!;
+          _calculateTableAndDispersions();
+        });
+      },
     );
   }
 }

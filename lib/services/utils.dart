@@ -66,6 +66,7 @@ class Utils {
     required String labelCampo,
     required String valorInicial,
     required void Function(String novoValor) aoSalvar,
+    final dynamic inputFormatters,
   }) async {
     final controller = TextEditingController(text: valorInicial);
     final formKey = GlobalKey<FormState>();
@@ -86,7 +87,7 @@ class Utils {
                   TextFormField(
                     controller: controller,
                     keyboardType: TextInputType.number,
-                    inputFormatters:  [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt'),],
+                    inputFormatters: inputFormatters ?? [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt'),],
                     decoration: InputDecoration(
                       labelText: labelCampo,
                       border: OutlineInputBorder(
@@ -100,15 +101,6 @@ class Utils {
                       return null;
                     },
                   ),
-
-                  /*
-                  TextFormFieldData(controllerName: 'valor', label: 'Valor',
-                      inputFormatters: [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt'),],
-                      tipo:'string'):
-
-                   */
-
-
                 ],
               ),
             ),
