@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/utils.dart';
-import '../widgets/texto.dart';
 class SummaryTable extends StatefulWidget {
   final int totalProfissionais;
   final double custoMensal;
