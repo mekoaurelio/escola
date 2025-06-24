@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
 import '../services/utils.dart';
 class SummaryTable extends StatefulWidget {
@@ -30,17 +31,23 @@ class SummaryTable extends StatefulWidget {
 
 class _SummaryTableState extends State<SummaryTable> {
   late int _meses;
+  late double _ferias;
+  late double _custoMensal;
+  late double _remuneracaoTotal;
 
   @override
   void initState() {
     super.initState();
     _meses = widget.meses;
+    _ferias=widget.ferias;
+    _custoMensal=widget.custoMensal;
+    _remuneracaoTotal=_custoMensal *(_meses*_ferias);
   }
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 4,
+      elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
@@ -89,10 +96,11 @@ class _SummaryTableState extends State<SummaryTable> {
 
         // Linhas da tabela
         _buildTableRow('Total profissionais', widget.totalProfissionais.toString(),isTotal: true),
-        _buildTableRow('Custo Mensal', Utils.formatVr.format(widget.custoMensal)),
+        _buildTableRow('Custo Mensal', Utils.formatVr.format(_custoMensal)),
         _buildEditableTableRow(
           'Meses',
           _meses.toString(),
+            [FilteringTextInputFormatter.digitsOnly],
           onSave: (novoValor) {
             setState(() {
               _meses = int.tryParse(novoValor) ?? widget.meses;
@@ -100,8 +108,24 @@ class _SummaryTableState extends State<SummaryTable> {
             // Adicione aqui qualquer cálculo que precise ser atualizado
           },
         ),
-        _buildTableRow('1/3 férias', widget.ferias.toStringAsFixed(6)),
-        _buildTableRow('Remuneração Total', Utils.formatVr.format(widget.remuneracaoTotal), isTotal: true),
+            _buildEditableTableRow(
+              '1/3 férias',
+              _ferias.toString(),
+                [CurrencyTextInputFormatter.currency(symbol: '%', locale: 'pt')],
+              onSave: (novoValor) {
+                setState(() {
+                  _ferias = double.tryParse(novoValor) ?? widget.ferias;
+                  _remuneracaoTotal=_custoMensal *(_meses*_ferias);
+
+                  //_custoMensal=widget.custoMensal*_ferias;
+                });
+                // Adicione aqui qualquer cálculo que precise ser atualizado
+              },
+            ),
+        _buildTableRow('Remuneração Total', _remuneracaoTotal!=0?Utils.formatVr.format(_remuneracaoTotal):Utils.formatVr.format('0.0'),
+            isTotal: true),
+
+
         _buildTableRow('Encargos Sociais', '${widget.encargosPercentual.toStringAsFixed(0)}%'),
         _buildTableRow('TOTAL Encargos', Utils.formatVr.format(widget.totalEncargos), isTotal: true),
         _buildTableRow('Total COM ENCARGOS', Utils.formatVr.format(widget.totalComEncargos), isHighlighted: true),
@@ -158,7 +182,7 @@ class _SummaryTableState extends State<SummaryTable> {
     );
   }
 
-  Widget _buildEditableTableRow(String label, String value, {required Function(String) onSave}) {
+  Widget _buildEditableTableRow(String label, String value,dynamic inputFormatters, {required Function(String) onSave}) {
     return Container(
       decoration: BoxDecoration(
         border: Border(
@@ -178,7 +202,7 @@ class _SummaryTableState extends State<SummaryTable> {
               labelCampo: label,
               valorInicial: value,
               aoSalvar: onSave,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              inputFormatters: inputFormatters,
             );
           },
           child: Padding(

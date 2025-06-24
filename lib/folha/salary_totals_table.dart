@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/utils.dart';
+import '../widgets/texto.dart';
 import 'professor_utils.dart';
 
 class SalaryTotalsTable extends StatelessWidget {
@@ -60,133 +61,64 @@ class SalaryTotalsTable extends StatelessWidget {
                 children: [
                   // Header
                   Container(
-                      decoration: BoxDecoration(
-                        color: primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
-                      ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 80,
-                              padding: EdgeInsets.symmetric(vertical: 12),
-                              alignment: Alignment.center,
-                              child: Text(
-                                'Nível',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: primaryColor,
-                                ),
-                              ),
-                            ),
-                            for (int i = 1; i <= cargaHoraria; i++)
-                              Container(
-                                width: 100,
-                                padding: EdgeInsets.symmetric(vertical: 12),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  'Classe $i',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: primaryColor,
-                                  ),
-                                ),
-                              ),
-                            // Coluna para o total
-                            Container(
-                              width: 120,
-                              padding: EdgeInsets.symmetric(vertical: 12),
-                              alignment: Alignment.center,
-                              child: Text(
-                                'Total Nível',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: primaryColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Rows
-                      for (int nivelIndex = 1; nivelIndex < niveis.length; nivelIndex++)
-                  Container(
                     decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: borderColor,
-                          width: 1,
-                        ),
-                      ),
+                      color: primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 80,
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          alignment: Alignment.center,
-                          child: Text(
-                            niveis[nivelIndex],
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                            ),
+                    child: ProfessorUtils().nivelClasse(cargaHoraria,primaryColor,true,100)
+                  ),
+                  // Rows
+                  for (int nivelIndex = 1; nivelIndex < niveis.length; nivelIndex++)
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: borderColor,
+                            width: 1,
                           ),
                         ),
-                        for (int coluna = 0; coluna < calculatedTableValues[nivelIndex].length; coluna++)
+                      ),
+                      child: Row(
+                        children: [
                           Container(
-                            width: 100,
-                            padding: EdgeInsets.symmetric(vertical: 8),
+                            width: 80,
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            alignment: Alignment.center,
+                            child: Texto(tit: niveis[nivelIndex],negrito: true,cor:textColor ,),
+                          ),
+                          for (int coluna = 0; coluna < calculatedTableValues[nivelIndex].length; coluna++)
+                            Container(
+                              width: 100,
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              alignment: Alignment.center,
+                              child: Column(
+                                children: [
+                                  if (quantidadeDeProfessores(niveis[nivelIndex], coluna + 1) != 0)
+                                    Texto(tit: '${quantidadeDeProfessores(niveis[nivelIndex], coluna + 1)} Profs.',
+                                      tam: 11,cor: textColor.withOpacity(0.8),),
+                                  if (quantidadeDeProfessores(niveis[nivelIndex], coluna + 1) != 0)
+                                    Texto(tit:Utils.formatVr.format(ProfessorUtils.totalDeVencimentos(niveis[nivelIndex], coluna + 1, professores)),
+                                      tam: 11,negrito: true,cor: primaryColor,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          /// Célula de total por nível
+                          Container(
+                            width: 120,
+                            padding: EdgeInsets.symmetric(vertical: 12),
                             alignment: Alignment.center,
                             child: Column(
                               children: [
-                                if (quantidadeDeProfessores(niveis[nivelIndex], coluna + 1) != 0)
-                                  Text(
-                                    '${quantidadeDeProfessores(niveis[nivelIndex], coluna + 1)} Profs.',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: textColor.withOpacity(0.8),
-                                    ),
-                                  ),
-                                if (quantidadeDeProfessores(niveis[nivelIndex], coluna + 1) != 0)
-                                  Text(
-                                    Utils.formatVr.format(ProfessorUtils.totalDeVencimentos(niveis[nivelIndex], coluna + 1, professores)),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: primaryColor,
-                                    ),
-                                  ),
+                                Texto(tit: 'Total',tam: 11,cor:textColor.withOpacity(0.8)),
+                                Texto(tit: Utils.formatVr.format(ProfessorUtils.calculateTotalForLevel(niveis[nivelIndex], professores, cargaHoraria)),
+                                  tam: 13,negrito: true,cor:Colors.green.shade800,),
                               ],
                             ),
                           ),
-                        // Célula de total por nível
-                        Container(
-                          width: 120,
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          alignment: Alignment.center,
-                          child: Column(
-                            children: [
-                              Text(
-                                'Total',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: textColor.withOpacity(0.8),
-                                ),
-                              ),
-                              Text(
-                                Utils.formatVr.format(ProfessorUtils.calculateTotalForLevel(niveis[nivelIndex], professores, cargaHoraria)),
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green.shade800,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),

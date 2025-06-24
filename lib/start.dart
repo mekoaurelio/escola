@@ -19,6 +19,7 @@ import 'services/anoBimestreListenerMixin.dart';
 import 'services/ano_bimestre_controller.dart';
 import 'services/utils.dart';
 import 'simulador/executa_simulador.dart';
+import 'simulador/vaaf.dart';
 import 'widgets/texto.dart';
 
 class Start extends StatefulWidget {
@@ -87,6 +88,12 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
     {'title': 'Tabela Professor', 'table': 'encargos_sociais'},
     {'title': 'Professor Infantil', 'table': 'fonte_receita'},
   ];
+  ///SUB-MENUS DE SIMULADOR
+  final List<Map<String, dynamic>> _simuladorItems = [
+    {'title': 'Simulador', 'table': 'cargo','icon': Icons.person},
+    {'title': 'VAAF', 'table': 'encargos_sociais'},
+    {'title': 'Professor Infantil', 'table': 'fonte_receita'},
+  ];
   ///SUB-MENUS DE GRÁFICOS
   final List<Map<String, dynamic>> _graficosItems = [
     {'title': 'FUNDEB e execução', 'table': 'cargo','icon': Icons.person},
@@ -115,6 +122,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
     final pageMap = <String, Widget>{
       'professores'.tr: Professores(),
       'Simulador': SimuladorExecuta(),
+      'VAAF': VAAF(),
       'Impacto': ImpactoGrid2(),
       'Extracao'.tr: PdfExtractorPage(),
       'Tabela Professor': SimuladorTabelaProfessor(
@@ -326,6 +334,8 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
           Texto(tit: 'title'.tr + ' V.010', cor: Colors.black54),
           const SizedBox(height: 20),
           _buildProfessoresExpansionTile(),
+          const SizedBox(height: 20),
+          _buildSimuladorExpansionTile(),
           _buildGraficosExpansionTile(),
           ..._mainNavigationItems.map((item) => _buildDrawerItem(item['title'], item['icon'], item['index'])),
           _buildAuxiliaryExpansionTile(),
@@ -378,7 +388,26 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
       }).toList(),
     );
   }
-  ///MENU PROFESSORES
+
+  ///MENU SIMULADOR
+  Widget _buildSimuladorExpansionTile() {
+    return ExpansionTile(
+      leading: const Icon(Icons.perm_contact_cal_sharp,color: Colors.grey,),
+      title: Text('Simulador', style: const TextStyle(color: Colors.grey)),
+      children: _simuladorItems.map((item) {
+        final title = item['title'];
+        final isSelected = _currentPage == title;
+        return ListTile(
+          contentPadding: const EdgeInsets.only(left: 50.0),
+          title: Text(title, style: TextStyle(color: isSelected ? Colors.black : Colors.grey)),
+          selected: isSelected,
+          onTap: () => _onNavigationItemSelected(999, title),
+        );
+      }).toList(),
+    );
+  }
+
+  ///MENU GRAFICOS
   Widget _buildGraficosExpansionTile() {
     return ExpansionTile(
       leading: const Icon(Icons.auto_graph_outlined),

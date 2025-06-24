@@ -10,6 +10,7 @@ import '../widgets/line.dart';
 import '../widgets/texto.dart';
 import 'buildSummaryTable.dart';
 import 'professor_distribution_table.dart';
+import 'professor_utils.dart';
 import 'salary_totals_table.dart';
 import 'tabela_salarial.dart';
 
@@ -34,7 +35,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   static const Color _textColor = Color(0xFF212121);
   static const Color _borderColor = Color(0xFFE0E0E0);
   final anoBimestreController = Get.find<AnoBimestreController>();
-  int cargaHoraria = 20;
+  int cargaHoraria = 30;
   double _percEntreColunas=0;
   final List<String> niveis = ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'];
 
@@ -282,8 +283,8 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
               TabelaSalarial(
                 primaryColor: Colors.blue, // Sua cor primária
                 textColor: Colors.black,   // Sua cor de texto
-                borderColor: Colors.grey.shade200,
-                cargaHoraria: 20, // Sua carga horária
+                borderColor: Colors.grey.shade300,
+                cargaHoraria: cargaHoraria, // Sua carga horária
                 niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Seus níveis
                 calculatedTableValues: _calculatedTableValues, // Seus valores calculados
                 quantidadeDeProfessores: (nivel, coluna) {
@@ -298,10 +299,11 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
               SizedBox(height: 24),
               ///Quantidade de professores por nível e classe
               ///Acho que deveria sar
+/*
               ProfessorDistributionTable(
                 primaryColor: Colors.blue, // Your primary color
                 textColor: Colors.black,   // Your text color
-                borderColor: Colors.grey.shade200,
+                borderColor: Colors.grey.shade300,
                 cargaHoraria: 20, // Your workload value
                 niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Your levels
                 calculatedTableValues: _calculatedTableValues, // Your calculated values
@@ -314,14 +316,16 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                   _handleCellSelection(row, column);
                 },
               ),
+
+ */
               SizedBox(height: 24),
               ///Quantidade de professores com as somas dos saários
               ///Somatório de vencimentos por nível e classe
               SalaryTotalsTable(
                 primaryColor: Colors.blue, // ou sua cor primária
                 textColor: Colors.black,   // ou sua cor de texto
-                borderColor: Colors.grey.shade200,
-                cargaHoraria: 20, // ou seu valor
+                borderColor: Colors.grey.shade300,
+                cargaHoraria: cargaHoraria, // ou seu valor
                 niveis: ['NA', 'NB', 'NC', 'ND', 'NE'], // sua lista de níveis
                 calculatedTableValues: _calculatedTableValues, // seus valores calculados
                 quantidadeDeProfessores: (nivel, coluna) {
@@ -330,11 +334,10 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                 },
                 professores: professores, // sua lista de professores
               ),
-
               SizedBox(height: 24),
               SummaryTable(
-                totalProfissionais: totProf,
-                custoMensal: totalFolha,
+                totalProfissionais: calcQtdeServidoresTotal(),
+                custoMensal: calcValorTotal(),
                 meses: 12,
                 ferias: 0.033,
                 remuneracaoTotal: 20993884.21,
@@ -348,6 +351,24 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
         ),
       ),
     );
+  }
+
+  calcValorTotal(){
+    double tot=0;
+    ///Começa com 2 para não pegar o nível BASE
+    for (int nivelIndex = 2; nivelIndex < niveis.length; nivelIndex++){
+      tot=tot+ProfessorUtils.calculateTotalForLevel(niveis[nivelIndex], professores, cargaHoraria);
+    }
+    return tot;
+  }
+
+  calcQtdeServidoresTotal(){
+    double tot=0;
+    ///Começa com 2 para não pegar o nível BASE
+    for (int nivelIndex = 2; nivelIndex < niveis.length; nivelIndex++){
+      tot=tot+ProfessorUtils.calculateNroProfissionalForLevel(niveis[nivelIndex], professores, cargaHoraria);
+    }
+    return tot;
   }
 
   Widget buildSummaryCards() {

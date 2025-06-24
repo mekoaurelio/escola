@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:psycostatattoo/folha/professor_utils.dart';
 
 import '../services/utils.dart';
 
@@ -72,35 +73,7 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
                       color: widget.primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 80,
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Nível',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: widget.primaryColor,
-                            ),
-                          ),
-                        ),
-                        for (int i = 1; i <= widget.cargaHoraria; i++)
-                          Container(
-                            width: 90,
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            alignment: Alignment.center,
-                            child: Text(
-                              'Classe $i',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: widget.primaryColor,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
+                    child: ProfessorUtils().nivelClasse(widget.cargaHoraria,widget.primaryColor,false,90),
                   ),
                   // Rows
                   for (int nivelIndex = 0; nivelIndex < widget.niveis.length; nivelIndex++)
@@ -113,14 +86,7 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
                           ),
                         ),
                       ),
-                      child: MouseRegion(
-                        onEnter: (_) => setState(() => _isHovered = true),
-                        onExit: (_) => setState(() => _isHovered = false),
-                        child: Material(
-                          color: _isHovered
-                              ? widget.primaryColor.withOpacity(0.05)
-                              : Colors.transparent,
-                          child: Row(
+                      child: Row(
                             children: [
                               Container(
                                 width: 80,
@@ -176,8 +142,6 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
                                 ),
                             ],
                           ),
-                        ),
-                      ),
                     ),
                 ],
               ),

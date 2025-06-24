@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/texto.dart';
+import 'professor_utils.dart';
+
 class ProfessorDistributionTable extends StatefulWidget {
   final Color primaryColor;
   final Color textColor;
@@ -29,7 +32,6 @@ class ProfessorDistributionTable extends StatefulWidget {
 class _ProfessorDistributionTableState extends State<ProfessorDistributionTable> {
   int? selectedRow;
   int? selectedColumn;
-  bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -43,23 +45,8 @@ class _ProfessorDistributionTableState extends State<ProfessorDistributionTable>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Distribuição de Professores',
-              style: TextStyle(
-                color: widget.textColor,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Quantidade de professores por nível e classe',
-              style: TextStyle(
-                color: widget.textColor.withOpacity(0.6),
-                fontSize: 14,
-              ),
-            ),
-            SizedBox(height: 16),
+            Texto(tit: 'Distribuição de Professores',cor:widget.textColor ,tam: 18,negrito: true,bottom: 8,),
+            Texto(tit: 'Quantidade de professores por nível e classe',cor: widget.textColor.withOpacity(0.6),tam: 14,bottom: 16,),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Column(
@@ -70,35 +57,7 @@ class _ProfessorDistributionTableState extends State<ProfessorDistributionTable>
                       color: widget.primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 80,
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Nível',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: widget.primaryColor,
-                            ),
-                          ),
-                        ),
-                        for (int i = 1; i <= widget.cargaHoraria; i++)
-                          Container(
-                            width: 80,
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            alignment: Alignment.center,
-                            child: Text(
-                              'Classe $i',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: widget.primaryColor,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
+                    child: ProfessorUtils().nivelClasse(widget.cargaHoraria,widget.primaryColor,false,80)
                   ),
                   // Rows
                   for (int nivelIndex = 1; nivelIndex < widget.niveis.length; nivelIndex++)
@@ -111,41 +70,27 @@ class _ProfessorDistributionTableState extends State<ProfessorDistributionTable>
                           ),
                         ),
                       ),
-                      child: MouseRegion(
-                        onEnter: (_) => setState(() => _isHovered = true),
-                        onExit: (_) => setState(() => _isHovered = false),
-                        child: Material(
-                          color: _isHovered
-                              ? widget.primaryColor.withOpacity(0.05)
-                              : Colors.transparent,
-                          child: Row(
-                            children: [
-                              Container(
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 80,
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            alignment: Alignment.center,
+                            child: Texto(tit: widget.niveis[nivelIndex],negrito: true,cor: widget.textColor,),),
+                          for (int coluna = 0; coluna < widget.calculatedTableValues[nivelIndex].length; coluna++)
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  selectedRow = nivelIndex;
+                                  selectedColumn = coluna;
+                                });
+                                widget.onCellSelected(nivelIndex, coluna);
+                                },
+                              child: Container(
                                 width: 80,
                                 padding: EdgeInsets.symmetric(vertical: 12),
                                 alignment: Alignment.center,
                                 child: Text(
-                                  widget.niveis[nivelIndex],
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: widget.textColor,
-                                  ),
-                                ),
-                              ),
-                              for (int coluna = 0; coluna < widget.calculatedTableValues[nivelIndex].length; coluna++)
-                                GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      selectedRow = nivelIndex;
-                                      selectedColumn = coluna;
-                                    });
-                                    widget.onCellSelected(nivelIndex, coluna);
-                                  },
-                                  child: Container(
-                                    width: 80,
-                                    padding: EdgeInsets.symmetric(vertical: 12),
-                                    alignment: Alignment.center,
-                                    child: Text(
                                       widget.quantidadeDeProfessores(widget.niveis[nivelIndex], coluna + 1) == 0
                                           ? '-'
                                           : widget.quantidadeDeProfessores(widget.niveis[nivelIndex], coluna + 1).toString(),
@@ -159,8 +104,6 @@ class _ProfessorDistributionTableState extends State<ProfessorDistributionTable>
                                   ),
                                 ),
                             ],
-                          ),
-                        ),
                       ),
                     ),
                 ],
