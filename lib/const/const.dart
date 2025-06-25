@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 const  corFundoInativo=Colors.white;
 const  corLetraAtiva=Colors.black;
 const  corLetraInativa=Colors.grey;
+const Color primaryColor = Color(0xFF1976D2);
+const Color backgroundColor = Color(0xFFFAFAFA);
+const Color textColor = Color(0xFF212121);
+const Color borderColor = Color(0xFFE0E0E0);
 
 //Diretorios
 const pathDados= 'https://www.xmktech.net/tattoo/dados';
@@ -10,9 +14,6 @@ const pathImage= 'https://www.xmktech.net/tattoo/imagens';
 
 //Arquivos PHP
 String arqPhpGetImage = '$pathImage/get_image.php?filename=';
-
-//Cores
-const primaryColor =  Color(0xff4363ec);
 
 //IMPACTO
 const d1 =  'Soma de todos os vencimentos';

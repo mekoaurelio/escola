@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
+import '../const/const.dart';
+import '../const/nome_tabelas.dart';
+import '../data/api_my_sql.dart';
 import '../services/utils.dart';
 import '../widgets/texto.dart';
 
@@ -11,9 +15,7 @@ class VAAF extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Calculadora FUNDEB',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue),
       home: const FUNDEBCalculatorScreen(),
     );
   }
@@ -29,179 +31,213 @@ class FUNDEBCalculatorScreen extends StatefulWidget {
 class _FUNDEBCalculatorScreenState extends State<FUNDEBCalculatorScreen> {
   final double vaafPr = 6290.1;
   final _controller = TextEditingController();
+  final _base = TextEditingController();
+  Map<String, dynamic>? tabela; // Dados do banco (uma única linha)
+  bool isLoading = true;
+
   final List<Map<String, dynamic>> etapas = [
     {
       'nome': 'Creche em tempo integral - Pública',
       'fator': 1.55,
-      'matricula': null,
+      'campo': 'vr1',
     },
     {
       'nome': 'Creche em tempo integral - Conveniada',
       'fator': 1.45,
-      'matricula': null,
+      'campo': 'vr2',
     },
-    {
-      'nome': 'Creche em tempo parcial Pública',
-      'fator': 1.25,
-      'matricula': null,
-    },
+    {'nome': 'Creche em tempo parcial Pública', 'fator': 1.25, 'campo': 'vr3'},
     {
       'nome': 'Creche em tempo parcial Conveniada',
       'fator': 1.15,
-      'matricula': null,
+      'campo': 'vr4',
     },
     {
       'nome': 'Pré-escola em tempo integral - Pública',
       'fator': 1.5,
-      'matricula': null,
+      'campo': 'vr5',
     },
     {
       'nome': 'Pré-escola em tempo parcial - Pública',
       'fator': 1.15,
-      'matricula': null,
+      'campo': 'vr6',
     },
     {
       'nome': 'Pré-escola em tempo integral -Conveniada',
       'fator': 1.4,
-      'matricula': null,
+      'campo': 'vr7',
     },
     {
       'nome': 'Pré-escola em tempo parcial -Conveniada',
       'fator': 1.05,
-      'matricula': null,
+      'campo': 'vr8',
     },
     {
       'nome': 'Anos iniciais do Ensino Fundamental urbano',
-      'fator': 1.15,
-      'matricula': null,
+      'fator': 1.00,
+      'campo': 'vr9',
     },
     {
       'nome': 'Anos iniciais do Ensino Fundamental no campo',
       'fator': 1.15,
-      'matricula': null,
+      'campo': 'vr10',
     },
     {
       'nome': 'Anos finais do ensino fundamental urbana',
       'fator': 1.1,
-      'matricula': null,
+      'campo': 'vr11',
     },
     {
       'nome': 'Anos finais do ensino fundamental no campo',
       'fator': 1.265,
-      'matricula': null,
+      'campo': 'vr12',
     },
     {
       'nome': 'Ensino Fundamental em tempo integral',
       'fator': 1.5,
-      'matricula': null,
+      'campo': 'vr13',
     },
-    {
-      'nome': 'Ensino Médio urbano',
-      'fator': 1.25,
-      'matricula': null,
-    },
-    {
-      'nome': 'Ensino Médio em tempo Integral',
-      'fator': 1.52,
-      'matricula': null,
-    },
+    {'nome': 'Ensino Médio urbano', 'fator': 1.25, 'campo': 'vr14'},
+    {'nome': 'Ensino Médio em tempo Integral', 'fator': 1.52, 'campo': 'vr15'},
     {
       'nome': 'Ensino Médio integrado à educação profissional',
       'fator': 1.6875,
-      'matricula': null,
+      'campo': 'vr16',
     },
-    {
-      'nome': 'Educação especial',
-      'fator': 1.4,
-      'matricula': null,
-    },
+    {'nome': 'Educação especial', 'fator': 1.4, 'campo': 'vr17'},
     {
       'nome': 'Atendimento educacional especializado - AEE',
       'fator': 1.96,
-      'matricula': null,
+      'campo': 'vr18',
     },
-    {
-      'nome': 'Educação indígena e quilombola',
-      'fator': 1.4,
-      'matricula': null,
-    },
+    {'nome': 'Educação indígena e quilombola', 'fator': 1.4, 'campo': 'vr19'},
     {
       'nome': 'Educação de jovens e adultos (EJA)',
       'fator': 1.0,
-      'matricula': null,
+      'campo': 'vr20',
     },
     {
       'nome': 'EJA integrada à educação profissional de nível médio',
       'fator': 1.2,
-      'matricula': null,
+      'campo': 'vr21',
     },
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _carregarDadosBanco();
+  }
+
+  Future<void> _carregarDadosBanco() async {
+    try {
+      // Supondo que a tabela só tem uma linha com id=1
+      final dados = await ApiMySql.get(TBVaaf, null, null);
+
+      setState(() {
+        tabela = dados.isNotEmpty ? dados.first : {};
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      // Tratar erro
+      print('Erro ao carregar dados: $e');
+    }
+  }
+
+  double _obterMatricula(int index) {
+    final campo = etapas[index]['campo'];
+    if (tabela == null || !tabela!.containsKey(campo)) {
+      return 0.0;
+    }
+    return double.tryParse(tabela![campo].toString()) ?? 0.0;
+  }
+
+  Future<void> _salvarMatricula(int index, double valor) async {
+    final campo = etapas[index]['campo'];
+
+    try {
+      // Atualizar no banco de dados
+      await ApiMySql.executaSql('update $TBVaaf set $campo=$valor');
+      // Atualizar localmente
+      setState(() {
+        tabela?[campo] = valor;
+      });
+    } catch (e) {
+      // Tratar erro
+      print('Erro ao salvar matrícula: $e');
+    }
+  }
+
   double get totalMatriculas {
-    return etapas.fold(0, (sum, item) => sum + (item['matricula'] ?? 0));
+    return etapas.fold(
+      0,
+      (sum, item) => sum + _obterMatricula(etapas.indexOf(item)),
+    );
   }
 
   double get totalReceitas {
     return etapas.fold(0, (sum, item) {
-      final matricula = item['matricula'] ?? 0;
+      final index = etapas.indexOf(item);
+      final matricula = _obterMatricula(index);
       final fator = item['fator'];
-      final vaafPonderado = matricula * fator * vaafPr;
+      final vaafPonderado = matricula*fator * vaafPr;
       return sum + vaafPonderado;
     });
   }
 
   void _editMatricula(int index) async {
-    var currentValue = etapas[index]['matricula']?.toString() ?? '';
+    final currentValue = _obterMatricula(index);
+    _controller.text = currentValue.toString();
 
-    final newValue = await showDialog<String>(
+    await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Editar Matrícula - ${etapas[index]['nome']}'),
-        content: TextField(
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
-          decoration: const InputDecoration(
-            labelText: 'Número de matrículas',
-            hintText: 'Digite o valor',
+      builder:
+          (context) => AlertDialog(
+            title: Text('Editar Matrícula - ${etapas[index]['nome']}'),
+            content: TextField(
+              controller: _controller,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,3}')),
+              ],
+              decoration: const InputDecoration(
+                labelText: 'Número de matrículas',
+                hintText: 'Digite o valor',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final valor = double.tryParse(_controller.text) ?? 0;
+                  await _salvarMatricula(index, valor);
+                  Navigator.pop(context);
+                  _controller.clear();
+                },
+                child: const Text('Salvar'),
+              ),
+            ],
           ),
-          controller:_controller,
-         // autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              //final text = (context as Element).findAncestorWidgetOfExactType<AlertDialog>()?.content is TextField
-                //  ? ((context as Element).findAncestorWidgetOfExactType<AlertDialog>()?.content as TextField).controller?.text
-                //  : '';
-              //setState(() {
-                //_Controller.text='8875';
-              //  currentValue='10990';
-             // });
-              Navigator.pop(context, _controller.text);
-              _controller.text='';
-            },
-            child: const Text('Salvar'),
-          ),
-        ],
-      ),
     );
-
-    if (newValue != null && newValue != currentValue) {
-      setState(() {
-        etapas[index]['matricula'] = double.tryParse(newValue) ?? 0;
-      });
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Projeção dos recursos do FUNDEB'),
+        title: Texto(tit: 'Projeção dos recursos do FUNDEB',cor:Colors.white ,negrito: true,tam: 20,),
+        centerTitle: true,
+        backgroundColor: primaryColor,
+        elevation: 4,
       ),
       body: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -212,15 +248,14 @@ class _FUNDEBCalculatorScreenState extends State<FUNDEBCalculatorScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'VAAF/PR: $vaafPr - Portaria Interministerial MEC/MF nº 04/2025',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
+
                 const SizedBox(height: 16),
                 DataTable(
                   columnSpacing: 16,
                   columns: const [
-                    DataColumn(label: Text('Etapas e Modalidades da Educação Básica')),
+                    DataColumn(
+                      label: Text('Etapas e Modalidades da Educação Básica'),
+                    ),
                     DataColumn(label: Text('Matrículas Censo do Ano Anterior')),
                     DataColumn(label: Text('Fatores de Ponderação')),
                     DataColumn(label: Text('VAA Ponderado')),
@@ -228,74 +263,79 @@ class _FUNDEBCalculatorScreenState extends State<FUNDEBCalculatorScreen> {
                   ],
                   rows: [
                     ...etapas.map((etapa) {
-                      final matricula = etapa['matricula'] ?? 0;
+                      final index = etapas.indexOf(etapa);
+                      final matricula = _obterMatricula(index);
                       final fator = etapa['fator'];
-                      final vaafPonderado = matricula * fator * vaafPr;
+                      final vaafPonderado = fator * vaafPr;
                       final receita = matricula * vaafPonderado;
 
-                      return  DataRow(cells: [
-                        DataCell(Text(etapa['nome'])),
-                        DataCell(
-                          Container(
-                            color: Colors.grey[200],
-                            child: InkWell(
-                              onTap: () => _editMatricula(etapas.indexOf(etapa)),
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(matricula == 0 ? '' : matricula.toStringAsFixed(2)),
-                                    const Icon(Icons.edit, size: 18),
-                                  ],
+                      return DataRow(
+                        cells: [
+                          ///Descrição
+                          DataCell(Text(etapa['nome'])),
+                          ///Matrícula
+                          DataCell(
+                            Container(
+                              color: Colors.grey[200],
+                              child: InkWell(
+                                onTap: () => _editMatricula(index),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        matricula == 0
+                                            ? ''
+                                            : matricula.toStringAsFixed(2),
+                                      ),
+                                      const Icon(Icons.edit, size: 18),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                       ///fators de ponderaçao
-                        DataCell( // Célula do Fator de Ponderação (agora centralizada)
-                          Center(
-                            child: Text(fator.toString()),
+                          ///Fator de Ponderação
+                          DataCell(Center(child: Text(fator.toString()))),
+                          ///VAA ponderado
+                          DataCell(
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(Utils.formatVr.format(vaafPonderado)),
+                            ),
                           ),
-                        ),
-                        ///VAA ponderado
-                        DataCell(
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Text(vaafPonderado.toStringAsFixed(2)),
+                          ///Projeção de receitas
+                          DataCell(
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(Utils.formatVr.format(receita)),
+                            ),
                           ),
-                        ),
-
-                        ///Projeção de receitas
-                        DataCell(
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Text(receita.toStringAsFixed(2)),
-                          ),
-                        ),
-                      ]);
+                        ],
+                      );
                     }).toList(),
+
                     DataRow(
                       cells: [
-                        const DataCell(Text('Total FUNDEB (20%)', style: TextStyle(fontWeight: FontWeight.bold))),
+                         DataCell(
+                          Texto(tit:'Total FUNDEB (20%)',negrito: true,)
+                        ),
                         DataCell(
                           Align(
                             alignment: Alignment.centerRight,
-                            child: Texto(tit:Utils.formatVr.format(totalMatriculas),negrito: true,),
+                            child: Texto(tit: Utils.formatVr.format(totalMatriculas),negrito: true,),
                           ),
                         ),
-
                         const DataCell(Text('')),
                         const DataCell(Text('')),
                         DataCell(
                           Align(
                             alignment: Alignment.centerRight,
-                            child: Texto(tit:Utils.formatVr.format(totalReceitas),negrito: true,),
+                            child:Texto(tit: Utils.formatVr.format(totalReceitas),negrito: true,),
                           ),
                         ),
-
-                        //DataCell(Text(totalReceitas.toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold))),
                       ],
                     ),
                   ],

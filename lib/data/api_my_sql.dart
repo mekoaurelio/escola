@@ -23,17 +23,14 @@ class ApiMySql {
 
   ///**********************************************************************
   static get(var table, var id, var orderBy) async {
-    var sql = '';
-    // var idE=Utils.getIdEntidade();
-    var idE = '0';
-    sql = 'select * from $table WHERE id_municipio=$idE';
+    var sql = 'select * from $table';
     if (id != null) {
       sql += ' AND id=$id';
     }
     if(orderBy!=null){
       sql+=' order by $orderBy';
     }
-    // print(sql);
+     print(sql);
     return executaSql(sql);
   }
 
@@ -141,7 +138,7 @@ class ApiMySql {
     sql2+=" SUM(CASE WHEN dv.codigo IN ('21019') THEN dv.valor ELSE 0  END) AS soma_apts,";
     sql2+="(SELECT SUM(vencimento) FROM a2501 WHERE status = 'A') AS total_vencimentos_geral";
     sql2+=" FROM $TBFolha f LEFT JOIN $TBVantagens dv ON f.id = dv.folha_id WHERE f.status = 'A'GROUP BY f.id ORDER BY f.id";
-    print(sql2);
+   // print(sql2);
     return await executaSql(sql2);
   }
 

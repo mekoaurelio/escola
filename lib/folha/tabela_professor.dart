@@ -3,13 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:psycostatattoo/const/nome_tabelas.dart';
 import 'package:get/get.dart';
 
+import '../const/const.dart';
 import '../data/api_my_sql.dart';
 import '../services/ano_bimestre_controller.dart';
 import '../services/utils.dart'; // Assumindo que Utils.formatVr existe
-import '../widgets/line.dart';
 import '../widgets/texto.dart';
 import 'buildSummaryTable.dart';
-import 'professor_distribution_table.dart';
 import 'professor_utils.dart';
 import 'salary_totals_table.dart';
 import 'tabela_salarial.dart';
@@ -27,13 +26,7 @@ class SimuladorTabelaProfessor extends StatefulWidget {
 }
 
 class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
-  // ... (mantenha todas as variáveis existentes)
 
-  // Adicione estas cores no início da classe
-  static const Color _primaryColor = Color(0xFF1976D2);
-  static const Color _backgroundColor = Color(0xFFFAFAFA);
-  static const Color _textColor = Color(0xFF212121);
-  static const Color _borderColor = Color(0xFFE0E0E0);
   final anoBimestreController = Get.find<AnoBimestreController>();
   int cargaHoraria = 30;
   double _percEntreColunas=0;
@@ -237,19 +230,19 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(_primaryColor),
+              valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
             ),
-            Texto(tit: 'Carregando dados...',cor: _textColor,tam: 16,bottom: 16,),
+            Texto(tit: 'Carregando dados...',cor: textColor,tam: 16,bottom: 16,),
           ],
         ),
       );
     }
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         title: Texto(tit: 'Plano de Carreira Docente',cor:Colors.white ,negrito: true,tam: 20,),
         centerTitle: true,
-        backgroundColor: _primaryColor,
+        backgroundColor: primaryColor,
         elevation: 4,
         actions: [
           IconButton(
@@ -266,7 +259,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
           children: [
             Icon(Icons.error_outline, size: 48, color: Colors.red),
             SizedBox(height: 16),
-            Texto(tit: 'Sem dados disponíveis para este período',cor:_textColor ,tam: 18,),
+            Texto(tit: 'Sem dados disponíveis para este período',cor:textColor ,tam: 18,),
           ],
         ),
       )
@@ -469,11 +462,11 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
         ),
         child: Column(
           children: [
-            Icon(icon, size: 24, color: _primaryColor),
+            Icon(icon, size: 24, color: primaryColor),
             SizedBox(height: 8),
-            Texto(tit: title,cor: _textColor.withOpacity(0.7),tam: 12,),
+            Texto(tit: title,cor: textColor.withOpacity(0.7),tam: 12,),
             SizedBox(height: 4),
-            Texto(tit: value,cor:_primaryColor ,tam: 16,negrito: true,),
+            Texto(tit: value,cor:primaryColor ,tam: 16,negrito: true,),
           ],
         ),
       ),
