@@ -13,3 +13,6 @@ String TBExercicio='a_exercicio$ano$bimestre';
 String TBProfessor='a_professor$ano$bimestre';
 String TBReceitaFundebSimulador='a_receita_fundeb_simulador$ano$bimestre';
 String TBVaaf='a_vaaf$ano$bimestre';
+String TBTotais='a_totais$ano$bimestre';
+String TBDecenio='a_decenio$ano$bimestre';
+String TBImpostos='a_impostos$ano$bimestre';

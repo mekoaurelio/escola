@@ -56,10 +56,11 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> with AnoBimestreLis
     final i = await ApiMySql.get(TBInfantil, null, 'ordem');
     final g = await ApiMySql.get(TBReceitaFundebSimulador, null, null);
     final h = await ApiMySql.get(TBExercicio, null, 'ordem');
+    print('55555');
 
-    fundebBase = double.tryParse(
-        g.firstWhere((e) => e['ordem'] == '1', orElse: () => {'valor': 0})['valor'].toString());
+    fundebBase = double.tryParse(g.firstWhere((e) => e['ordem'] == '1', orElse: () => {'valor': 0})['valor'].toString());
 
+    print('66666');
     setState(() {
       prof = List<Map<String, dynamic>>.from(f);
       infantil = List<Map<String, dynamic>>.from(i);
@@ -96,6 +97,7 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> with AnoBimestreLis
                 onEdited: _loadAll,
               ),
               const SizedBox(height: 24),
+
               _SectionFundebExercio(
                 title: 'FUNDEB RECEITA',
                 table: TBReceitaFundebSimulador,
@@ -104,7 +106,9 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> with AnoBimestreLis
                 onEdited: _loadAll,
                 referencia: null, // Não usa referência
               ),
+
               const SizedBox(height: 24),
+              
               _SectionFundebExercio(
                 title: 'EXERCÍCIO',
                 table: TBExercicio,
@@ -113,6 +117,8 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> with AnoBimestreLis
                 onEdited: _loadAll,
                 referencia: fundebBase, // 🔥 Usa o valor do FUNDEB
               ),
+
+
             ],
           ),
         ),
@@ -141,6 +147,7 @@ class _Section extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Calcula iterativamente os valores compostos:
+    print(title);
     double? lastValue;
     double? firstValue;
     final cards = <Widget>[];
@@ -150,8 +157,10 @@ class _Section extends StatelessWidget {
       final rawValor = double.tryParse(data['valor'].toString()) ?? 0;
       final perc = double.tryParse(data['percentual'].toString()) ?? 0;
 
+
       // Primeiro item: usa rawValor. Depois, valor anterior * (1 + perc/100)
       var computed = (i == 0) ? rawValor : (lastValue! * (1 + perc / 100));
+
       if(data['ordem']=='0'){
         firstValue=computed;
       }

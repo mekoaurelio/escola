@@ -27,7 +27,35 @@ class Utils {
   static var formatterD =  DateFormat('dd/MM/yyyy');
   static var formatterh =  DateFormat('hh:mm');
 
-  static Widget vazio(var texto){
+  static String formatCurrency(double value) {
+    final format = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+    return format.format(value);
+  }
+
+  static verificaErro(var result){
+    if(result==null){
+      Utils.snak('Atenção', 'Erro ao atualizar dados', false, Colors.red);
+    }else{
+      if(result['error']!=null){
+        Utils.snak('Atenção', result['error'], false, Colors.red);
+        print(result['error']);
+      }
+    }
+  }
+  static BoxDecoration decor() {
+    return BoxDecoration(
+      // color: Colors.blueGrey[100], // Cor de fundo do container
+      border: Border.all(
+        color: Colors.grey.shade300, // Cor da borda
+        width: 1.0, // Espessura da borda
+        style: BorderStyle.solid, // Estilo da borda (sólida, tracejada, etc.)
+      ),
+      borderRadius: BorderRadius.circular(
+          10.0), // Opcional: bordas arredondadas
+    );
+  }
+
+  static Widget vazio(var texto) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -44,6 +72,7 @@ class Utils {
       ),
     );
   }
+
 
   static limpaBanco()async{
    // String van=await ApiMySql.executaSql('delete from  $TBVantagens');

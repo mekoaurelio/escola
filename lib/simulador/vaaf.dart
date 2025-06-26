@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../const/const.dart';
 import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
+import '../services/anoBimestreListenerMixin.dart';
 import '../services/utils.dart';
 import '../widgets/texto.dart';
 
@@ -28,12 +29,27 @@ class FUNDEBCalculatorScreen extends StatefulWidget {
   State<FUNDEBCalculatorScreen> createState() => _FUNDEBCalculatorScreenState();
 }
 
-class _FUNDEBCalculatorScreenState extends State<FUNDEBCalculatorScreen> {
+class _FUNDEBCalculatorScreenState extends State<FUNDEBCalculatorScreen> with AnoBimestreListenerMixin{
   final double vaafPr = 6290.1;
   final _controller = TextEditingController();
   final _base = TextEditingController();
   Map<String, dynamic>? tabela; // Dados do banco (uma única linha)
   bool isLoading = true;
+
+  @override
+  void onAnoBimestreMudou(String ano, String bimestre) {
+    _atualizaTela(ano,bimestre);
+  }
+
+  _atualizaTela(var ano,var bimestre){
+    setState(() {
+      TBProfessor='a_professor$ano$bimestre';
+      TBInfantil='a_infantil$ano$bimestre';
+      TBReceitaFundebSimulador='a_receita_fundeb_simulador$ano$bimestre';
+      TBExercicio='a_exercicio$ano$bimestre';
+
+    });
+  }
 
   final List<Map<String, dynamic>> etapas = [
     {
@@ -159,9 +175,12 @@ class _FUNDEBCalculatorScreenState extends State<FUNDEBCalculatorScreen> {
     final campo = etapas[index]['campo'];
 
     try {
-      // Atualizar no banco de dados
+      /// Atualizar no banco de dados
       await ApiMySql.executaSql('update $TBVaaf set $campo=$valor');
-      // Atualizar localmente
+      /// Salva os totais
+      var _result=await ApiMySql.executaSql('update $TBTotais set matricula=$totalMatriculas, receita=$totalReceitas');
+      Utils.verificaErro(_result);
+      /// Atualizar localmente
       setState(() {
         tabela?[campo] = valor;
       });

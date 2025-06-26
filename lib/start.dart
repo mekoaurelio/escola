@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:country_flags/country_flags.dart';
 
 import 'auxiliares/cargo_lista.dart';
 import 'auxiliares/encargo_social_lista.dart';
 import 'auxiliares/fonte_receita_lista.dart';
 import 'auxiliares/lista_cod_descri.dart';
+import 'dashboard/dashboard_screen.dart';
 import 'const/nome_tabelas.dart';
 import 'grafico/grafico_fundeb_exercicio.dart';
-import 'grafico/home.dart';
+import 'grafico/receita_municipio.dart';
 import 'impacto/impacto_grid2.dart';
 import 'import/pdfExtractorPage.dart';
 import 'professor/professor_vecto_proposta.dart';
 import 'professor/professores.dart';
 import 'folha/tabela_professor.dart';
-import 'folha/tabela_professor_infantil.dart';
 import 'services/anoBimestreListenerMixin.dart';
 import 'services/ano_bimestre_controller.dart';
+import 'services/progressaoScreen.dart';
 import 'services/utils.dart';
-import 'simulador/executa_simulador.dart';
 import 'simulador/tabela_simulador.dart';
 import 'simulador/vaaf.dart';
 import 'widgets/texto.dart';
@@ -32,7 +31,7 @@ class Start extends StatefulWidget {
 
 class _StartState extends State<Start> with AnoBimestreListenerMixin{
   final Color appBarColorCrypto = const Color(0xFF2459A9);
-  String _currentPage = 'Home';
+  String _currentPage = 'DashboardScreen';
   int _currentTabIndex = 0;
   String _currentAno = '00';
   String _currentBimestre = '00';
@@ -65,8 +64,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
   ];
 
   final List<Map<String, dynamic>> _mainNavigationItems = [
-    {'title': 'Simulador', 'icon': Icons.swap_vertical_circle_rounded, 'index': 1},
-   // {'title': 'Impacto', 'icon': Icons.lightbulb_outline, 'index': 2},
+   // {'title': 'Simulador', 'icon': Icons.swap_vertical_circle_rounded, 'index': 1},
     {'title': 'Impacto', 'icon': Icons.lightbulb_outline, 'index': 2},
     {'title': 'Extracao'.tr, 'icon': Icons.archive_outlined, 'index': 3},
     {'title': 'Vecto X Proposto', 'icon': Icons.auto_graph_outlined, 'index': 4},
@@ -99,7 +97,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
   final List<Map<String, dynamic>> _graficosItems = [
     {'title': 'FUNDEB e execução', 'table': 'cargo','icon': Icons.person},
     {'title': 'Comparativo Fundeb e execuçao', 'table': 'encargos_sociais'},
-
+    {'title': 'Receitas', 'table': 'encargos_sociais'},
   ];
 
   Widget _getContent() {
@@ -122,10 +120,11 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
 
     final pageMap = <String, Widget>{
       'professores'.tr: Professores(),
-      'Simulador': SimuladorExecuta(),
+      'Simulador': ProgressaoScreen(),
       'VAAF': VAAF(),
       'Tabelas': TabelasSimulador(),
       'Extracao'.tr: PdfExtractorPage(),
+      'Impacto': ImpactoGrid2(),
       'Tabela Professor': SimuladorTabelaProfessor(
         key: ValueKey('SimuladorTabelaProfessor_normal'), // Chave única
         table: 'a_professor',
@@ -135,11 +134,10 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
         table: 'a_infantil',
       ),
 
-      //  'Professor Infantil': TabelaProfessorInfantil(),
       'Vecto X Proposto': ProfessorVectoProposta(),
       'Comparativo Fundeb e execuçao': FundebChartSelector(),
-      'FUNDEB e execução': Home(),
-      'Home': FundebChartSelector(),
+      'Receitas': GraficoReceitaMunicipio(),
+      'Home': DashboardScreen(),
     };
 
     return pageMap[title] ?? Container();
@@ -332,7 +330,10 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
         children: [
           const SizedBox(height: 20),
           Image.asset('assets/images/Xmktec_logo.jpeg', height: 105),
-          Texto(tit: 'title'.tr + ' V.010', cor: Colors.black54),
+          Center(
+            child: Texto(tit: 'title'.tr + ' V.011', cor: Colors.black54),
+          ),
+
           const SizedBox(height: 20),
           _buildProfessoresExpansionTile(),
           const SizedBox(height: 20),
@@ -393,7 +394,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
   ///MENU SIMULADOR
   Widget _buildSimuladorExpansionTile() {
     return ExpansionTile(
-      leading: const Icon(Icons.perm_contact_cal_sharp,color: Colors.grey,),
+      leading: const Icon(Icons.swap_vertical_circle_rounded,color: Colors.grey,),
       title: Text('Simulador', style: const TextStyle(color: Colors.grey)),
       children: _simuladorItems.map((item) {
         final title = item['title'];

@@ -30,27 +30,26 @@ class ApiMySql {
     if(orderBy!=null){
       sql+=' order by $orderBy';
     }
-     print(sql);
+    //print(sql);
     return executaSql(sql);
   }
-
+/*
   static Future<dynamic> executaSql(String sql) async {
     String cleanSql = sql.replaceAll(r'\"', '"');
-    if(sql.contains('$TBExercicio')){
-      //print('yyyyyy');
+    //if(sql.contains('$TBExercicio')){
       //print(sql);
-      //print('yyyyyy');
-    }
+    //}
     List<Map<String, dynamic>> dados = [];
     var url = 'https://www.xmktech.net/dados/get.php?sql=$cleanSql';
     try {
       final response = await http.get(Uri.parse(url));
-
      // if(sql.contains('Quantidade'))
        // print(response.body);
       if (response.statusCode == 200) {
         String volta = response.body.trim();
-        if (volta.contains('NENHUM')) {
+        if (volta.contains('NENHUM') || volta.contains('affected_rows')) {
+          print('RESULTADO $volta');
+          dados = json.decode(volta);
           return dados;
         } else {
           dados = List<Map<String, dynamic>>.from(json.decode(volta));
@@ -63,6 +62,23 @@ class ApiMySql {
     } catch (e) {
       print('ERRO AO EXECUTAR ==> $e');
       return dados;
+    }
+  }
+
+ */
+  static Future<dynamic> executaSql(String sql) async {
+    String cleanSql = sql.replaceAll(r'\"', '"');
+    var url = 'https://www.xmktech.net/dados/get.php?sql=$cleanSql';
+    try {
+      final response = await http.get(Uri.parse(url));
+     // print(response);
+      if (response.statusCode == 200) {
+        return json.decode(response.body.trim());
+      }
+      return [];
+    } catch (e) {
+      print('ERRO AO EXECUTAR ==> $e');
+      return [];
     }
   }
 
