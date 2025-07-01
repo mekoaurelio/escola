@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import '../data/api_my_sql.dart';
 import '../services/anoBimestreListenerMixin.dart';
 import '../services/ano_bimestre_controller.dart';
+import '../services/utils.dart';
 
 class FundebChartSelector extends StatefulWidget {
   const FundebChartSelector({Key? key}) : super(key: key);
@@ -80,7 +81,9 @@ class _FundebChartSelectorState extends State<FundebChartSelector> with AnoBimes
         margin: EdgeInsets.all(8),
         child: _isLoading
             ? Center(child: CircularProgressIndicator())
-            : Column(
+            : receitaFundeb.isEmpty?Utils.vazio('Nenhum Dado Encontrado',height: 100,width: 100):
+
+        Column(
           children: [
             Padding(
               padding: const EdgeInsets.all(8.0),

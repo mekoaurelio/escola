@@ -15,10 +15,12 @@ import 'tabela_salarial.dart';
 
 class SimuladorTabelaProfessor extends StatefulWidget {
   final String table;
+  final String tipo;
 
   const SimuladorTabelaProfessor({
     Key? key,
     required this.table,
+    required this.tipo,
   }) : super(key: key);
 
   @override
@@ -52,7 +54,9 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       coluna = '';
   var professores;
   int totProf=0;
-
+  double perAumentoInfantil=0.00;
+  double perAumentoAdulto=0.00;
+  double _custoMensal = 0.0;
   double totalFolha=0;
 
   _atualizaTela(var ano,var bimestre){
@@ -174,12 +178,30 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   }
 
   Future<void> _loadDataAndCalculate() async {
-    //professores = await ApiMySql.executaSql('select * from $TBFolha');
-    professores = await ApiMySql.getProfessor();
+
+    print('>> widget.tipo recebido: "${widget.tipo}"');
+    print('>> widget.tipo normalizado: "${widget.tipo.trim().toUpperCase()}"');
+
+    professores = await ApiMySql
+        .getProfessores(widget.tipo.trim().toUpperCase())
+        .timeout(const Duration(seconds: 30));
+
+    print(widget.tipo);
+    print(professores.length);
+    //final totais = await ApiMySql.get(TBTotais,null,null);
+    //perAumentoInfantil=double.parse(totais[0]['perc_aumento_infantil']);
+    //perAumentoAdulto=double.parse(totais[0]['perc_aumento_adulto']);
+
+    //final totals = await Future.wait([
+     // Utils.calculateTotals(adulto),
+     // Utils.calculateTotals(infantil),
+    //]);
+
+  //  professores.
     if(professores.length==0){
+      setState(() => isLoading = false);
       return;
     }
-    totProf=professores.length;
     setState(() => isLoading = true);
     /// Pré-processa a contagem de professores por nível
     _professoresPorNivel = {};
@@ -188,12 +210,25 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       _professoresPorNivel[nivel] = (_professoresPorNivel[nivel] ?? 0) + 1;
     }
 
+    final valor = await calcValorTotal(widget.tipo);
+    setState(() {
+      _custoMensal = valor;
+      totProf=professores.length;
+    });
+
     totalFolha=double.parse(professores[0]['total_vencimentos_geral']);
 
     try {
       profs = await ApiMySql.get(TBProfessor, null, 'ordem');
       valorBase = double.parse(profs[0]['valor']);
 
+      if(perAumentoAdulto>0 && widget.tipo=='NORMAL' ){
+        valorBase=valorBase+(valorBase*perAumentoAdulto/100);
+      }
+
+      if(perAumentoInfantil>0 && widget.tipo=='INFANTIL'){
+        valorBase=valorBase+(valorBase*perAumentoInfantil/100);
+      }
       ///PISO INFANTIL
       penA = double.parse(profs[2]['valor']);
 
@@ -240,7 +275,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Texto(tit: 'Plano de Carreira Docente',cor:Colors.white ,negrito: true,tam: 20,),
+        title: Texto(tit: 'Plano de Carreira Docente ${widget.tipo}',cor:Colors.white ,negrito: true,tam: 20,),
         centerTitle: true,
         backgroundColor: primaryColor,
         elevation: 4,
@@ -252,16 +287,9 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
           ),
         ],
       ),
-      body: professores == null
+      body: professores.length==0
           ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 48, color: Colors.red),
-            SizedBox(height: 16),
-            Texto(tit: 'Sem dados disponíveis para este período',cor:textColor ,tam: 18,),
-          ],
-        ),
+        child: Utils.vazio('Nenhum dado Encontrado')
       )
           : SingleChildScrollView(
         child: Padding(
@@ -317,7 +345,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
               SalaryTotalsTable(
                 primaryColor: Colors.blue, // ou sua cor primária
                 textColor: Colors.black,   // ou sua cor de texto
-                borderColor: Colors.grey.shade300,
+                tipo: widget.tipo,
                 cargaHoraria: cargaHoraria, // ou seu valor
                 niveis: ['NA', 'NB', 'NC', 'ND', 'NE'], // sua lista de níveis
                 calculatedTableValues: _calculatedTableValues, // seus valores calculados
@@ -328,16 +356,16 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                 professores: professores, // sua lista de professores
               ),
               SizedBox(height: 24),
+
               SummaryTable(
                 totalProfissionais: calcQtdeServidoresTotal(),
-                custoMensal: calcValorTotal(),
+                custoMensal: _custoMensal,
                 meses: 12,
                 ferias: 0.033,
                 remuneracaoTotal: 20993884.21,
                 encargosPercentual: 22,
                 totalEncargos: 6968798,
                 totalComEncargos: 0697079709
-
               )
             ],
           ),
@@ -346,13 +374,29 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
     );
   }
 
-  calcValorTotal(){
-    double tot=0;
-    ///Começa com 2 para não pegar o nível BASE
-    for (int nivelIndex = 2; nivelIndex < niveis.length; nivelIndex++){
-      tot=tot+ProfessorUtils.calculateTotalForLevel(niveis[nivelIndex], professores, cargaHoraria);
+  Future<double> calcValorTotal(String tipo) async {
+    double tot = 0;
+    try {
+      // Otimização: calcula todos os níveis em paralelo
+      List<Future<double>> futures = [];
+
+      for (int nivelIndex = 2; nivelIndex < niveis.length; nivelIndex++) {
+        futures.add(ProfessorUtils.calculateTotalForLevel(
+            niveis[nivelIndex],
+            professores,
+            cargaHoraria,
+            tipo
+        ));
+      }
+
+      List<double> results = await Future.wait(futures);
+      tot = results.fold(0, (sum, element) => sum + element);
+
+      return tot;
+    } catch (e) {
+      print('Erro em calcValorTotal: $e');
+      return 0.0;
     }
-    return tot;
   }
 
   calcQtdeServidoresTotal(){

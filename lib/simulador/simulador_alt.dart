@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
+import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
 import '../services/generic_form_screen.dart';
 import '../services/utils.dart';
@@ -46,17 +47,46 @@ class SimuladorAlt extends StatelessWidget {
       body: GenericFormScreen(
         subTitle: data==null?'Novo Dado': data!['descricao'],
         onBack: () => Get.back(),
+        /*
         onSave: (formValues) async {
           if (data == null || data!['id'] == null) {
             print('NOVO');
              await ApiMySql.insertDynamic(formValues, tb);
           } else {
-            print('EDITANDO');
+            print(data);
             await ApiMySql.updateDynamic(tb,formValues,idValue: data!['id']);
+           // await ApiMySql.executaSql('UPDATE $TBTotais set $campo=$computed');
             Get.back();
             //Utils.snak('congra'.tr, 'success'.tr, false, Colors.green);
           }
         },
+
+         */
+        onSave: (formValues) async {
+          if (data == null || data!['id'] == null) {
+            // Inserção nova (não é o seu foco aqui)
+            await ApiMySql.insertDynamic(formValues, tb);
+          } else {
+            // Atualiza a tabela principal
+            await ApiMySql.updateDynamic(tb, formValues, idValue: data!['id']);
+
+            // Se for o campo "percentual" e da ordem 8, atualiza a tabela TBTotais
+            if (tipo == 'percentual' && data!['ordem'] == '8') {
+              final novoPercentual = double.tryParse(
+                formValues['percentual'].toString().replaceAll(RegExp(r'[^\d,]'), '').replaceAll(',', '.'),
+              ) ?? 0;
+
+              if (tb == TBProfessor) {
+                await ApiMySql.executaSql('UPDATE $TBTotais SET perc_aumento_adulto = $novoPercentual');
+              } else if (tb == TBInfantil) {
+                await ApiMySql.executaSql('UPDATE $TBTotais SET perc_aumento_infantil = $novoPercentual');
+              }
+            }
+
+            Get.back();
+          }
+        },
+
         fieldsData: fields,
         initialValues: initialValues,
         hasImagePicker: false,

@@ -68,7 +68,7 @@ class _CompactChartContentState extends State<_CompactChartContent> {
     return isLoading
         ? Center(child: CircularProgressIndicator())
         : errorMessage.isNotEmpty
-        ? Center(child: Text(errorMessage, style: TextStyle(fontSize: 12)))
+        ? Utils.vazio('Nenhum Dado Encontrado',width: 100,height: 100)
         : Column(
       children: [
         Padding(

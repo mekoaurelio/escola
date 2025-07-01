@@ -36,6 +36,7 @@ class ApiMySql {
 /*
   static Future<dynamic> executaSql(String sql) async {
     String cleanSql = sql.replaceAll(r'\"', '"');
+
     //if(sql.contains('$TBExercicio')){
       //print(sql);
     //}
@@ -66,13 +67,21 @@ class ApiMySql {
   }
 
  */
+
+
   static Future<dynamic> executaSql(String sql) async {
     String cleanSql = sql.replaceAll(r'\"', '"');
+   // print(cleanSql);
+    cleanSql = Uri.encodeComponent(cleanSql)
+        .replaceAll('%25', '%') // Mantém os % originais do LIKE
+        .replaceAll('+', '%20');
+
     var url = 'https://www.xmktech.net/dados/get.php?sql=$cleanSql';
     try {
       final response = await http.get(Uri.parse(url));
-     // print(response);
       if (response.statusCode == 200) {
+       // print('RESULTADO OK');
+       // print(json.decode(response.body.trim()));
         return json.decode(response.body.trim());
       }
       return [];
@@ -81,6 +90,45 @@ class ApiMySql {
       return [];
     }
   }
+
+
+  //******
+  static Future<List<dynamic>> getProfessores(String tipo) async {
+    var url = Uri.parse('https://www.xmktech.net/dados/get_prof_infan.php?nocache=${DateTime.now().millisecondsSinceEpoch}');
+
+    // Corpo da requisição em formato JSON
+    final body = json.encode({
+      'action': 'getProfessor', // O nome da ação que o PHP vai identificar
+      'tipo': tipo, // Os parâmetros que o PHP precisa
+    });
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: body,
+      );
+
+      if (response.statusCode == 200) {
+        // Sucesso
+        final List<dynamic> data = json.decode(response.body);
+        print('Dados de professores ($tipo) recebidos com sucesso!');
+        return data;
+      } else {
+        // Erro retornado pelo PHP
+        final errorData = json.decode(response.body);
+        print('Erro do servidor (${response.statusCode}): ${errorData['error']}');
+        return [];
+      }
+    } catch (e) {
+      print('Erro de conexão ao buscar professores: $e');
+      return [];
+    }
+  }
+
+//*****
 
   static Future<dynamic> insereSql(String sql) async {
     String cleanSql = sql.replaceAll(r'\"', '"');
@@ -132,18 +180,7 @@ class ApiMySql {
     sql+='created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP);';
     await executaSql(sql);
   }
-/*
-  static totalSalariosPorNivel(var tb)async{
-   var sql=" SELECT nivel AS 'nivel', COUNT(*) AS 'Quantidade',";
-    sql+=" FORMAT(SUM(vencimento), 2) AS 'Total',";
-    sql+=" FORMAT(AVG(vencimento), 2) AS 'Media'";
-    sql+=" FROM $tb WHERE vencimento IS NOT NULL AND nivel IS NOT NULL";
-    sql+=" GROUP BY nivel ORDER BY nivel";
-   //print(sql);
-   return await executaSql(sql);
-  }
 
- */
 
   static getProfessor() async {
     var sql2 = "SELECT  f.id AS folha_id,f.id_municipio,f.matricula,f.nome,f.cpf,f.unidade,f.local_lotacao,f.vencimento,";
@@ -155,6 +192,28 @@ class ApiMySql {
     sql2+="(SELECT SUM(vencimento) FROM a2501 WHERE status = 'A') AS total_vencimentos_geral";
     sql2+=" FROM $TBFolha f LEFT JOIN $TBVantagens dv ON f.id = dv.folha_id WHERE f.status = 'A'GROUP BY f.id ORDER BY f.id";
    // print(sql2);
+    return await executaSql(sql2);
+  }
+
+  static getProfessor2(String tipo) async {
+    var sql2 = "SELECT f.id AS folha_id,f.id_municipio,f.matricula,f.nome,f.cpf,f.unidade,f.local_lotacao,f.vencimento,";
+    sql2+="f.cargo,f.nivel,DATE_FORMAT(f.admissao, '%d/%m/%Y') AS admissao,f.competencia_mes,f.vantagens_total,";
+    sql2+="f.descontos_total,f.liquido_total,f.fgts_total,GROUP_CONCAT(CONCAT(dv.codigo, ':',dv.descricao, ':',";
+    sql2+="dv.percentual, ':',' R/\$ ', FORMAT(dv.valor, 2)) SEPARATOR ' | ') AS vantagens_detalhadas,";
+    sql2+=" SUM(CASE WHEN dv.codigo NOT IN ('21003', '21019') THEN dv.valor ELSE 0 END) AS soma_vantagens,";
+    sql2+=" SUM(CASE WHEN dv.codigo IN ('21019') THEN dv.valor ELSE 0 END) AS soma_apts,";
+    sql2+="(SELECT SUM(vencimento) FROM a2501 WHERE status = 'A') AS total_vencimentos_geral";
+    sql2+=" FROM $TBFolha f LEFT JOIN $TBVantagens dv ON f.id = dv.folha_id WHERE f.status = 'A'";
+
+    // Adiciona filtro baseado no tipo
+    if (tipo == 'INFANTIL') {
+      sql2 += " AND f.unidade LIKE '%Educ%Inf%'";
+
+    } else if (tipo == 'NORMAL') {
+      sql2 += " AND f.unidade NOT LIKE '%Educ%Inf%'";
+    }
+    sql2 += " GROUP BY f.id ORDER BY f.id";
+     print(sql2);
     return await executaSql(sql2);
   }
 

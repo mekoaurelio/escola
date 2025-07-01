@@ -27,6 +27,7 @@ class _FundebChartState extends State<FundebChart> with AnoBimestreListenerMixin
   bool _isLoading = true;
   var maxYValue;
   final anoBimestreController = Get.find<AnoBimestreController>();
+  bool temDados=true;
 
   @override
   void onAnoBimestreMudou(String ano, String bimestre) {
@@ -46,22 +47,48 @@ class _FundebChartState extends State<FundebChart> with AnoBimestreListenerMixin
   Future<void> start() async {
     String TB = widget.tipo == 'receita' ? TBReceitaFundebSimulador : TBExercicio;
     try {
-      final f = await ApiMySql.get(TB, null, 'ordem');
-      setState(() {
-        fundebData = [
-          FundebData(year: getDescri(f[1]['descricao']), value: double.parse(f[1]['valor']), growth: null),
-          FundebData(year: getDescri(f[2]['descricao']), value: double.parse(f[2]['valor']), growth: 26.37),
-          FundebData(year: getDescri(f[3]['descricao']), value: double.parse(f[3]['valor']), growth: 21.64),
-          FundebData(year: getDescri(f[4]['descricao']), value: double.parse(f[4]['valor']), growth: 10.71),
-          FundebData(year: getDescri(f[5]['descricao']), value: double.parse(f[5]['valor']), growth: 29.59),
-          FundebData(year: getDescri(f[6]['descricao']), value: double.parse(f[6]['valor']), growth: 3.72, isEstimated: true),
-        ];
-        _isLoading = false;
-      });
+      var f = await ApiMySql.get(TB, null, 'ordem');
+      print(f.length);
+      if(f.length>0) {
+        print('MMMMMMMMMMMMMMM');
+        setState(() {
+          fundebData = [
+            FundebData(year: getDescri(f[1]['descricao']),
+                value: double.parse(f[1]['valor']),
+                growth: null),
+            FundebData(year: getDescri(f[2]['descricao']),
+                value: double.parse(f[2]['valor']),
+                growth: 26.37),
+            FundebData(year: getDescri(f[3]['descricao']),
+                value: double.parse(f[3]['valor']),
+                growth: 21.64),
+            FundebData(year: getDescri(f[4]['descricao']),
+                value: double.parse(f[4]['valor']),
+                growth: 10.71),
+            FundebData(year: getDescri(f[5]['descricao']),
+                value: double.parse(f[5]['valor']),
+                growth: 29.59),
+            FundebData(year: getDescri(f[6]['descricao']),
+                value: double.parse(f[6]['valor']),
+                growth: 3.72,
+                isEstimated: true),
+          ];
+          _isLoading = false;
+        });
+      }else{
+        setState(() {
+          temDados=false;
+          _isLoading=false;
+        });
+      }
+
+
     } catch (e) {
       setState(() {
+        temDados=false;
         _isLoading = false;
-        Utils.snak('Erro', 'Falha ao carregar dados', false, Colors.red);
+        return;
+       // Utils.snak('Erro', 'Falha ao carregar dados', false, Colors.red);
       });
     }
   }
@@ -78,7 +105,7 @@ class _FundebChartState extends State<FundebChart> with AnoBimestreListenerMixin
 
   @override
   Widget build(BuildContext context) {
-    if (!_isLoading) {
+    if (!_isLoading && temDados) {
       maxYValue = fundebData.map((e) => e.value).reduce((a, b) => a > b ? a : b);
     }
 
@@ -90,7 +117,10 @@ class _FundebChartState extends State<FundebChart> with AnoBimestreListenerMixin
         margin: EdgeInsets.all(8),
         child: _isLoading
             ? Center(child: CircularProgressIndicator())
-            : Padding(
+
+        :!temDados?Utils.vazio('Nenhum Dado Encontrado',height: 100,width: 100):
+
+        Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

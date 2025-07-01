@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:psycostatattoo/folha/professor_utils.dart';
 
 import '../services/utils.dart';
+import '../widgets/texto.dart';
 
 class TabelaSalarial extends StatefulWidget {
   final Color primaryColor;
@@ -32,7 +33,6 @@ class TabelaSalarial extends StatefulWidget {
 class _TabelaSalarialState extends State<TabelaSalarial> {
   int? selectedRow;
   int? selectedColumn;
-  bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -46,23 +46,9 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Tabela Salarial',
-              style: TextStyle(
-                color: widget.textColor,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 4),
-            Text(
-              'Valores calculados para cada nível e classe',
-              style: TextStyle(
-                color: widget.textColor.withOpacity(0.6),
-                fontSize: 14,
-              ),
-            ),
-            SizedBox(height: 16),
+            Texto(tit: 'Tabela Salarial',cor:widget.textColor ,tam: 18,negrito: true,bottom: 4,),
+            Texto(tit: 'Valores calculados para cada nível e classe',cor:widget.textColor.withOpacity(0.6),tam: 14,bottom: 16,),
+
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Column(

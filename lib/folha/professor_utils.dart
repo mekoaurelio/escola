@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../const/nome_tabelas.dart';
+import '../data/api_my_sql.dart';
 import '../widgets/texto.dart';
 
 class ProfessorUtils {
@@ -31,6 +33,39 @@ class ProfessorUtils {
     return total;
   }
 
+
+  static Future<double> totalDeVencimentosProposta(String nivel, int coluna, var professores, var tipo) async {
+    try {
+      final totais = await ApiMySql.get(TBTotais, null, null);
+      double perAumentoInfantil = double.tryParse(totais[0]['perc_aumento_infantil'].toString()) ?? 0.0;
+      double perAumentoAdulto = double.tryParse(totais[0]['perc_aumento_adulto'].toString()) ?? 0.0;
+
+      String nivelFormatado = nivel.substring(1);
+      String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
+      String chave = '$nivelFormatado$colunaFormatada';
+
+      double total = 0.0;
+
+      for (var professor in professores) {
+        if (professor['nivel'] == chave && professor['vencimento'] != null) {
+          double vencimento = double.tryParse(professor['vencimento'].toString()) ?? 0.0;
+          total += vencimento;
+        }
+      }
+
+      // Aplica o aumento percentual
+      if (tipo == 'INFANTIL') {
+        total += total * perAumentoInfantil / 100;
+      } else {
+        total += total * perAumentoAdulto / 100;
+      }
+
+      return total;
+    } catch (e) {
+      print('Erro em totalDeVencimentosProposta: $e');
+      return 0.0;
+    }
+  }
   static int totalDeProfissionais(String nivel, int coluna, var professores) {
     // Formata o nível/classe no formato esperado (ex: "B01" para NB coluna 1)
     String nivelFormatado = nivel.substring(1); // Remove o "N" do início
@@ -49,13 +84,36 @@ class ProfessorUtils {
   }
 
   // Método auxiliar para calcular o total por nível
-  static double calculateTotalForLevel(String nivel,var professores,int cargaHoraria) {
-    double total = 0.0;
-    for (int coluna = 0; coluna < cargaHoraria; coluna++) {
-      total += ProfessorUtils.totalDeVencimentos(nivel, coluna + 1,professores);
+  static Future<double> calculateTotalForLevel(String nivel, var professores, int cargaHoraria, var tipo) async {
+    try {
+      // Cache dos totais (busca apenas uma vez)
+      final totais = await ApiMySql.get(TBTotais, null, null);
+      double perAumentoInfantil = double.parse(totais[0]['perc_aumento_infantil']);
+      double perAumentoAdulto = double.parse(totais[0]['perc_aumento_adulto']);
+
+      double total = 0.0;
+
+      for (int coluna = 0; coluna < cargaHoraria; coluna++) {
+        String nivelFormatado = nivel.substring(1);
+        String colunaFormatada = (coluna + 1) < 10 ? '0${coluna + 1}' : '${coluna + 1}';
+        String chave = '$nivelFormatado$colunaFormatada';
+
+        for (var professor in professores) {
+          if (professor['nivel'] == chave && professor['vencimento'] != null) {
+            double vencimento = double.tryParse(professor['vencimento'].toString()) ?? 0.0;
+            double aumento = tipo == 'INFANTIL' ? perAumentoInfantil : perAumentoAdulto;
+            total += vencimento * (1 + aumento / 100);
+          }
+        }
+      }
+
+      return total;
+    } catch (e) {
+      print('Erro em calculateTotalForLevel: $e');
+      return 0.0;
     }
-    return total;
   }
+
 
   static double calculateNroProfissionalForLevel(String nivel,var professores,int cargaHoraria) {
     double total = 0.0;

@@ -7,7 +7,7 @@ import 'professor_utils.dart';
 class SalaryTotalsTable extends StatelessWidget {
   final Color primaryColor;
   final Color textColor;
-  final Color borderColor;
+  final String tipo;
   final int cargaHoraria;
   final List<String> niveis;
   final List<List<double>> calculatedTableValues;
@@ -18,7 +18,7 @@ class SalaryTotalsTable extends StatelessWidget {
     Key? key,
     required this.primaryColor,
     required this.textColor,
-    required this.borderColor,
+    required this.tipo,
     required this.cargaHoraria,
     required this.niveis,
     required this.calculatedTableValues,
@@ -68,12 +68,12 @@ class SalaryTotalsTable extends StatelessWidget {
                     child: ProfessorUtils().nivelClasse(cargaHoraria,primaryColor,true,100)
                   ),
                   // Rows
-                  for (int nivelIndex = 1; nivelIndex < niveis.length; nivelIndex++)
+                  for (int nivelIndex = 0; nivelIndex < niveis.length; nivelIndex++)
                     Container(
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: borderColor,
+                            color: Colors.grey.shade300,
                             width: 1,
                           ),
                         ),
@@ -94,16 +94,32 @@ class SalaryTotalsTable extends StatelessWidget {
                               child: Column(
                                 children: [
                                   if (quantidadeDeProfessores(niveis[nivelIndex], coluna + 1) != 0)
-                                    Texto(tit: '${quantidadeDeProfessores(niveis[nivelIndex], coluna + 1)} Profs.',
-                                      tam: 11,cor: textColor.withOpacity(0.8),),
+                                    Texto(
+                                      tit: '${quantidadeDeProfessores(niveis[nivelIndex], coluna + 1)} Profs.', tam: 11, cor: textColor.withOpacity(0.8),),
+
                                   if (quantidadeDeProfessores(niveis[nivelIndex], coluna + 1) != 0)
-                                    Texto(tit:Utils.formatVr.format(ProfessorUtils.totalDeVencimentos(niveis[nivelIndex], coluna + 1, professores)),
-                                      tam: 11,negrito: true,cor: primaryColor,
+                                    FutureBuilder<double>(
+                                      future: ProfessorUtils.totalDeVencimentosProposta(
+                                          niveis[nivelIndex],
+                                          coluna + 1,
+                                          professores,
+                                          tipo
+                                      ),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.connectionState == ConnectionState.waiting) {
+                                          return Texto(tit: 'Calculando...', tam: 11, cor: primaryColor);
+                                        }
+                                        if (snapshot.hasError) {
+                                          return Texto(tit: 'Erro', tam: 11, cor: Colors.red);
+                                        }
+                                        return Texto(
+                                          tit: Utils.formatVr.format(snapshot.data ?? 0.0), tam: 11, negrito: true, cor: primaryColor,);
+                                      },
                                     ),
                                 ],
                               ),
                             ),
-                          /// Célula de total por nível
+                          /// total geral por nível
                           Container(
                             width: 120,
                             padding: EdgeInsets.symmetric(vertical: 12),
@@ -111,8 +127,20 @@ class SalaryTotalsTable extends StatelessWidget {
                             child: Column(
                               children: [
                                 Texto(tit: 'Total',tam: 11,cor:textColor.withOpacity(0.8)),
-                                Texto(tit: Utils.formatVr.format(ProfessorUtils.calculateTotalForLevel(niveis[nivelIndex], professores, cargaHoraria)),
-                                  tam: 13,negrito: true,cor:Colors.green.shade800,),
+                                FutureBuilder<double>(
+                                  future: ProfessorUtils.calculateTotalForLevel(niveis[nivelIndex], professores, cargaHoraria,tipo),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState == ConnectionState.waiting) {
+                                      return Texto(tit: 'Calculando...', tam: 11, cor: primaryColor);
+                                    }
+                                    if (snapshot.hasError) {
+                                      return Texto(tit: 'Erro', tam: 11, cor: Colors.red);
+                                    }
+                                    return Texto(
+                                      tit: Utils.formatVr.format(snapshot.data ?? 0.0), tam: 11, negrito: true, cor: primaryColor,);
+                                  },
+                                )
+
                               ],
                             ),
                           ),

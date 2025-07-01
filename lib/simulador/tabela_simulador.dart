@@ -63,6 +63,12 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> with An
       final dadosDecenios = (await ApiMySql.get(TBDecenio, null, null) as List).cast<Map<String, dynamic>>();
       final dadosImpostos = (await ApiMySql.get(TBImpostos, null, null) as List).cast<Map<String, dynamic>>();
       var tt=await ApiMySql.get(TBTotais,null,null);
+      if(tt.length==0){
+        setState(() {
+          isLoading=false;
+        });
+        return;
+      }
 
       setState(() {
         totais=tt;
@@ -380,7 +386,6 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> with An
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    //  appBar: AppBar(title: Text('Projeção de Recursos')),
       appBar: AppBar(
         title: Texto(tit: 'Projeção de Recursos',cor:Colors.white ,negrito: true,tam: 20,),
         centerTitle: true,
@@ -389,7 +394,9 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> with An
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
+          : totais==null?Utils.vazio('Nenhum Dado Encontrado'):
+
+      SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Center(
           child:Column(

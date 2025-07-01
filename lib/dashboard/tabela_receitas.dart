@@ -4,6 +4,8 @@ import 'package:psycostatattoo/services/utils.dart';
 import 'package:psycostatattoo/widgets/texto.dart';
 import 'package:psycostatattoo/data/api_my_sql.dart';
 
+import '../const/nome_tabelas.dart';
+
 class TabelaReceitas extends StatefulWidget {
   @override
   _TabelaReceitasState createState() => _TabelaReceitasState();
@@ -14,7 +16,6 @@ class _TabelaReceitasState extends State<TabelaReceitas> {
   String vrInput = '0,00';
   String receitaTotalFundeb = '0,00';
   String receitaTotal = '0,00';
-  String TBTotais = 'nome_da_tabela'; // Substitua pelo nome real da sua tabela
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -26,12 +27,12 @@ class _TabelaReceitasState extends State<TabelaReceitas> {
   Future<void> _carregarDados() async {
     try {
       final dados = await ApiMySql.get(TBTotais, null, null);
+      if(dados.length==0){
+        return;
+      }
       setState(() {
         totais = dados;
         vrInput = Utils.formatVr.format(double.parse(dados[0]['fundeb_10_5']));
-        print('kkkkkkk');
-        print(vrInput);
-
 
         // Calcular totais
         double receitaFundeb = double.parse(dados[0]['receita']) + double.parse(dados[0]['fundeb_10_5']);
@@ -57,49 +58,39 @@ class _TabelaReceitasState extends State<TabelaReceitas> {
     }
   }
 
-  Widget _linhaCompacta(String descricao, String valor, {bool editavel = false}) {
+  Widget _linhaCompacta(String descricao, String valor,
+      {bool editavel = false,Color corContainer=Colors.transparent,double height=20}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(
-            child: Text(
-              descricao,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.black87,
-              ),
-              overflow: TextOverflow.ellipsis,
+      padding: const EdgeInsets.symmetric(vertical: 1.0),
+      child: Container(
+        height: height,
+        decoration: BoxDecoration(
+          color: corContainer,
+          borderRadius: BorderRadius.circular(
+              10.0), // Opcional: bordas arredondadas
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+              child: Texto(tit: descricao,tam: 12,cor:Colors.black87 ,),
             ),
-          ),
-          if (editavel)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  valor,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+            if (editavel)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Texto(tit: valor,tam: 12,negrito: true,right: 10),
+                  IconButton(
+                    icon: Icon(Icons.edit, size: 16),
+                    onPressed: () => _editarValor(),
                   ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.edit, size: 16),
-                  onPressed: () => _editarValor(),
-                ),
-              ],
-            )
-          else
-            Text(
-              valor,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-        ],
-      ),
+                ],
+              )
+            else
+              Texto(tit:valor,tam: 12,negrito: true,right: 5),
+          ],
+        ),
+      )
     );
   }
 
@@ -119,8 +110,7 @@ class _TabelaReceitasState extends State<TabelaReceitas> {
         double nv = valorNumerico + double.parse(r);
         setState(() {
           vrInput = Utils.formatVr.format(valorNumerico);
-          receitaTotalFundeb = Utils.formatVr.format(nv);
-          double totalGeral = nv +
+          receitaTotalFundeb = Utils.formatVr.format(nv);double totalGeral = nv +
               double.parse(totais[0]['decendio_5']) +
               double.parse(totais[0]['imposto_25']);
           receitaTotal = Utils.formatVr.format(totalGeral);
@@ -134,7 +124,9 @@ class _TabelaReceitasState extends State<TabelaReceitas> {
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.5,
       height: MediaQuery.of(context).size.height * 0.5,
-      child: Card(
+      child:totais==null?Utils.vazio('Nenhum Dado Encontrado'):
+
+      Card(
         elevation: 4,
         margin: EdgeInsets.all(8),
         child: Padding(
@@ -143,7 +135,6 @@ class _TabelaReceitasState extends State<TabelaReceitas> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
 
-              // Linha de títulos
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -176,21 +167,25 @@ class _TabelaReceitasState extends State<TabelaReceitas> {
                     controller: _scrollController,
                     shrinkWrap: true,
                     children: [
-                      _linhaCompacta('1. Receitas FUNDEB', totais[0]['receita']),
-                      Divider(thickness: 1, height: 1, color: Colors.grey.shade200),
+                      _linhaCompacta('1. Receitas FUNDEB',
+                      Utils.formatVr.format(double.parse(totais[0]['receita']))),
+                      Divider(thickness: 1, height: 1, color: Colors.grey.shade300),
                       _linhaCompacta('1.1. Complementação VAAF 10%', '0'),
-                      Divider(thickness: 1, height: 1, color: Colors.grey.shade200),
-                      _linhaCompacta('1.2. Complementação VAAT 10,5%', vrInput, editavel: true),
-                      Divider(thickness: 1, height: 1, color: Colors.grey.shade200),
-                      _linhaCompacta('1.3. Complementação VAAR 2,5%', '320.000,00'),
-                      Divider(thickness: 1, height: 1, color: Colors.grey.shade200),
+                      Divider(thickness: 1, height: 1, color: Colors.grey.shade300),
+                      _linhaCompacta('1.2. Complementação VAAT 10,5%', vrInput),
+                      Divider(thickness: 1, height: 1, color: Colors.grey.shade300),
+                      _linhaCompacta('1.3. Complementação VAAR 2,5%', '0'),
+                      Divider(thickness: 1, height: 1, color: Colors.grey.shade300),
                       _linhaCompacta('Total FUNDEB', receitaTotalFundeb),
-                      Divider(thickness: 1, height: 1, color: Colors.grey.shade200),
-                      _linhaCompacta('2. Recursos próprios 5%', totais[0]['decendio_5']),
-                      Divider(thickness: 1, height: 1, color: Colors.grey.shade200),
-                      _linhaCompacta('3. Recursos próprios 25%', totais[0]['imposto_25']),
-                      Divider(thickness: 1, height: 1, color: Colors.grey.shade200),
-                      _linhaCompacta('TOTAL GERAL', receitaTotal),
+                      Divider(thickness: 1, height: 1, color: Colors.grey.shade300),
+                      _linhaCompacta('2. Recursos próprios 5%',
+                          Utils.formatVr.format(double.parse(totais[0]['decendio_5']))),
+                      Divider(thickness: 1, height: 1, color: Colors.grey.shade300),
+                      _linhaCompacta('3. Recursos próprios 25%',
+                          Utils.formatVr.format(double.parse(totais[0]['imposto_25']))),
+
+                     // Divider(thickness: 1, height: 1, color: Colors.grey.shade200),
+                      //_linhaCompacta('TOTAL GERAL', receitaTotal,corContainer: Colors.blue.shade200),
                     ],
                   ),
                 ),
@@ -199,14 +194,10 @@ class _TabelaReceitasState extends State<TabelaReceitas> {
               // Rodapé
               Padding(
                 padding: const EdgeInsets.only(top: 4.0),
-                child: Text(
-                  'Atualizado em ${DateTime.now().toString().substring(0, 16)}',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+                child: _linhaCompacta(' TOTAL GERAL', receitaTotal,corContainer: Colors.blue.shade200,height: 30)
+                //Texto(tit: 'Atualizado em ${DateTime.now().toString().substring(0, 16)}',
+                  //tam: 10,cor: Colors.grey,alin:TextAlign.center ,
+                //),
               ),
             ],
           ),

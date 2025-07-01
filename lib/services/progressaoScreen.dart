@@ -23,6 +23,8 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> with AnoBimestreLis
   List<Map<String, dynamic>> fundeb = [];
   List<Map<String, dynamic>> exercicio = [];
   final anoBimestreController = Get.find<AnoBimestreController>();
+  double perAumentoAdulto=0.00;
+  double perAumentoInfantil=0.00;
 
   double? fundebBase; // Valor da ordem 1 do FUNDEB RECEITA
 
@@ -56,12 +58,13 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> with AnoBimestreLis
     final i = await ApiMySql.get(TBInfantil, null, 'ordem');
     final g = await ApiMySql.get(TBReceitaFundebSimulador, null, null);
     final h = await ApiMySql.get(TBExercicio, null, 'ordem');
-    print('55555');
 
     fundebBase = double.tryParse(g.firstWhere((e) => e['ordem'] == '1', orElse: () => {'valor': 0})['valor'].toString());
-
-    print('66666');
+    final totais = await ApiMySql.get(TBTotais, null, null);
     setState(() {
+
+      perAumentoInfantil=double.parse(totais[0]['perc_aumento_infantil']);
+      perAumentoAdulto=double.parse(totais[0]['perc_aumento_adulto']);
       prof = List<Map<String, dynamic>>.from(f);
       infantil = List<Map<String, dynamic>>.from(i);
       fundeb = List<Map<String, dynamic>>.from(g);
@@ -73,56 +76,54 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> with AnoBimestreLis
   @override
   Widget build(BuildContext context) {
     if (loading) return const Center(child: CircularProgressIndicator());
-
-    return Center(
-      child: prof.isEmpty?Utils.vazio('Nenhum dado para esse ano/bimestre'):
-
-      FractionallySizedBox(
-        widthFactor: 0.7,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              _Section(
-                title: 'SIMULADOR PCRM – PROFESSORES',
-                table: TBProfessor,
-                items: prof,
-                onEdited: _loadAll,
-              ),
-              const SizedBox(height: 24),
-              _Section(
-                title: 'SIMULADOR PCRM – EDUCADOR INFANTIL (40h)',
-                table: TBInfantil,
-                items: infantil,
-                onEdited: _loadAll,
-              ),
-              const SizedBox(height: 24),
-
-              _SectionFundebExercio(
-                title: 'FUNDEB RECEITA',
-                table: TBReceitaFundebSimulador,
-                items: fundeb,
-                fundeb: [],
-                onEdited: _loadAll,
-                referencia: null, // Não usa referência
-              ),
-
-              const SizedBox(height: 24),
-              
-              _SectionFundebExercio(
-                title: 'EXERCÍCIO',
-                table: TBExercicio,
-                items: exercicio,
-                fundeb: fundeb,
-                onEdited: _loadAll,
-                referencia: fundebBase, // 🔥 Usa o valor do FUNDEB
-              ),
-
-
-            ],
+    return prof.isEmpty?Utils.vazio('Nenhum dado para esse ano/bimestre'):
+    Center(
+      child: FractionallySizedBox(
+    widthFactor: 0.7,
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          _Section(
+            title: 'SIMULADOR PCRM – PROFESSORES',
+            table: TBProfessor,
+            items: prof,
+            perAumento: perAumentoAdulto,
+            onEdited: _loadAll,
           ),
-        ),
+          const SizedBox(height: 24),
+          _Section(
+            title: 'SIMULADOR PCRM – EDUCADOR INFANTIL (40h)',
+            table: TBInfantil,
+            items: infantil,
+            perAumento: perAumentoInfantil,
+            onEdited: _loadAll,
+          ),
+          const SizedBox(height: 24),
+
+          _SectionFundebExercio(
+            title: 'FUNDEB RECEITA',
+            table: TBReceitaFundebSimulador,
+            items: fundeb,
+            fundeb: [],
+            onEdited: _loadAll,
+            referencia: null, // Não usa referência
+          ),
+
+          const SizedBox(height: 24),
+
+          _SectionFundebExercio(
+            title: 'EXERCÍCIO',
+            table: TBExercicio,
+            items: exercicio,
+            fundeb: fundeb,
+            onEdited: _loadAll,
+            referencia: fundebBase, // 🔥 Usa o valor do FUNDEB
+          ),
+        ],
       ),
+    ),
+  ),
     );
   }
 }
@@ -135,6 +136,7 @@ class _Section extends StatelessWidget {
   final List<Map<String, dynamic>> items; //Tabela fundeb ou infantil
   final VoidCallback onEdited;
   final String table;
+  final double perAumento;
 
   const _Section({
     Key? key,
@@ -142,12 +144,12 @@ class _Section extends StatelessWidget {
     required this.items,
     required this.onEdited,
     required this.table,
+    required this.perAumento,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     // Calcula iterativamente os valores compostos:
-    print(title);
     double? lastValue;
     double? firstValue;
     final cards = <Widget>[];
@@ -157,13 +159,18 @@ class _Section extends StatelessWidget {
       final rawValor = double.tryParse(data['valor'].toString()) ?? 0;
       final perc = double.tryParse(data['percentual'].toString()) ?? 0;
 
-
       // Primeiro item: usa rawValor. Depois, valor anterior * (1 + perc/100)
       var computed = (i == 0) ? rawValor : (lastValue! * (1 + perc / 100));
 
       if(data['ordem']=='0'){
-        firstValue=computed;
+        firstValue = computed;
       }
+      ///Percentual de aumento
+      if(data['ordem']=='8'){
+        final percAumento = double.tryParse(data['percentual'].toString()) ?? 0;
+        computed=firstValue!+(firstValue!*percAumento/100);
+      }
+
       if(data['ordem']=='1' || data['ordem']=='7'){
         computed=0;
       }
@@ -179,7 +186,10 @@ class _Section extends StatelessWidget {
         updateValor(firstValue,data['ordem']);
       }
       if(data['ordem']=='2' || data['ordem']=='4' || data['ordem']=='5' || data['ordem']=='6' ) {
-       updateValor(computed,data['ordem']);
+        if(perAumento>0) {
+          computed = computed + (computed! * perAumento / 100);
+        }
+        updateValor(computed,data['ordem']);
       }
 
       cards.add(
@@ -193,6 +203,7 @@ class _Section extends StatelessWidget {
         ),
       );
     }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -227,7 +238,7 @@ class _Section extends StatelessWidget {
                       child: SimuladorAlt(
                         data: null,
                         tb: table,
-                        tipo: 'valor',
+                        tipo: 'percentual',
                         //tipo: 'percentual',
                       ),
                       onClose: () => Navigator.of(context).pop(),
@@ -247,6 +258,10 @@ class _Section extends StatelessWidget {
 
   updateValor(var computed,var ordem)async{
     await ApiMySql.executaSql('UPDATE $table set valor=$computed where ordem=$ordem');
+  }
+  updatePerc(var computed,var campo)async{
+    await ApiMySql.executaSql('UPDATE $TBTotais set $campo=$computed');
+   // onEdited();
   }
 }
 
@@ -275,7 +290,9 @@ class _ItemCard extends StatelessWidget {
     if(displayValue!=0){
       valorStr = Utils.toReal(displayValue);
     }
-    return Row(
+    return Container(
+      color: index==8?Colors.blue.shade100:Colors.transparent,
+      child: Row(
         children: [
           /// Descrição
           Line(
@@ -283,7 +300,7 @@ class _ItemCard extends StatelessWidget {
             tam: 350,
             cor: isFirst ? Colors.black : Colors.black54,
             alin: Alignment.centerLeft,
-            negrito: isFirst,
+            negrito: isFirst || index==8,
             fontSize: isFirst ? 20 : 16,
           ),
 
@@ -294,6 +311,7 @@ class _ItemCard extends StatelessWidget {
             cor: Colors.black54,
             alin: Alignment.centerRight,
             fontSize: 16,
+            negrito: index==8,
           ),
 
           ///EDITA O PERCENTUAL
@@ -327,17 +345,9 @@ class _ItemCard extends StatelessWidget {
             tam: 200,
             cor: isFirst ? Colors.red : Colors.black87,
             alin: Alignment.centerRight,
-            negrito: isFirst,
+            negrito: isFirst || index==8,
             fontSize: isFirst ? 18 : 15,
           ),
-          ///ICONE PARA DELETAR
-         /*
-          IconButton(
-            onPressed: () => delete(),
-            icon: Icon(Icons.delete, color: Colors.black38,),
-          ),
-
-          */
 
           ///EDITA O VALOR BÁSICO
           if (isFirst)
@@ -350,21 +360,23 @@ class _ItemCard extends StatelessWidget {
                   barrierDismissible: false,
                   builder:
                       (_) => Panel(
-                        width: MediaQuery.of(context).size.width * 0.44,
-                        height: MediaQuery.of(context).size.height * 0.44,
-                        child: SimuladorAlt(
-                          data: data,
-                          tb: table,
-                          tipo: 'valor',
-                        ),
-                        onClose: () => Navigator.of(context).pop(),
-                      ),
+                    width: MediaQuery.of(context).size.width * 0.44,
+                    height: MediaQuery.of(context).size.height * 0.44,
+                    child: SimuladorAlt(
+                      data: data,
+                      tb: table,
+                      tipo: 'valor',
+                    ),
+                    onClose: () => Navigator.of(context).pop(),
+                  ),
                 );
                 onEdited(); // <— aqui recarrega a tela
               },
             ),
         ],
-      );
+      )
+    );
+
 
   }
   delete(){

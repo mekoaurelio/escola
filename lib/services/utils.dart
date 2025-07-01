@@ -27,6 +27,23 @@ class Utils {
   static var formatterD =  DateFormat('dd/MM/yyyy');
   static var formatterh =  DateFormat('hh:mm');
 
+  static Future<Map<String, double>> calculateTotals(List<dynamic> professores) async {
+    try {
+      double total = 0;
+      double ats = 0;
+
+      for (final prof in professores) {
+        total += double.tryParse(prof['vencimento']?.toString() ?? '') ?? 0;
+        ats += double.tryParse(prof['soma_apts']?.toString() ?? '') ?? 0;
+      }
+
+      return {'total': total, 'ats': ats};
+    } catch (e) {
+      debugPrint('Erro no cálculo de totais: $e');
+      return {'total': 0, 'ats': 0};
+    }
+  }
+
   static String formatCurrency(double value) {
     final format = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
     return format.format(value);
@@ -42,6 +59,7 @@ class Utils {
       }
     }
   }
+
   static BoxDecoration decor() {
     return BoxDecoration(
       // color: Colors.blueGrey[100], // Cor de fundo do container
@@ -55,19 +73,20 @@ class Utils {
     );
   }
 
-  static Widget vazio(var texto) {
+  static Widget vazio(var texto,{double height=150,double width=150 }) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(
-            "assets/images/indisponivel.png",
-            width: 150,
-            height: 150,
+          Image.asset("assets/images/indisponivel.png",
+            width: width,
+            height: height,
             fit: BoxFit.cover,
           ),
-          const SizedBox(height: 10),
-          Texto(tit: texto, cor: Colors.grey, tam: 18,),
+          //Expanded(
+           // child: Texto(tit: texto, cor: Colors.grey, tam: 18,top: 10,),
+         // )
+          Texto(tit: texto, cor: Colors.grey, tam: 18,top: 10,),
         ],
       ),
     );

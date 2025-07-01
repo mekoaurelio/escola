@@ -5,6 +5,7 @@ import 'auxiliares/cargo_lista.dart';
 import 'auxiliares/encargo_social_lista.dart';
 import 'auxiliares/fonte_receita_lista.dart';
 import 'auxiliares/lista_cod_descri.dart';
+import 'cianorte/import_page.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'const/nome_tabelas.dart';
 import 'grafico/grafico_fundeb_exercicio.dart';
@@ -18,6 +19,7 @@ import 'services/anoBimestreListenerMixin.dart';
 import 'services/ano_bimestre_controller.dart';
 import 'services/progressaoScreen.dart';
 import 'services/utils.dart';
+import 'simulador/simula.dart';
 import 'simulador/tabela_simulador.dart';
 import 'simulador/vaaf.dart';
 import 'widgets/texto.dart';
@@ -108,7 +110,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
       final table = auxItem['table'];
       switch (table) {
         case 'cargo':
-          return CargoLista(table: table, title: '');
+          return Simula();
         case 'encargos_sociais':
           return EncargoSocialLista(table: table);
         case 'fonte_receita':
@@ -127,11 +129,11 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
       'Impacto': ImpactoGrid2(),
       'Tabela Professor': SimuladorTabelaProfessor(
         key: ValueKey('SimuladorTabelaProfessor_normal'), // Chave única
-        table: 'a_professor',
+        table: 'a_professor',tipo: 'ADULTO',
       ),
       'Professor Infantil': SimuladorTabelaProfessor(
         key: ValueKey('SimuladorTabelaProfessor_infantil'), // Chave única
-        table: 'a_infantil',
+        table: 'a_infantil',tipo: 'INFANTIL',
       ),
 
       'Vecto X Proposto': ProfessorVectoProposta(),
@@ -336,7 +338,6 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin{
 
           const SizedBox(height: 20),
           _buildProfessoresExpansionTile(),
-          const SizedBox(height: 20),
           _buildSimuladorExpansionTile(),
           _buildGraficosExpansionTile(),
           ..._mainNavigationItems.map((item) => _buildDrawerItem(item['title'], item['icon'], item['index'])),
