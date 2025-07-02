@@ -33,7 +33,7 @@ class Start extends StatefulWidget {
 
 class _StartState extends State<Start> with AnoBimestreListenerMixin{
   final Color appBarColorCrypto = const Color(0xFF2459A9);
-  String _currentPage = 'DashboardScreen';
+  String _currentPage = 'Home';
   int _currentTabIndex = 0;
   String _currentAno = '00';
   String _currentBimestre = '00';

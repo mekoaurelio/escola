@@ -472,7 +472,51 @@ class _SimulaState extends State<Simula> {
                   children:  [
                     lin('Cargo',true,Alignment.centerLeft),
                     lin('Total',true,Alignment.center),
-                    lin('Proposta',true,Alignment.center),
+                    Align(
+                      alignment: Alignment.center, // Alinha o conteúdo à direita
+                      child: Texto(tit:'Proposta',negrito: true,top: 10,alin: TextAlign.center,
+                        icone: Icons.edit,
+                        tooltip: 'Click aqui para ....',
+                        aoClicarIcone: () {
+                          Utils.mostrarDialogoEditarValor(
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(RegExp(r'[0-9,]'))
+                            ],
+                            context: context,
+                            titulo: 'Simular para quantos meses ',
+                            labelCampo: 'Meses',
+                            valorInicial: '0',
+                            aoSalvar: (novoValor) {
+                              setState(() {
+                                // percP = double.tryParse(novoValor)!;
+                                //_calculateTableAndDispersions();
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+
+                    /*
+                    Tooltip(
+                      message: 'Click aqui para simular para vários meses',
+                      child:Row(
+                        children: [
+                          lin('Proposta',true,Alignment.center),///PROPOSTA
+                         /*
+                          IconButton(
+                            onPressed: () => Utils.snak('oi', 'teste', false, Colors.green),
+                            icon: Icon(Icons.edit, size: 15, color: Colors.black38,),
+                          ),
+
+                          */
+                        ],
+                      )
+
+
+                    ),
+
+                     */
                     lin('Variação',true,Alignment.center),
                   ],
                 ),
