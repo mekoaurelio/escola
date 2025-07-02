@@ -34,6 +34,8 @@ class _SummaryTableState extends State<SummaryTable> {
   late double _ferias;
   late double _custoMensal;
   late double _remuneracaoTotal;
+  late double _totalEncargos;
+  late double _totalComEncargos;
 
   @override
   void initState() {
@@ -41,7 +43,10 @@ class _SummaryTableState extends State<SummaryTable> {
     _meses = widget.meses;
     _ferias=widget.ferias;
     _custoMensal=widget.custoMensal;
-    _remuneracaoTotal=_custoMensal *(_meses*_ferias);
+    _totalEncargos=_custoMensal*0.14;
+    _remuneracaoTotal=_custoMensal *_meses;
+    _remuneracaoTotal=_remuneracaoTotal+(_remuneracaoTotal*_ferias);
+    _totalComEncargos=_remuneracaoTotal+_totalEncargos;
   }
 
   @override
@@ -127,8 +132,8 @@ class _SummaryTableState extends State<SummaryTable> {
 
 
         _buildTableRow('Encargos Sociais', '${widget.encargosPercentual.toStringAsFixed(0)}%'),
-        _buildTableRow('TOTAL Encargos', Utils.formatVr.format(widget.totalEncargos), isTotal: true),
-        _buildTableRow('Total COM ENCARGOS', Utils.formatVr.format(widget.totalComEncargos), isHighlighted: true),
+        _buildTableRow('TOTAL Encargos', Utils.formatVr.format(_totalEncargos), isTotal: true),
+        _buildTableRow('Total COM ENCARGOS', Utils.formatVr.format(_totalComEncargos), isHighlighted: true),
         ],
       ),
     ),
@@ -155,8 +160,7 @@ class _SummaryTableState extends State<SummaryTable> {
                 flex: 2,
                 child: Padding(
                   padding: EdgeInsets.only(left: 16),
-                  child: Text(
-                    label,
+                  child: Text(label,
                     style: TextStyle(
                       fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
                       color: isHighlighted ? Colors.blue.shade800 : Colors.black,

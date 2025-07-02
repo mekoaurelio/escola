@@ -31,10 +31,11 @@ class Utils {
     try {
       double total = 0;
       double ats = 0;
-
+      String ad='';
       for (final prof in professores) {
         total += double.tryParse(prof['vencimento']?.toString() ?? '') ?? 0;
-        ats += double.tryParse(prof['soma_apts']?.toString() ?? '') ?? 0;
+        ad=prof['soma_apts'].toString().replaceAll('-', '');
+        ats += double.tryParse(ad ?? '') ?? 0;
       }
 
       return {'total': total, 'ats': ats};

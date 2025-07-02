@@ -85,17 +85,65 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       coluna = '0$coluna';
     }
     String ni = nivel + coluna;
-    String Profs = '';
+    List<Map<String, String>> professoresFiltrados = [];
     for (var item in professores) {
       if (item['nivel'] == ni) {
-        Profs += item['nome'] + '\n';
+        professoresFiltrados.add({
+          'nome': item['nome']?.toString() ?? 'Nome não disponível',
+          'matricula': item['matricula']?.toString() ?? 'Matrícula não disponível'
+        });
       }
     }
-    if (Profs.length == 0) {
-      Profs = 'Não existe';
-    }
-    Utils.snak('Valor', Profs, false, Colors.green);
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              const Icon(Icons.groups_rounded, color: Colors.blue),
+              const SizedBox(width: 10),
+              Text(
+                'Professores (${professoresFiltrados.length})',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (professoresFiltrados.isEmpty)
+                  const Text('Nenhum professor encontrado', style: TextStyle(color: Colors.grey))
+                else
+                  ...professoresFiltrados.map((prof) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Texto(tit: 'Matrícula: ${prof['matricula']}',tam: 12,cor:Colors.grey[600]!),
+                        Texto(tit: prof['nome']!,negrito: true,),
+                        const Divider(height: 16, thickness: 0.5),
+                      ],
+                    ),
+                  )).toList(),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Fechar'),
+            ),
+          ],
+        );
+      },
+    );
   }
+
 
   int quantidadeDeProfessores(String nivel, int coluna) {
     // Formata o nível/classe no formato esperado (ex: "B01" para NB coluna 1)
@@ -178,42 +226,34 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   }
 
   Future<void> _loadDataAndCalculate() async {
+    professores = await ApiMySql.getProfessores(widget.tipo.trim().toUpperCase()).timeout(const Duration(seconds: 30));
 
-    print('>> widget.tipo recebido: "${widget.tipo}"');
-    print('>> widget.tipo normalizado: "${widget.tipo.trim().toUpperCase()}"');
-
-    professores = await ApiMySql
-        .getProfessores(widget.tipo.trim().toUpperCase())
-        .timeout(const Duration(seconds: 30));
-
-    print(widget.tipo);
-    print(professores.length);
-    //final totais = await ApiMySql.get(TBTotais,null,null);
-    //perAumentoInfantil=double.parse(totais[0]['perc_aumento_infantil']);
-    //perAumentoAdulto=double.parse(totais[0]['perc_aumento_adulto']);
-
-    //final totals = await Future.wait([
-     // Utils.calculateTotals(adulto),
-     // Utils.calculateTotals(infantil),
-    //]);
-
-  //  professores.
+    ///Pega os totais
+    final totais = await ApiMySql.get(TBTotais,null,null);
+    perAumentoInfantil=double.parse(totais[0]['perc_aumento_infantil']);
+    perAumentoAdulto=double.parse(totais[0]['perc_aumento_adulto']);
+    ///Se atabela estiver vazia, aborta
     if(professores.length==0){
       setState(() => isLoading = false);
       return;
     }
-    setState(() => isLoading = true);
+
     /// Pré-processa a contagem de professores por nível
     _professoresPorNivel = {};
     for (var item in professores) {
       final nivel = item['nivel']?.toString() ?? '';
       _professoresPorNivel[nivel] = (_professoresPorNivel[nivel] ?? 0) + 1;
     }
+    ///Pega a quantidade de professores
+    final totals = await Future.wait([
+      Utils.calculateTotals(professores),
+      Utils.calculateTotals(professores),
+    ]);
 
-    final valor = await calcValorTotal(widget.tipo);
     setState(() {
-      _custoMensal = valor;
+      _custoMensal = totals[0]['total']!;
       totProf=professores.length;
+      isLoading = true;
     });
 
     totalFolha=double.parse(professores[0]['total_vencimentos_geral']);
@@ -358,7 +398,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
               SizedBox(height: 24),
 
               SummaryTable(
-                totalProfissionais: calcQtdeServidoresTotal(),
+                totalProfissionais: totProf,
                 custoMensal: _custoMensal,
                 meses: 12,
                 ferias: 0.033,
@@ -372,40 +412,6 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
         ),
       ),
     );
-  }
-
-  Future<double> calcValorTotal(String tipo) async {
-    double tot = 0;
-    try {
-      // Otimização: calcula todos os níveis em paralelo
-      List<Future<double>> futures = [];
-
-      for (int nivelIndex = 2; nivelIndex < niveis.length; nivelIndex++) {
-        futures.add(ProfessorUtils.calculateTotalForLevel(
-            niveis[nivelIndex],
-            professores,
-            cargaHoraria,
-            tipo
-        ));
-      }
-
-      List<double> results = await Future.wait(futures);
-      tot = results.fold(0, (sum, element) => sum + element);
-
-      return tot;
-    } catch (e) {
-      print('Erro em calcValorTotal: $e');
-      return 0.0;
-    }
-  }
-
-  calcQtdeServidoresTotal(){
-    double tot=0;
-    ///Começa com 2 para não pegar o nível BASE
-    for (int nivelIndex = 2; nivelIndex < niveis.length; nivelIndex++){
-      tot=tot+ProfessorUtils.calculateNroProfissionalForLevel(niveis[nivelIndex], professores, cargaHoraria);
-    }
-    return tot;
   }
 
   Widget buildSummaryCards() {
