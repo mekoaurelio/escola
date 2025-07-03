@@ -68,7 +68,7 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> with AnoBimestreListenerMix
 
       /// A DESCRICAO DOS DADOS DO EXERCICIO
       _dadosDoExercicio = [
-        Texto(tit: '1-Receita de Impostos '),
+        Texto(tit: '1-Receita de Impostos ',left: 10,negrito: true,),
         Texto(tit: '2-Receitas de Transferências',tooltip: d12,icone: Icons.help),
         Texto(tit: 'Total Receita - (1 + 2)',negrito: true,),
         Texto(tit: ' 3-Receitas Destinadas ao Fundeb (20%) ', icone: Icons.help,tooltip: 'nro2 * 20%',),
@@ -97,31 +97,76 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> with AnoBimestreListenerMix
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100],
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _impactoData == null
-          ? Utils.vazio('Nenhum dado de Impcato para esse ano/bimestre')
-          : SingleChildScrollView(
-        child: Center(
-          child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          scrollDirection: Axis.horizontal,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ///Mostra todos os dados da folha de pagamento
-              _buildDadosDaFolha(_impactoData!),
-              const SizedBox(height: 16),
-              const Divider(thickness: 1.5),
-              const SizedBox(height: 16),
-              ///Mostra todo so dados do Exercicio
-              _buildDadosDoExercio(_impactoData!),
-            ],
+          ? Utils.vazio('Nenhum dado de Impacto para esse ano/bimestre')
+          : SingleChildScrollView( // Rolagem principal para a página inteira
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+        child: Center( // Centraliza o conteúdo na tela
+          child: ConstrainedBox( // Define uma largura máxima para o conteúdo
+            constraints: const BoxConstraints(maxWidth: 800), // Largura generosa
+            child: Column( // Organiza os cards verticalmente
+              crossAxisAlignment: CrossAxisAlignment.stretch, // Faz os cards ocuparem a largura
+              children: [
+                // ===================================
+                // CARD 1: DADOS DA FOLHA DE PAGAMENTO
+                // ===================================
+                _buildSectionCard(
+                  title: 'DADOS DA FOLHA DE PAGAMENTO',
+                  child: _buildDadosDaFolha(_impactoData!),
+                ),
+
+                const SizedBox(height: 32), // Espaço entre os cards
+
+                // ===================================
+                // CARD 2: DADOS DO EXERCÍCIO
+                // ===================================
+                _buildSectionCard(
+                  title: 'DADOS DO EXERCÍCIO',
+                  child: _buildDadosDoExercio(_impactoData!),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
+    );
+  }
+
+
+// NOVO WIDGET HELPER PARA OS CARDS
+  Widget _buildSectionCard({
+    required String title,
+    required Widget child,
+  }) {
+    return Card(
+      color: Colors.white,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      clipBehavior: Clip.antiAlias,
+      child:  Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ///TITULOS
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.08), // Cor de fundo azul claro da imagem
+              ),
+              child: Center(
+                child:Texto(tit: title,tam: 18,negrito: true,cor: Colors.blue,),
+              ),
+            ),
+            // A rolagem horizontal garante que o conteúdo nunca cause overflow
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: child,
+            ),
+          ],
+        ),
+
     );
   }
 
@@ -141,9 +186,10 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> with AnoBimestreListenerMix
     ];
 
     return Column(
-      children: List.generate(_dadosDaFolhaDePagamento.length, (index) {
-        final bool isTotal = index >= 8;
-        return //
+      children:
+
+      List.generate(_dadosDaFolhaDePagamento.length, (index) {final bool isTotal = index >= 8;
+        return
          HoverableDataRow(
           label: _dadosDaFolhaDePagamento[index].tit,
           icon: _dadosDaFolhaDePagamento[index].icone,
@@ -151,22 +197,6 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> with AnoBimestreListenerMix
           value: values[index],
           isHighlighted: isTotal,
            onValueChanged: (label, newValue) {
-            /*
-             valueUpdates.value = {'label': label, 'value': newValue};
-
-            // Atualize o estado aqui baseado no label e newValue
-            setState(() {
-              if (label.contains('1-Receita de Impostos')) {
-                nro1 = double.tryParse(newValue) ?? nro1;
-              } else if (label.contains('2-Receitas de Transferências')) {
-                nro2 = double.tryParse(newValue) ?? nro2;
-              } else if (label.contains('4-Receitas Recebidas do FUNDEB')) {
-                nro4 = double.tryParse(newValue) ?? nro4;
-              }
-              // Adicione outros casos conforme necessário
-            });
-
-             */
           },
         );
       }),
@@ -195,10 +225,6 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> with AnoBimestreListenerMix
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-         Texto(tit:'DADOS DO EXERCÍCIO DE 2025', negrito: true, top: 10, bottom: 10),
-
-        ///TODOS OS DADOS - VEIO DO _loadData()
-
         ...List.generate(_dadosDoExercicio.length, (index) {
           final valor = valoresComIcones[index];
           return HoverableDataRow(
@@ -229,7 +255,6 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> with AnoBimestreListenerMix
     );
   }
 }
-
 
 class ValorComIcone {
   final String valor;

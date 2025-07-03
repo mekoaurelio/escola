@@ -204,55 +204,27 @@ class _Section extends StatelessWidget {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Center(
-          child:Card(
-            color: Colors.grey.shade300,
-            elevation: 0,
-            shape: Utils.borda(),
-            child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Texto(
-                tit: title,
-                cor: Colors.black,
-                alin: TextAlign.center,
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.add_circle_outline,
-                  color: Colors.black,
-                  size: 20,
-                ),
-                onPressed: () async {
-                  // abre o dialog e, quando fechar, dispara o callback:
-                  await showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder:
-                        (_) => Panel(
-                      width: MediaQuery.of(context).size.width * 0.44,
-                      height: MediaQuery.of(context).size.height * 0.44,
-                      child: SimuladorAlt(
-                        data: null,
-                        tb: table,
-                        tipo: 'percentual',
-                        //tipo: 'percentual',
-                      ),
-                      onClose: () => Navigator.of(context).pop(),
-                    ),
-                  );
-                  onEdited(); // <— aqui recarrega a tela
-                },
-              ),
-            ],
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      clipBehavior: Clip.antiAlias,
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: double.infinity, // Ocupa toda a largura disponível
+            color: Colors.blue,
+            padding: EdgeInsets.all(10), // Ajuste o padding conforme necessário
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.black),
+            ),
           ),
-          )
-        ),
-        Center(child: Column(children: cards)),
-      ],
+          Column(children: cards),
+        ],
+      ),
     );
   }
 
@@ -295,6 +267,7 @@ class _ItemCard extends StatelessWidget {
       child: Row(
         children: [
           /// Descrição
+         SizedBox(width: 20,),
           Line(
             tex: data['descricao'] ?? '',
             tam: 350,

@@ -10,8 +10,8 @@ import '../services/utils.dart';
 import '../widgets/line.dart';
 import '../widgets/texto.dart';
 
-class TabelasSimulador extends StatelessWidget {
-  const TabelasSimulador({super.key});
+class ProjecaoDeRecursos extends StatelessWidget {
+  const ProjecaoDeRecursos({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -386,12 +386,7 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> with An
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Texto(tit: 'Projeção de Recursos',cor:Colors.white ,negrito: true,tam: 20,),
-        centerTitle: true,
-        backgroundColor: primaryColor,
-        elevation: 4,
-      ),
+      backgroundColor: Colors.white,
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : totais==null?Utils.vazio('Nenhum Dado Encontrado'):

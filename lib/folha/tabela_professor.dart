@@ -313,20 +313,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       );
     }
     return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        title: Texto(tit: 'Plano de Carreira Docente ${widget.tipo}',cor:Colors.white ,negrito: true,tam: 20,),
-        centerTitle: true,
-        backgroundColor: primaryColor,
-        elevation: 4,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: () => _loadDataAndCalculate(),
-            tooltip: 'Atualizar dados',
-          ),
-        ],
-      ),
+      backgroundColor: Colors.white,
       body: professores.length==0
           ? Center(
         child: Utils.vazio('Nenhum dado Encontrado')

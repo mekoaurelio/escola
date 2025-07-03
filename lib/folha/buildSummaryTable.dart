@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
 import '../services/utils.dart';
+
 class SummaryTable extends StatefulWidget {
   final int totalProfissionais;
   final double custoMensal;
@@ -41,113 +42,132 @@ class _SummaryTableState extends State<SummaryTable> {
   void initState() {
     super.initState();
     _meses = widget.meses;
-    _ferias=widget.ferias;
-    _custoMensal=widget.custoMensal;
-    _totalEncargos=_custoMensal*0.14;
-    _remuneracaoTotal=_custoMensal *_meses;
-    _remuneracaoTotal=_remuneracaoTotal+(_remuneracaoTotal*_ferias);
-    _totalComEncargos=_remuneracaoTotal+_totalEncargos;
+    _ferias = widget.ferias;
+    _custoMensal = widget.custoMensal;
+    _totalEncargos = _custoMensal * 0.14;
+    _remuneracaoTotal = _custoMensal * _meses;
+    _remuneracaoTotal = _remuneracaoTotal + (_remuneracaoTotal * _ferias);
+    _totalComEncargos = _remuneracaoTotal + _totalEncargos;
   }
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       margin: EdgeInsets.all(16),
       child: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-        // Header
-        Container(
-        decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
-        ),
-          padding: EdgeInsets.symmetric(vertical: 12),
+            // Header
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+              ),
+              padding: EdgeInsets.symmetric(vertical: 12),
 
-          child: Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: Padding(
-                  padding: EdgeInsets.only(left: 16),
-                  child: Text(
-                    'Descrição',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue.shade800,
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 16),
+                      child: Text(
+                        'Descrição',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue.shade800,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  'Valor',
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      'Valor',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade800,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
 
-        // Linhas da tabela
-        _buildTableRow('Total profissionais', widget.totalProfissionais.toString(),isTotal: true),
-        _buildTableRow('Custo Mensal', Utils.formatVr.format(_custoMensal)),
-        _buildEditableTableRow(
-          'Meses',
-          _meses.toString(),
-            [FilteringTextInputFormatter.digitsOnly],
-          onSave: (novoValor) {
-            setState(() {
-              _meses = int.tryParse(novoValor) ?? widget.meses;
-            });
-            // Adicione aqui qualquer cálculo que precise ser atualizado
-          },
-        ),
+            // Linhas da tabela
+            _buildTableRow(
+              'Total profissionais',
+              widget.totalProfissionais.toString(),
+              isTotal: true,
+            ),
+            _buildTableRow('Custo Mensal', Utils.formatVr.format(_custoMensal)),
+            _buildEditableTableRow(
+              'Meses',
+              _meses.toString(),
+              [FilteringTextInputFormatter.digitsOnly],
+              onSave: (novoValor) {
+                setState(() {
+                  _meses = int.tryParse(novoValor) ?? widget.meses;
+                });
+                // Adicione aqui qualquer cálculo que precise ser atualizado
+              },
+            ),
             _buildEditableTableRow(
               '1/3 férias',
               _ferias.toString(),
-                [CurrencyTextInputFormatter.currency(symbol: '%', locale: 'pt')],
+              [CurrencyTextInputFormatter.currency(symbol: '%', locale: 'pt')],
               onSave: (novoValor) {
                 setState(() {
                   _ferias = double.tryParse(novoValor) ?? widget.ferias;
-                  _remuneracaoTotal=_custoMensal *(_meses*_ferias);
+                  _remuneracaoTotal = _custoMensal * (_meses * _ferias);
 
                   //_custoMensal=widget.custoMensal*_ferias;
                 });
                 // Adicione aqui qualquer cálculo que precise ser atualizado
               },
             ),
-        _buildTableRow('Remuneração Total', _remuneracaoTotal!=0?Utils.formatVr.format(_remuneracaoTotal):Utils.formatVr.format('0.0'),
-            isTotal: true),
+            _buildTableRow(
+              'Remuneração Total',
+              _remuneracaoTotal != 0
+                  ? Utils.formatVr.format(_remuneracaoTotal)
+                  : Utils.formatVr.format('0.0'),
+              isTotal: true,
+            ),
 
-
-        _buildTableRow('Encargos Sociais', '${widget.encargosPercentual.toStringAsFixed(0)}%'),
-        _buildTableRow('TOTAL Encargos', Utils.formatVr.format(_totalEncargos), isTotal: true),
-        _buildTableRow('Total COM ENCARGOS', Utils.formatVr.format(_totalComEncargos), isHighlighted: true),
-        ],
+            _buildTableRow(
+              'Encargos Sociais',
+              '${widget.encargosPercentual.toStringAsFixed(0)}%',
+            ),
+            _buildTableRow(
+              'TOTAL Encargos',
+              Utils.formatVr.format(_totalEncargos),
+              isTotal: true,
+            ),
+            _buildTableRow(
+              'Total COM ENCARGOS',
+              Utils.formatVr.format(_totalComEncargos),
+              isHighlighted: true,
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 
-  Widget _buildTableRow(String label, String value, {bool isTotal = false, bool isHighlighted = false}) {
+  Widget _buildTableRow(
+    String label,
+    String value, {
+    bool isTotal = false,
+    bool isHighlighted = false,
+  }) {
     return Container(
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-            color: Colors.grey.shade200,
-            width: 1,
-          ),
+          bottom: BorderSide(color: Colors.grey.shade200, width: 1),
         ),
       ),
       child: Material(
@@ -160,10 +180,12 @@ class _SummaryTableState extends State<SummaryTable> {
                 flex: 2,
                 child: Padding(
                   padding: EdgeInsets.only(left: 16),
-                  child: Text(label,
+                  child: Text(
+                    label,
                     style: TextStyle(
                       fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-                      color: isHighlighted ? Colors.blue.shade800 : Colors.black,
+                      color:
+                          isHighlighted ? Colors.blue.shade800 : Colors.black,
                     ),
                   ),
                 ),
@@ -174,7 +196,10 @@ class _SummaryTableState extends State<SummaryTable> {
                   value,
                   textAlign: TextAlign.right,
                   style: TextStyle(
-                    fontWeight: isTotal || isHighlighted ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        isTotal || isHighlighted
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                     color: isHighlighted ? Colors.blue.shade800 : Colors.black,
                   ),
                 ),
@@ -186,14 +211,16 @@ class _SummaryTableState extends State<SummaryTable> {
     );
   }
 
-  Widget _buildEditableTableRow(String label, String value,dynamic inputFormatters, {required Function(String) onSave}) {
+  Widget _buildEditableTableRow(
+    String label,
+    String value,
+    dynamic inputFormatters, {
+    required Function(String) onSave,
+  }) {
     return Container(
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-            color: Colors.grey.shade200,
-            width: 1,
-          ),
+          bottom: BorderSide(color: Colors.grey.shade200, width: 1),
         ),
       ),
       child: Material(
@@ -233,12 +260,7 @@ class _SummaryTableState extends State<SummaryTable> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Text(
-                          value,
-                          style: TextStyle(
-                            color: Colors.black,
-                          ),
-                        ),
+                        Text(value, style: TextStyle(color: Colors.black)),
                         SizedBox(width: 8),
                         Icon(Icons.edit, size: 16, color: Colors.blue),
                       ],

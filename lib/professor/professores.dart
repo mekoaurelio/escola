@@ -18,7 +18,9 @@ class Professores extends StatefulWidget {
   @override
   State<Professores> createState() => _ProfessoresState();
 }
-class _ProfessoresState extends State<Professores> with AnoBimestreListenerMixin{
+
+class _ProfessoresState extends State<Professores>
+    with AnoBimestreListenerMixin {
   final TextEditingController controller = TextEditingController();
   List<dynamic> lista = [];
   List<dynamic> listaCompleta = [];
@@ -30,7 +32,7 @@ class _ProfessoresState extends State<Professores> with AnoBimestreListenerMixin
 
   @override
   void onAnoBimestreMudou(String ano, String bimestre) {
-    atualizaTela(ano,bimestre);
+    atualizaTela(ano, bimestre);
   }
 
   @override
@@ -39,12 +41,12 @@ class _ProfessoresState extends State<Professores> with AnoBimestreListenerMixin
     _loadData();
   }
 
-  atualizaTela(var ano,var bimestre){
+  atualizaTela(var ano, var bimestre) {
     setState(() {
-      TBFolha='a$ano$bimestre';
-      TBVantagens='a_vantagens$ano$bimestre';
-      listaCompleta=[];
-      lista=[];
+      TBFolha = 'a$ano$bimestre';
+      TBVantagens = 'a_vantagens$ano$bimestre';
+      listaCompleta = [];
+      lista = [];
       _loadData();
     });
   }
@@ -82,18 +84,21 @@ class _ProfessoresState extends State<Professores> with AnoBimestreListenerMixin
       if (text.isEmpty) {
         lista = listaCompleta;
       } else {
-        lista = listaCompleta.where((professor) {
-          final nome = professor['nome']?.toString().toLowerCase() ?? '';
-          final matr = professor['matricula']?.toString().toLowerCase() ?? '';
-          final nivel = professor['nivel']?.toString().toLowerCase() ?? '';
-          final unidade = professor['unidade']?.toString().toLowerCase() ?? '';
+        lista =
+            listaCompleta.where((professor) {
+              final nome = professor['nome']?.toString().toLowerCase() ?? '';
+              final matr =
+                  professor['matricula']?.toString().toLowerCase() ?? '';
+              final nivel = professor['nivel']?.toString().toLowerCase() ?? '';
+              final unidade =
+                  professor['unidade']?.toString().toLowerCase() ?? '';
 
-          final query = text.toLowerCase();
-          return nome.contains(query) ||
-              matr.contains(query) ||
-              nivel.contains(query) ||
-              unidade.contains(query);
-        }).toList();
+              final query = text.toLowerCase();
+              return nome.contains(query) ||
+                  matr.contains(query) ||
+                  nivel.contains(query) ||
+                  unidade.contains(query);
+            }).toList();
       }
       currentPage = 1;
     });
@@ -110,87 +115,147 @@ class _ProfessoresState extends State<Professores> with AnoBimestreListenerMixin
 
     final totalPages = (lista.length / pageSize).ceil();
     final screenSizeConfig = ScreenSizeConfig(context);
-
+    const double maxTableWidth = 1500;
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: CustomTextFiel(
-              controller: controller,
-              label: 'Pesquisar por nome, matrícula, nível ou unidade...',
-              left: 10,
-              prefixIcon: Icons.search_outlined,
-              obrigatorio: false,
-              onChanged: _onSearchChanged,
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: lista.isEmpty
-                  ?  Utils.vazio('Nenhum Professor Encontrado para esse ano/bimestre')
-                  : Column(
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 10),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: currentItems.length,
-                      itemBuilder: (context, index) {
-                        final item = currentItems[index];
-                        // 2. AGORA USAMOS O NOSSO NOVO WIDGET, PASSANDO OS DADOS
-                        return _ProfessorListItem(item: item);
-                      },
-                    ),
-                  ),
-                  PaginationFooter(
-                    currentPage: currentPage,
-                    totalPages: totalPages,
-                    totalItems: lista.length,
-                    onPageChanged: (newPage) {
-                      // A lógica de atualização do estado permanece no widget pai.
-                      setState(() {
-                        currentPage = newPage;
-                      });
-                    },
-                  ),
+      body:Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: maxTableWidth),
+            // Usamos um Card como container geral da tabela para dar sombra e um visual limpo
+            child: Column(
+              children: [
+                CustomTextFiel(
+                  controller: controller,
+                  label: 'Pesquisar por nome, matrícula, nível ou unidade...',
+                  left: 10,
+                  prefixIcon: Icons.search_outlined,
+                  obrigatorio: false,
+                  onChanged: _onSearchChanged,
+                ),
+                Expanded(
+                    child: Card(
+                      color: Colors.white,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      clipBehavior: Clip.antiAlias, // Essencial para cortar os cantos
+                      child: Column( // A estrutura principal que separa cabeçalho, corpo e rodapé
+                        children: [
+                          // ===================================
+                          // 1. CABEÇALHO (FIXO)
+                          // ===================================
+                          _buildHeader(),
 
-                ],
-              ),
-            ),
+                          // ===================================
+                          // 2. CORPO (ROLÁVEL)
+                          // ===================================
+                          Expanded(
+                            child:  ListView.builder(
+                              itemCount: currentItems.length,
+                              itemBuilder: (context, index) {
+                                final item = currentItems[index];
+                                // 2. AGORA USAMOS O NOSSO NOVO WIDGET, PASSANDO OS DADOS
+                                return _ProfessorListItem(item: item);
+                              },
+                            ),
+                          ),
+
+                          // ===================================
+                          // 3. RODAPÉ (FIXO)
+                          // ===================================
+                          PaginationFooter(
+                            currentPage: currentPage,
+                            totalPages: totalPages,
+                            totalItems: lista.length,
+                            onPageChanged: (newPage) {
+                              // A lógica de atualização do estado permanece no widget pai.
+                              setState(() {
+                                currentPage = newPage;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                )
+
+              ],
+            )
+
+
           ),
-        ],
+        ),
       ),
     );
   }
 
   // Refatorado para ser um widget mais limpo e constante
   Widget _buildHeader() {
-    const headerTextStyle = TextStyle(color: Colors.black, fontWeight: FontWeight.bold);
-
-    return Card(
-      color: Colors.grey.shade300,
-      elevation: 0,
-      shape: Utils.borda(),
-      child:  Padding( // Adicionado padding para alinhar melhor com os itens
-        padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-        child: Row(
-          children: [
-            Line(tex: 'Matrícula', tam: 70, alin: Alignment.centerLeft, ),
-            SizedBox(width: 5),
-            Line(tex: 'CPF', tam: 85, alin: Alignment.centerLeft, ),
-            Line(tex: 'Professor', tam: 200, alin: Alignment.centerLeft,  ),
-            Line(tex: 'Cargo', tam: 200, alin: Alignment.centerLeft,), // Ordem corrigida
-            Line(tex: 'Local', tam: 200, alin: Alignment.centerLeft, ),
-            Line(tex: 'Unidade', tam: 200, alin: Alignment.centerLeft,  ),
-            Line(tex: 'Nível', tam: 30, alin: Alignment.centerLeft,  ),
-            Line(tex: 'Admissão', tam: 90, alin: Alignment.centerLeft, ),
-          ],
-        ),
-      ),
+    const headerTextStyle = TextStyle(
+      color: Colors.black,
+      fontWeight: FontWeight.bold,
     );
+
+    return Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.blue.withOpacity(0.08), // Cor de fundo azul claro da imagem
+          ),
+          child:Row(
+            children: [
+              SizedBox(width: 15,),
+              Line(tex: 'Matrícula', tam: 70, alin: Alignment.centerLeft, cor: Colors.blue, negrito: true,fontSize: 16,),
+              SizedBox(width: 5),
+              Line(tex: 'CPF', tam: 85, alin: Alignment.centerLeft, cor: Colors.blue, negrito: true,fontSize: 16,),
+              Line(
+                tex: 'Professor',
+                tam: 200,
+                alin: Alignment.centerLeft,
+                cor: Colors.blue,
+                negrito: true,
+                  fontSize: 16
+              ),
+              Line(
+                tex: 'Cargo',
+                tam: 200,
+                alin: Alignment.centerLeft,
+                cor: Colors.blue,
+                negrito: true,
+                  fontSize: 16
+              ), // Ordem corrigida
+              Line(
+                tex: 'Local',
+                tam: 200,
+                alin: Alignment.centerLeft,
+                cor: Colors.blue,
+                negrito: true,
+                  fontSize: 16
+              ),
+              Line(
+                tex: 'Unidade',
+                tam: 200,
+                alin: Alignment.centerLeft,
+                cor: Colors.blue,
+                negrito: true,fontSize: 16
+              ),
+              Line(
+                tex: 'Nível',
+                tam: 50,
+                alin: Alignment.centerLeft,
+                cor: Colors.blue,
+                negrito: true,fontSize: 16
+              ),
+              Line(
+                tex: 'Admissão',
+                tam: 90,
+                alin: Alignment.centerLeft,
+                cor: Colors.blue,
+                negrito: true,fontSize: 14
+              ),
+            ],
+          ),
+        );
   }
 }
 
@@ -213,16 +278,18 @@ class __ProfessorListItemState extends State<_ProfessorListItem> {
     final item = widget.item;
     final DateTime parsedDate = Utils.parseDate(item['admissao']);
     final int yearsDifference = Utils.calculateYearsDifference(parsedDate);
-    final double somaVantagens = double.tryParse(item['soma_vantagens'] ?? '0.0') ?? 0.0;
+    final double somaVantagens =
+        double.tryParse(item['soma_vantagens'] ?? '0.0') ?? 0.0;
 
     return MouseRegion(
-
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.grey.shade300, width: 1.0)),
+          border: Border(
+            bottom: BorderSide(color: Colors.grey.shade300, width: 1.0),
+          ),
           // A cor depende do estado local _isHovered
           color: _isHovered ? Colors.blue.shade50 : Colors.transparent,
         ),
@@ -230,15 +297,53 @@ class __ProfessorListItemState extends State<_ProfessorListItem> {
           children: [
             Row(
               children: [
-                Line(tex: item['matricula'] ?? '', tam: 70, alin: Alignment.centerLeft, negrito: true, fontSize: 14),
+                Line(
+                  tex: item['matricula'] ?? '',
+                  tam: 70,
+                  alin: Alignment.centerLeft,
+                  negrito: true,
+                  fontSize: 18,
+                ),
                 const SizedBox(width: 5),
-                Line(tex: item['cpf'] ?? '', tam: 85, alin: Alignment.centerLeft,fontSize: 9,),
-                Line(tex: item['nome'] ?? '', tam: 200, alin: Alignment.centerLeft, fontSize: 14,negrito: true,),
-                Line(tex: item['cargo'] ?? '', tam: 200, alin: Alignment.centerLeft),
-                Line(tex: item['local_lotacao'] ?? '', tam: 200, alin: Alignment.centerLeft),
-                Line(tex: item['unidade'] ?? '', tam: 200, alin: Alignment.centerLeft),
-                Line(tex: item['nivel'] ?? '', tam: 30, alin: Alignment.centerLeft),
-                Line(tex: '${item['admissao'] ?? ''} ($yearsDifference anos)', tam: 90, alin: Alignment.centerLeft, fontSize: 9),
+                Line(
+                  tex: item['cpf'] ?? '',
+                  tam: 85,
+                  alin: Alignment.centerLeft,
+                  fontSize: 9,
+                ),
+                Line(
+                  tex: item['nome'] ?? '',
+                  tam: 200,
+                  alin: Alignment.centerLeft,
+                  fontSize: 14,
+                  negrito: true,
+                ),
+                Line(
+                  tex: item['cargo'] ?? '',
+                  tam: 200,
+                  alin: Alignment.centerLeft,
+                ),
+                Line(
+                  tex: item['local_lotacao'] ?? '',
+                  tam: 200,
+                  alin: Alignment.centerLeft,
+                ),
+                Line(
+                  tex: item['unidade'] ?? '',
+                  tam: 200,
+                  alin: Alignment.centerLeft,
+                ),
+                Line(
+                  tex: item['nivel'] ?? '',
+                  tam: 30,
+                  alin: Alignment.centerLeft,
+                ),
+                Line(
+                  tex: '${item['admissao'] ?? ''} ($yearsDifference anos)',
+                  tam: 90,
+                  alin: Alignment.centerLeft,
+                  fontSize: 9,
+                ),
               ],
             ),
             const SizedBox(height: 5),
@@ -248,8 +353,22 @@ class __ProfessorListItemState extends State<_ProfessorListItem> {
             const SizedBox(height: 5),
             Row(
               children: [
-                Line(tex: 'Total de Vantagens', tam: 200, alin: Alignment.centerLeft, cor: Colors.blue, negrito: true),
-                Line(tex: Utils.formatVr.format(double.parse(item['soma_vantagens'])), tam: 300, alin: Alignment.centerRight, cor: Colors.blue, negrito: true),
+                Line(
+                  tex: 'Total de Vantagens',
+                  tam: 200,
+                  alin: Alignment.centerLeft,
+                  cor: Colors.blue,
+                  negrito: true,
+                ),
+                Line(
+                  tex: Utils.formatVr.format(
+                    double.parse(item['soma_vantagens']),
+                  ),
+                  tam: 300,
+                  alin: Alignment.centerRight,
+                  cor: Colors.blue,
+                  negrito: true,
+                ),
               ],
             ),
           ],
