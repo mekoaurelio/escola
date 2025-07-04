@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'lang/translation_service.dart';
 import 'services/ano_bimestre_controller.dart';
 import 'services/utils.dart';
+import 'splash_screen.dart';
 import 'start.dart';
 
 void main()async {
@@ -61,7 +62,7 @@ class _TattooStudioAppState extends State<TattooStudioApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,  ],
 
-      home: const Start(),
+      home: const SplashScreen(),
     );
   }
 }

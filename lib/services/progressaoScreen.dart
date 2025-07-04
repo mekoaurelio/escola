@@ -17,14 +17,15 @@ class ProgressaoScreen extends StatefulWidget {
   _ProgressaoScreenState createState() => _ProgressaoScreenState();
 }
 
-class _ProgressaoScreenState extends State<ProgressaoScreen> with AnoBimestreListenerMixin {
+class _ProgressaoScreenState extends State<ProgressaoScreen>
+    with AnoBimestreListenerMixin {
   List<Map<String, dynamic>> prof = [];
   List<Map<String, dynamic>> infantil = [];
   List<Map<String, dynamic>> fundeb = [];
   List<Map<String, dynamic>> exercicio = [];
   final anoBimestreController = Get.find<AnoBimestreController>();
-  double perAumentoAdulto=0.00;
-  double perAumentoInfantil=0.00;
+  double perAumentoAdulto = 0.00;
+  double perAumentoInfantil = 0.00;
 
   double? fundebBase; // Valor da ordem 1 do FUNDEB RECEITA
 
@@ -32,7 +33,7 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> with AnoBimestreLis
 
   @override
   void onAnoBimestreMudou(String ano, String bimestre) {
-    _atualizaTela(ano,bimestre);
+    _atualizaTela(ano, bimestre);
   }
 
   @override
@@ -41,12 +42,12 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> with AnoBimestreLis
     _loadAll();
   }
 
-  _atualizaTela(var ano,var bimestre){
+  _atualizaTela(var ano, var bimestre) {
     setState(() {
-      TBProfessor='a_professor$ano$bimestre';
-      TBInfantil='a_infantil$ano$bimestre';
-      TBReceitaFundebSimulador='a_receita_fundeb_simulador$ano$bimestre';
-      TBExercicio='a_exercicio$ano$bimestre';
+      TBProfessor = 'a_professor$ano$bimestre';
+      TBInfantil = 'a_infantil$ano$bimestre';
+      TBReceitaFundebSimulador = 'a_receita_fundeb_simulador$ano$bimestre';
+      TBExercicio = 'a_exercicio$ano$bimestre';
       _loadAll();
     });
   }
@@ -59,12 +60,18 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> with AnoBimestreLis
     final g = await ApiMySql.get(TBReceitaFundebSimulador, null, null);
     final h = await ApiMySql.get(TBExercicio, null, 'ordem');
 
-    fundebBase = double.tryParse(g.firstWhere((e) => e['ordem'] == '1', orElse: () => {'valor': 0})['valor'].toString());
+    fundebBase = double.tryParse(
+      g
+          .firstWhere(
+            (e) => e['ordem'] == '1',
+            orElse: () => {'valor': 0},
+          )['valor']
+          .toString(),
+    );
     final totais = await ApiMySql.get(TBTotais, null, null);
     setState(() {
-
-      perAumentoInfantil=double.parse(totais[0]['perc_aumento_infantil']);
-      perAumentoAdulto=double.parse(totais[0]['perc_aumento_adulto']);
+      perAumentoInfantil = double.parse(totais[0]['perc_aumento_infantil']);
+      perAumentoAdulto = double.parse(totais[0]['perc_aumento_adulto']);
       prof = List<Map<String, dynamic>>.from(f);
       infantil = List<Map<String, dynamic>>.from(i);
       fundeb = List<Map<String, dynamic>>.from(g);
@@ -72,62 +79,142 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> with AnoBimestreLis
       loading = false;
     });
   }
+/*
+  @override
+  Widget build(BuildContext context) {
+    if (loading) return const Center(child: CircularProgressIndicator());
+    return prof.isEmpty
+        ? Utils.vazio('Nenhum dado para esse ano/bimestre')
+        : Center(
+          child: FractionallySizedBox(
+            widthFactor: 0.7,
+
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _Section(
+                    title: 'SIMULADOR PCRM – PROFESSORES',
+                    table: TBProfessor,
+                    items: prof,
+                    perAumento: perAumentoAdulto,
+                    onEdited: _loadAll,
+                  ),
+                  const SizedBox(height: 24),
+                  _Section(
+                    title: 'SIMULADOR PCRM – EDUCADOR INFANTIL (40h)',
+                    table: TBInfantil,
+                    items: infantil,
+                    perAumento: perAumentoInfantil,
+                    onEdited: _loadAll,
+                  ),
+                  const SizedBox(height: 24),
+
+                  _SectionFundebExercio(
+                    title: 'FUNDEB RECEITA',
+                    table: TBReceitaFundebSimulador,
+                    items: fundeb,
+                    fundeb: [],
+                    onEdited: _loadAll,
+                    referencia: null, // Não usa referência
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  _SectionFundebExercio(
+                    title: 'EXERCÍCIO',
+                    table: TBExercicio,
+                    items: exercicio,
+                    fundeb: fundeb,
+                    onEdited: _loadAll,
+                    referencia: fundebBase, // 🔥 Usa o valor do FUNDEB
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+  }
+
+ */
+  // Dentro da sua classe _ProgressaoScreenState (ou onde o build estiver)
 
   @override
   Widget build(BuildContext context) {
     if (loading) return const Center(child: CircularProgressIndicator());
-    return prof.isEmpty?Utils.vazio('Nenhum dado para esse ano/bimestre'):
-    Center(
-      child: FractionallySizedBox(
-    widthFactor: 0.7,
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _Section(
-            title: 'SIMULADOR PCRM – PROFESSORES',
-            table: TBProfessor,
-            items: prof,
-            perAumento: perAumentoAdulto,
-            onEdited: _loadAll,
-          ),
-          const SizedBox(height: 24),
-          _Section(
-            title: 'SIMULADOR PCRM – EDUCADOR INFANTIL (40h)',
-            table: TBInfantil,
-            items: infantil,
-            perAumento: perAumentoInfantil,
-            onEdited: _loadAll,
-          ),
-          const SizedBox(height: 24),
 
-          _SectionFundebExercio(
-            title: 'FUNDEB RECEITA',
-            table: TBReceitaFundebSimulador,
-            items: fundeb,
-            fundeb: [],
-            onEdited: _loadAll,
-            referencia: null, // Não usa referência
-          ),
+    // Verifica se alguma das listas essenciais está vazia
+    if (prof.isEmpty && infantil.isEmpty && fundeb.isEmpty && exercicio.isEmpty) {
+      return Utils.vazio('Nenhum dado para esse ano/bimestre');
+    }
 
-          const SizedBox(height: 24),
+    // O LayoutBuilder decide qual layout usar com base na largura da tela.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Ponto de quebra: telas com menos de 600px de largura são consideradas "mobile".
+        bool isMobileLayout = constraints.maxWidth < 600;
 
-          _SectionFundebExercio(
-            title: 'EXERCÍCIO',
-            table: TBExercicio,
-            items: exercicio,
-            fundeb: fundeb,
-            onEdited: _loadAll,
-            referencia: fundebBase, // 🔥 Usa o valor do FUNDEB
+        // O conteúdo principal é o mesmo para ambos os layouts.
+        Widget content = SingleChildScrollView(
+          // No mobile, o padding é menor para aproveitar o espaço.
+          padding: EdgeInsets.all(isMobileLayout ? 8.0 : 16.0),
+          child: Column(
+            children: [
+              _Section(
+                title: 'SIMULADOR PCRM – PROFESSORES',
+                table: TBProfessor,
+                items: prof,
+                perAumento: perAumentoAdulto,
+                onEdited: _loadAll,
+              ),
+              const SizedBox(height: 24),
+              _Section(
+                title: 'SIMULADOR PCRM – EDUCADOR INFANTIL (40h)',
+                table: TBInfantil,
+                items: infantil,
+                perAumento: perAumentoInfantil,
+                onEdited: _loadAll,
+              ),
+              const SizedBox(height: 24),
+              _SectionFundebExercio(
+                title: 'FUNDEB RECEITA',
+                table: TBReceitaFundebSimulador,
+                items: fundeb,
+                fundeb: [],
+                onEdited: _loadAll,
+                referencia: null,
+              ),
+              const SizedBox(height: 24),
+              _SectionFundebExercio(
+                title: 'EXERCÍCIO',
+                table: TBExercicio,
+                items: exercicio,
+                fundeb: fundeb,
+                onEdited: _loadAll,
+                referencia: fundebBase,
+              ),
+            ],
           ),
-        ],
-      ),
-    ),
-  ),
+        );
+
+        // Agora, aplicamos o container correto com base no layout.
+        if (isMobileLayout) {
+          // Em telas mobile, o conteúdo ocupa a tela toda.
+          return content;
+        } else {
+          // Em telas maiores, centralizamos e limitamos a largura.
+          return Center(
+            child: FractionallySizedBox(
+              widthFactor: 0.7, // Você pode ajustar este fator
+              child: content,
+            ),
+          );
+        }
+      },
     );
   }
-}
 
+}
 
 /// Widget genérico para exibir uma seção com título e lista de itens
 /// INFANTIL
@@ -162,34 +249,38 @@ class _Section extends StatelessWidget {
       // Primeiro item: usa rawValor. Depois, valor anterior * (1 + perc/100)
       var computed = (i == 0) ? rawValor : (lastValue! * (1 + perc / 100));
 
-      if(data['ordem']=='0'){
+      if (data['ordem'] == '0') {
         firstValue = computed;
       }
+
       ///Percentual de aumento
-      if(data['ordem']=='8'){
+      if (data['ordem'] == '8') {
         final percAumento = double.tryParse(data['percentual'].toString()) ?? 0;
-        computed=firstValue!+(firstValue!*percAumento/100);
+        computed = firstValue! + (firstValue! * percAumento / 100);
       }
 
-      if(data['ordem']=='1' || data['ordem']=='7'){
-        computed=0;
+      if (data['ordem'] == '1' || data['ordem'] == '7') {
+        computed = 0;
       }
-      if(data['ordem']=='2'){
-        computed=(firstValue!*perc/100);
+      if (data['ordem'] == '2') {
+        computed = (firstValue! * perc / 100);
       }
-      if(data['ordem']=='3'){
-        computed=firstValue!;
+      if (data['ordem'] == '3') {
+        computed = firstValue!;
       }
 
       lastValue = computed;
-      if(data['ordem']=='3'){
-        updateValor(firstValue,data['ordem']);
+      if (data['ordem'] == '3') {
+        updateValor(firstValue, data['ordem']);
       }
-      if(data['ordem']=='2' || data['ordem']=='4' || data['ordem']=='5' || data['ordem']=='6' ) {
-        if(perAumento>0) {
+      if (data['ordem'] == '2' ||
+          data['ordem'] == '4' ||
+          data['ordem'] == '5' ||
+          data['ordem'] == '6') {
+        if (perAumento > 0) {
           computed = computed + (computed! * perAumento / 100);
         }
-        updateValor(computed,data['ordem']);
+        updateValor(computed, data['ordem']);
       }
 
       cards.add(
@@ -219,7 +310,7 @@ class _Section extends StatelessWidget {
             child: Text(
               title,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black),
+              style: TextStyle(color: Colors.grey.shade300),
             ),
           ),
           Column(children: cards),
@@ -228,12 +319,15 @@ class _Section extends StatelessWidget {
     );
   }
 
-  updateValor(var computed,var ordem)async{
-    await ApiMySql.executaSql('UPDATE $table set valor=$computed where ordem=$ordem');
+  updateValor(var computed, var ordem) async {
+    await ApiMySql.executaSql(
+      'UPDATE $table set valor=$computed where ordem=$ordem',
+    );
   }
-  updatePerc(var computed,var campo)async{
+
+  updatePerc(var computed, var campo) async {
     await ApiMySql.executaSql('UPDATE $TBTotais set $campo=$computed');
-   // onEdited();
+    // onEdited();
   }
 }
 
@@ -258,22 +352,22 @@ class _ItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Formata o valor em real
-    String valorStr='0';
-    if(displayValue!=0){
+    String valorStr = '0';
+    if (displayValue != 0) {
       valorStr = Utils.toReal(displayValue);
     }
     return Container(
-      color: index==8?Colors.blue.shade100:Colors.transparent,
+      color: index == 8 ? Colors.blue.shade100 : Colors.transparent,
       child: Row(
         children: [
           /// Descrição
-         SizedBox(width: 20,),
+          SizedBox(width: 20),
           Line(
             tex: data['descricao'] ?? '',
             tam: 350,
             cor: isFirst ? Colors.black : Colors.black54,
             alin: Alignment.centerLeft,
-            negrito: isFirst || index==8,
+            negrito: isFirst || index == 8,
             fontSize: isFirst ? 20 : 16,
           ),
 
@@ -284,7 +378,7 @@ class _ItemCard extends StatelessWidget {
             cor: Colors.black54,
             alin: Alignment.centerRight,
             fontSize: 16,
-            negrito: index==8,
+            negrito: index == 8,
           ),
 
           ///EDITA O PERCENTUAL
@@ -298,15 +392,15 @@ class _ItemCard extends StatelessWidget {
                   barrierDismissible: false,
                   builder:
                       (_) => Panel(
-                    width: MediaQuery.of(context).size.width * 0.44,
-                    height: MediaQuery.of(context).size.height * 0.44,
-                    child: SimuladorAlt(
-                      data: data,
-                      tb: table,
-                      tipo: 'percentual',
-                    ),
-                    onClose: () => Navigator.of(context).pop(),
-                  ),
+                        width: MediaQuery.of(context).size.width * 0.44,
+                        height: MediaQuery.of(context).size.height * 0.44,
+                        child: SimuladorAlt(
+                          data: data,
+                          tb: table,
+                          tipo: 'percentual',
+                        ),
+                        onClose: () => Navigator.of(context).pop(),
+                      ),
                 );
                 onEdited(); // <— aqui recarrega a tela
               },
@@ -314,18 +408,22 @@ class _ItemCard extends StatelessWidget {
 
           /// Valor calculado
           Line(
-            tex: valorStr=='0'?'':valorStr,
+            tex: valorStr == '0' ? '' : valorStr,
             tam: 200,
             cor: isFirst ? Colors.red : Colors.black87,
             alin: Alignment.centerRight,
-            negrito: isFirst || index==8,
+            negrito: isFirst || index == 8,
             fontSize: isFirst ? 18 : 15,
           ),
 
           ///EDITA O VALOR BÁSICO
           if (isFirst)
             IconButton(
-              icon: const Icon(Icons.handshake_outlined, color: Colors.grey, size: 15,),
+              icon: const Icon(
+                Icons.handshake_outlined,
+                color: Colors.grey,
+                size: 15,
+              ),
               onPressed: () async {
                 // abre o dialog e, quando fechar, dispara o callback:
                 await showDialog(
@@ -333,28 +431,25 @@ class _ItemCard extends StatelessWidget {
                   barrierDismissible: false,
                   builder:
                       (_) => Panel(
-                    width: MediaQuery.of(context).size.width * 0.44,
-                    height: MediaQuery.of(context).size.height * 0.44,
-                    child: SimuladorAlt(
-                      data: data,
-                      tb: table,
-                      tipo: 'valor',
-                    ),
-                    onClose: () => Navigator.of(context).pop(),
-                  ),
+                        width: MediaQuery.of(context).size.width * 0.44,
+                        height: MediaQuery.of(context).size.height * 0.44,
+                        child: SimuladorAlt(
+                          data: data,
+                          tb: table,
+                          tipo: 'valor',
+                        ),
+                        onClose: () => Navigator.of(context).pop(),
+                      ),
                 );
                 onEdited(); // <— aqui recarrega a tela
               },
             ),
         ],
-      )
+      ),
     );
-
-
   }
-  delete(){
 
-  }
+  delete() {}
 }
 
 class _ItemFundebExercicio extends StatelessWidget {
@@ -378,78 +473,80 @@ class _ItemFundebExercicio extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Formata o valor em real
-    String valorStr='0';
-    if(displayValue!=0){
+    String valorStr = '0';
+    if (displayValue != 0) {
       valorStr = Utils.toReal(displayValue);
     }
-    return
-      valorStr=='0'?Container():
-      Row(
-      children: [
-        /// Descrição
-        Line(
-          tex: data['descricao'] ?? '',
-          tam: 350,
-          cor: Colors.black54,
-          alin: Alignment.centerLeft,
-          negrito: true,
-          fontSize: 16,
-        ),
+    return valorStr == '0'
+        ? Container()
+        : Row(
+          children: [
+            /// Descrição
+            Line(
+              tex: data['descricao'] ?? '',
+              tam: 350,
+              cor: Colors.black54,
+              alin: Alignment.centerLeft,
+              negrito: true,
+              fontSize: 16,
+            ),
 
-        /// Valor calculado
-        Line(
-          tex: valorStr=='0'?'':valorStr,
-          tam: 200,
-          cor: Colors.black87,
-          alin: Alignment.centerRight,
-          negrito: true,
-          fontSize:  16,
-        ),
-        ///EDITA O VALOR
-        IconButton(
-          icon: const Icon(Icons.edit, color: Colors.grey, size: 15),
-          onPressed: () async {
-            // abre o dialog e, quando fechar, dispara o callback:
-            await showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder:
-                  (_) => Panel(
-                width: MediaQuery.of(context).size.width * 0.44,
-                height: MediaQuery.of(context).size.height * 0.44,
-                child: SimuladorAlt(
-                  data: data,
-                  tb: table,
-                  tipo: 'valor',
-                ),
-                onClose: () => Navigator.of(context).pop(),
-              ),
-            );
-            onEdited(); // <— aqui recarrega a tela
-          },
-        ),
+            /// Valor calculado
+            Line(
+              tex: valorStr == '0' ? '' : valorStr,
+              tam: 200,
+              cor: Colors.black87,
+              alin: Alignment.centerRight,
+              negrito: true,
+              fontSize: 16,
+            ),
 
-        /// Percentual
-        Line(
-          tex: perct==0?'':perct.toStringAsFixed(2)+'%',
-          tam: 80,
-          cor: Colors.black54,
-          alin: Alignment.centerRight,
-          fontSize: 16,
-        ),
-        ///ICONE PARA DELETAR
-        /*
+            ///EDITA O VALOR
+            IconButton(
+              icon: const Icon(Icons.edit, color: Colors.grey, size: 15),
+              onPressed: () async {
+                // abre o dialog e, quando fechar, dispara o callback:
+                await showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder:
+                      (_) => Panel(
+                        width: MediaQuery.of(context).size.width * 0.44,
+                        height: MediaQuery.of(context).size.height * 0.44,
+                        child: SimuladorAlt(
+                          data: data,
+                          tb: table,
+                          tipo: 'valor',
+                        ),
+                        onClose: () => Navigator.of(context).pop(),
+                      ),
+                );
+                onEdited(); // <— aqui recarrega a tela
+              },
+            ),
+
+            /// Percentual
+            Line(
+              tex: perct == 0 ? '' : perct.toStringAsFixed(2) + '%',
+              tam: 80,
+              cor: Colors.black54,
+              alin: Alignment.centerRight,
+              fontSize: 16,
+            ),
+
+            ///ICONE PARA DELETAR
+            /*
           IconButton(
             onPressed: () => delete(),
             icon: Icon(Icons.delete, color: Colors.black38,),
           ),
 
           */
-      ],
-    );
+          ],
+        );
   }
-  delete(){
-  }
+
+  delete() {}
 }
 
 class _SectionFundebExercio extends StatelessWidget {
@@ -474,31 +571,31 @@ class _SectionFundebExercio extends StatelessWidget {
   Widget build(BuildContext context) {
     double? lastValue;
     final cards = <Widget>[];
-    int x=0;
-    double vrFundeb=0.0;
+    int x = 0;
+    double vrFundeb = 0.0;
     for (var data in items) {
       final rawValor = double.tryParse(data['valor'].toString()) ?? 0;
       double computed = rawValor;
       double perc = 0;
-      if(fundeb.isNotEmpty) {
-        if(x<=5) {
-          vrFundeb=double.tryParse(fundeb[x]['valor'].toString()) ?? 0;
+      if (fundeb.isNotEmpty) {
+        if (x <= 5) {
+          vrFundeb = double.tryParse(fundeb[x]['valor'].toString()) ?? 0;
         }
       }
 
       if (data['ordem'] == '1') {
         computed = rawValor;
-        if(title=='EXERCÍCIO'){
+        if (title == 'EXERCÍCIO') {
           ///PEGA O PRIMEIRO VALOR E O PRIMEIRO PERCENTUAL
-          perc =   (rawValor!/referencia!)*100;
+          perc = (rawValor! / referencia!) * 100;
         }
       } else if (referencia != null) {
         /// PEGA TODOS OS VALORES
-          perc = (rawValor/vrFundeb)*100;
-          computed = rawValor;
+        perc = (rawValor / vrFundeb) * 100;
+        computed = rawValor;
       }
 
-      if(title=='FUNDEB RECEITA') {
+      if (title == 'FUNDEB RECEITA') {
         if (lastValue != null && lastValue != 0) {
           perc = ((rawValor - lastValue) / lastValue) * 100;
         }
@@ -521,10 +618,7 @@ class _SectionFundebExercio extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        _buildHeader(context),
-        ...cards,
-      ],
+      children: [_buildHeader(context), ...cards],
     );
   }
 
@@ -536,11 +630,7 @@ class _SectionFundebExercio extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Texto(
-            tit: title,
-            cor: Colors.black,
-            alin: TextAlign.center,
-          ),
+          Texto(tit: title, cor: Colors.black, alin: TextAlign.center),
           IconButton(
             icon: const Icon(
               Icons.add_circle_outline,
@@ -551,16 +641,13 @@ class _SectionFundebExercio extends StatelessWidget {
               await showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (_) => Panel(
-                  width: MediaQuery.of(context).size.width * 0.44,
-                  height: MediaQuery.of(context).size.height * 0.44,
-                  child: SimuladorAlt(
-                    data: null,
-                    tb: table,
-                    tipo: 'valor',
-                  ),
-                  onClose: () => Navigator.of(context).pop(),
-                ),
+                builder:
+                    (_) => Panel(
+                      width: MediaQuery.of(context).size.width * 0.44,
+                      height: MediaQuery.of(context).size.height * 0.44,
+                      child: SimuladorAlt(data: null, tb: table, tipo: 'valor'),
+                      onClose: () => Navigator.of(context).pop(),
+                    ),
               );
               onEdited();
             },

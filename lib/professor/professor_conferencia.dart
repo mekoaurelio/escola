@@ -126,21 +126,21 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
     return Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.blue.withOpacity(0.08), // Cor de fundo azul claro da imagem
+          color: Colors.blue, // Cor de fundo azul claro da imagem
         ),
         child: Row(
           children: [
             SizedBox(width: 15,),
-            Line(tex: 'Matrícula', tam: 90, alin: Alignment.centerLeft,cor: Colors.blue,negrito: true,fontSize: 16,),
-            Line(tex: 'Professor', tam: 250, alin: Alignment.centerLeft,cor: Colors.blue,negrito: true,fontSize: 16),
-            Line(tex: 'Tipo', tam: 70, alin: Alignment.center,cor: Colors.blue,negrito: true,fontSize: 16),
-            Line(tex: 'Nível', tam: 70, alin: Alignment.center,cor: Colors.blue,negrito: true,fontSize: 16),
+            Line(tex: 'Matrícula', tam: 90, alin: Alignment.centerLeft,cor: Colors.grey.shade300,negrito: true,fontSize: 16,),
+            Line(tex: 'Professor', tam: 250, alin: Alignment.centerLeft,cor: Colors.grey.shade300,negrito: true,fontSize: 16),
+            Line(tex: 'Tipo', tam: 70, alin: Alignment.center,cor: Colors.grey.shade300,negrito: true,fontSize: 16),
+            Line(tex: 'Nível', tam: 70, alin: Alignment.center,cor: Colors.grey.shade300,negrito: true,fontSize: 16),
 
-            Line(tex: 'Vencimento', tam: 100, alin: Alignment.centerRight,cor: Colors.blue,negrito: true,fontSize: 16),
-            Line(tex: 'APTS', tam: 100, alin: Alignment.centerRight,cor: Colors.blue,negrito: true,fontSize: 16),
-            Line(tex: 'Vantagens', tam: 100, alin: Alignment.centerRight,cor: Colors.blue,negrito: true,fontSize: 16),
-            Line(tex: 'Total', tam: 100, alin: Alignment.centerRight,cor: Colors.blue,negrito: true,fontSize: 16),
-            Line(tex: 'Proposta', tam: 100, alin: Alignment.centerRight,cor: Colors.blue,negrito: true,fontSize: 16)
+            Line(tex: 'Vencimento', tam: 100, alin: Alignment.centerRight,cor: Colors.grey.shade300,negrito: true,fontSize: 16),
+            Line(tex: 'APTS', tam: 100, alin: Alignment.centerRight,cor: Colors.grey.shade300,negrito: true,fontSize: 16),
+            Line(tex: 'Vantagens', tam: 100, alin: Alignment.centerRight,cor: Colors.grey.shade300,negrito: true,fontSize: 16),
+            Line(tex: 'Total', tam: 100, alin: Alignment.centerRight,cor: Colors.grey.shade300,negrito: true,fontSize: 16),
+            Line(tex: 'Proposta', tam: 100, alin: Alignment.centerRight,cor: Colors.grey.shade300,negrito: true,fontSize: 16)
           ],
         )
     );

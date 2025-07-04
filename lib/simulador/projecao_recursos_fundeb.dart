@@ -34,8 +34,6 @@ class _FUNDEBCalculatorScreenState extends State<FUNDEBCalculatorScreen> with An
   Map<String, dynamic>? tabela;
   bool isLoading = true;
 
-  // Suas funções de lógica (onAnoBimestreMudou, _atualizaTela, initState, _carregarDadosBanco, etc.)
-  // permanecem exatamente as mesmas. Apenas a UI (o método build) será alterada.
   @override
   void onAnoBimestreMudou(String ano, String bimestre) { /* ... */ }
   _atualizaTela(var ano,var bimestre) { /* ... */ }
@@ -214,7 +212,7 @@ class _FUNDEBCalculatorScreenState extends State<FUNDEBCalculatorScreen> with An
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.08), // Cor de fundo azul claro da imagem
+        color: Colors.blue, // Cor de fundo azul claro da imagem
       ),
       child: Row(
         children: List.generate(columnTitles.length, (index) {
@@ -229,7 +227,7 @@ class _FUNDEBCalculatorScreenState extends State<FUNDEBCalculatorScreen> with An
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
-                  color: Colors.blue.shade700, // Cor do texto azul da imagem
+                  color: Colors.grey.shade300, // Cor do texto azul da imagem
                 ),
               ),
 

@@ -71,7 +71,7 @@ class ApiMySql {
 
   static Future<dynamic> executaSql(String sql) async {
     String cleanSql = sql.replaceAll(r'\"', '"');
-   // print(cleanSql);
+    print(cleanSql);
     cleanSql = Uri.encodeComponent(cleanSql)
         .replaceAll('%25', '%') // Mantém os % originais do LIKE
         .replaceAll('+', '%20');
@@ -191,7 +191,7 @@ class ApiMySql {
     sql2+=" SUM(CASE WHEN dv.codigo IN ('21019') THEN dv.valor ELSE 0  END) AS soma_apts,";
     sql2+="(SELECT SUM(vencimento) FROM a2501 WHERE status = 'A') AS total_vencimentos_geral";
     sql2+=" FROM $TBFolha f LEFT JOIN $TBVantagens dv ON f.id = dv.folha_id WHERE f.status = 'A'GROUP BY f.id ORDER BY f.id";
-   // print(sql2);
+    print(sql2);
     return await executaSql(sql2);
   }
 

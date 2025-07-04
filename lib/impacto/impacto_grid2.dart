@@ -102,36 +102,53 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> with AnoBimestreListenerMix
           ? const Center(child: CircularProgressIndicator())
           : _impactoData == null
           ? Utils.vazio('Nenhum dado de Impacto para esse ano/bimestre')
-          : SingleChildScrollView( // Rolagem principal para a página inteira
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-        child: Center( // Centraliza o conteúdo na tela
-          child: ConstrainedBox( // Define uma largura máxima para o conteúdo
-            constraints: const BoxConstraints(maxWidth: 800), // Largura generosa
-            child: Column( // Organiza os cards verticalmente
-              crossAxisAlignment: CrossAxisAlignment.stretch, // Faz os cards ocuparem a largura
-              children: [
-                // ===================================
-                // CARD 1: DADOS DA FOLHA DE PAGAMENTO
-                // ===================================
-                _buildSectionCard(
-                  title: 'DADOS DA FOLHA DE PAGAMENTO',
-                  child: _buildDadosDaFolha(_impactoData!),
-                ),
-
-                const SizedBox(height: 32), // Espaço entre os cards
-
-                // ===================================
-                // CARD 2: DADOS DO EXERCÍCIO
-                // ===================================
-                _buildSectionCard(
-                  title: 'DADOS DO EXERCÍCIO',
-                  child: _buildDadosDoExercio(_impactoData!),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+          :
+      LayoutBuilder(
+        builder: (context, constraints) {
+          // Se a tela for estreita, usamos uma Column
+          if (constraints.maxWidth < 900) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _buildSectionCard(
+                    title: 'DADOS DA FOLHA DE PAGAMENTO',
+                    child: _buildDadosDaFolha(_impactoData!),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSectionCard(
+                    title: 'DADOS DO EXERCÍCIO',
+                    child: _buildDadosDoExercio(_impactoData!),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            // Se a tela for larga, usamos uma Row
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _buildSectionCard(
+                      title: 'DADOS DA FOLHA DE PAGAMENTO',
+                      child: _buildDadosDaFolha(_impactoData!),
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    child: _buildSectionCard(
+                      title: 'DADOS DO EXERCÍCIO',
+                      child: _buildDadosDoExercio(_impactoData!),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+        },
+      )
     );
   }
 
@@ -142,7 +159,6 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> with AnoBimestreListenerMix
     required Widget child,
   }) {
     return Card(
-      color: Colors.white,
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       clipBehavior: Clip.antiAlias,
@@ -153,10 +169,10 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> with AnoBimestreListenerMix
             Container(
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.08), // Cor de fundo azul claro da imagem
+                color: Colors.blue, // Cor de fundo azul claro da imagem
               ),
               child: Center(
-                child:Texto(tit: title,tam: 18,negrito: true,cor: Colors.blue,),
+                child:Texto(tit: title,tam: 18,negrito: true,cor: Colors.grey.shade300,),
               ),
             ),
             // A rolagem horizontal garante que o conteúdo nunca cause overflow

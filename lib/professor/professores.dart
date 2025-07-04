@@ -200,19 +200,19 @@ class _ProfessoresState extends State<Professores>
     return Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.08), // Cor de fundo azul claro da imagem
+            color: Colors.blue, // Cor de fundo azul claro da imagem
           ),
           child:Row(
             children: [
               SizedBox(width: 15,),
-              Line(tex: 'Matrícula', tam: 70, alin: Alignment.centerLeft, cor: Colors.blue, negrito: true,fontSize: 16,),
+              Line(tex: 'Matrícula', tam: 70, alin: Alignment.centerLeft, cor: Colors.grey.shade300, negrito: true,fontSize: 16,),
               SizedBox(width: 5),
-              Line(tex: 'CPF', tam: 85, alin: Alignment.centerLeft, cor: Colors.blue, negrito: true,fontSize: 16,),
+              Line(tex: 'CPF', tam: 85, alin: Alignment.centerLeft, cor: Colors.grey.shade300, negrito: true,fontSize: 16,),
               Line(
                 tex: 'Professor',
                 tam: 200,
                 alin: Alignment.centerLeft,
-                cor: Colors.blue,
+                cor: Colors.grey.shade300,
                 negrito: true,
                   fontSize: 16
               ),
@@ -220,7 +220,7 @@ class _ProfessoresState extends State<Professores>
                 tex: 'Cargo',
                 tam: 200,
                 alin: Alignment.centerLeft,
-                cor: Colors.blue,
+                cor: Colors.grey.shade300,
                 negrito: true,
                   fontSize: 16
               ), // Ordem corrigida
@@ -228,7 +228,7 @@ class _ProfessoresState extends State<Professores>
                 tex: 'Local',
                 tam: 200,
                 alin: Alignment.centerLeft,
-                cor: Colors.blue,
+                cor: Colors.grey.shade300,
                 negrito: true,
                   fontSize: 16
               ),
@@ -236,21 +236,21 @@ class _ProfessoresState extends State<Professores>
                 tex: 'Unidade',
                 tam: 200,
                 alin: Alignment.centerLeft,
-                cor: Colors.blue,
+                cor: Colors.grey.shade300,
                 negrito: true,fontSize: 16
               ),
               Line(
                 tex: 'Nível',
                 tam: 50,
                 alin: Alignment.centerLeft,
-                cor: Colors.blue,
+                cor: Colors.grey.shade300,
                 negrito: true,fontSize: 16
               ),
               Line(
                 tex: 'Admissão',
                 tam: 90,
                 alin: Alignment.centerLeft,
-                cor: Colors.blue,
+                cor: Colors.grey.shade300,
                 negrito: true,fontSize: 14
               ),
             ],
