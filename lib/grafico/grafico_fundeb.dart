@@ -50,7 +50,6 @@ class _FundebChartState extends State<FundebChart> with AnoBimestreListenerMixin
       var f = await ApiMySql.get(TB, null, 'ordem');
       print(f.length);
       if(f.length>0) {
-        print('MMMMMMMMMMMMMMM');
         setState(() {
           fundebData = [
             FundebData(year: getDescri(f[1]['descricao']),

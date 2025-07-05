@@ -823,7 +823,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
                   child: Image.asset('assets/images/Xmktec_logo.jpeg', height: 105),
                 ),
               ),
-              Texto(tit:'V.014'),
+              Texto(tit:'V.015'),
             ],
           ),
 

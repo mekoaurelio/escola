@@ -71,7 +71,7 @@ class ApiMySql {
 
   static Future<dynamic> executaSql(String sql) async {
     String cleanSql = sql.replaceAll(r'\"', '"');
-    print(cleanSql);
+   // print(cleanSql);
     cleanSql = Uri.encodeComponent(cleanSql)
         .replaceAll('%25', '%') // Mantém os % originais do LIKE
         .replaceAll('+', '%20');

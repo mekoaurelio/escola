@@ -6,10 +6,10 @@ import 'package:get/get.dart';
 import '../const/const.dart';
 import '../data/api_my_sql.dart';
 import '../services/ano_bimestre_controller.dart';
+import '../services/calc_dispersao_valores.dart';
 import '../services/utils.dart'; // Assumindo que Utils.formatVr existe
 import '../widgets/texto.dart';
 import 'buildSummaryTable.dart';
-import 'professor_utils.dart';
 import 'salary_totals_table.dart';
 import 'tabela_salarial.dart';
 
@@ -144,85 +144,12 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
     );
   }
 
-
   int quantidadeDeProfessores(String nivel, int coluna) {
     // Formata o nível/classe no formato esperado (ex: "B01" para NB coluna 1)
     String nivelFormatado = nivel.substring(1); // Remove o "N" do início
     String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
     String chave = '$nivelFormatado$colunaFormatada';
     return _professoresPorNivel[chave] ?? 0;
-  }
-
-  // Método para calcular todos os valores da tabela e as dispersões
-  void _calculateTableAndDispersions() {
-    List<List<double>> tempTable = [];
-    double primeiroValorTabela = 0; // Primeira coluna da primeira linha (NB, classe 1)
-    double ultimaColunaPrimeiraLinha = 0; // Última coluna da primeira linha (NB, última classe)
-    double ultimaColunaUltimaLinha = 0; // Última coluna da última linha (NE, última classe)
-
-    for (int nivelIndex = 0; nivelIndex < niveis.length; nivelIndex++) {
-      List<double> rowValues = [];
-      double vrAnteriorDaLinha = 0;
-
-      // Define o valor inicial da linha com base no nível
-      if (nivelIndex == 0) vrAnteriorDaLinha = valorBase; //3
-      if (nivelIndex == 1) vrAnteriorDaLinha = penA; //tava 0
-      if (nivelIndex == 2) vrAnteriorDaLinha = penB; //1
-      if (nivelIndex == 3) vrAnteriorDaLinha = penC; //2
-      if (nivelIndex == 4) vrAnteriorDaLinha = penD; //3
-      if (nivelIndex == 5) vrAnteriorDaLinha = penE; //3
-
-      for (int coluna = 1; coluna <= cargaHoraria; coluna++) {
-        double valorAtual;
-        if (coluna == 1) {
-          valorAtual = vrAnteriorDaLinha;
-          // Captura o primeiro valor da tabela (NB, Classe 1)
-          if (nivelIndex == 0) {
-            primeiroValorTabela = valorAtual;
-          }
-        } else {
-          double percCalc = _percEntreColunas;
-          valorAtual =
-              ((vrAnteriorDaLinha * percCalc) / 100) + vrAnteriorDaLinha;
-        }
-
-        rowValues.add(valorAtual);
-        vrAnteriorDaLinha = valorAtual;
-
-        // Captura a última coluna da primeira linha (NB)
-        if (nivelIndex == 0 && coluna == cargaHoraria) {
-          ultimaColunaPrimeiraLinha = valorAtual;
-        }
-
-        // Captura a última coluna da última linha (NE)
-        if (nivelIndex == 4 && coluna == cargaHoraria) {
-          ultimaColunaUltimaLinha = valorAtual;
-        }
-      }
-      tempTable.add(rowValues);
-    }
-
-    // Cálculo das dispersões conforme especificado
-    double calcDispersaoHorizontal = 0;
-    double calcDispersaoTotal = 0;
-
-    if (primeiroValorTabela != 0) {
-      // Dispersão Horizontal: (última coluna da primeira linha - primeira coluna da primeira linha) / primeira coluna da primeira linha
-      calcDispersaoHorizontal =
-          ((ultimaColunaPrimeiraLinha - primeiroValorTabela) /
-              primeiroValorTabela) * 100;
-
-      // Dispersão Total: (última coluna da última linha - primeira coluna da primeira linha) / primeira coluna da primeira linha
-      // print('primeiroValorTabela : $primeiroValorTabela ultimaColunaUltimaLinha : $ultimaColunaUltimaLinha');
-      calcDispersaoTotal = ((ultimaColunaUltimaLinha - primeiroValorTabela) /
-          primeiroValorTabela) * 100;
-    }
-
-    setState(() {
-      _calculatedTableValues = tempTable;
-      _dispersaoHorizontal = calcDispersaoHorizontal.toStringAsFixed(2);
-      _dispersaoTotal = calcDispersaoTotal.toStringAsFixed(2);
-    });
   }
 
   Future<void> _loadDataAndCalculate() async {
@@ -281,7 +208,25 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
 
       ///Percentual de cálculo entre as colunas
 
-      _calculateTableAndDispersions(); // Calcula a tabela e dispersões
+      final result = calculateTableAndDispersions(
+        niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
+        valorBase: valorBase,
+        penA: penA,
+        penB: penB,
+        penC: penC,
+        penD: penD,
+        penE: penE,
+        cargaHoraria: cargaHoraria,
+        percEntreColunas: _percEntreColunas,
+      );
+
+      setState(() {
+        _calculatedTableValues = result.calculatedTableValues;
+        _dispersaoHorizontal = result.dispersaoHorizontal;
+        _dispersaoTotal = result.dispersaoTotal;
+      });
+
+      // Calcula a tabela e dispersões
     } catch (e) {
       print('Erro ao carregar dados ou calcular: $e');
       // Tratar erro, talvez mostrar uma mensagem ao usuário
@@ -520,7 +465,24 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       aoSalvar: (novoValor) {
         setState(() {
           cargaHoraria = int.tryParse(novoValor)!;
-          _calculateTableAndDispersions();
+          final result = calculateTableAndDispersions(
+            niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
+            valorBase: valorBase,
+            penA: penA,
+            penB: penB,
+            penC: penC,
+            penD: penD,
+            penE: penE,
+            cargaHoraria: cargaHoraria,
+            percEntreColunas: _percEntreColunas,
+          );
+
+          setState(() {
+            _calculatedTableValues = result.calculatedTableValues;
+            _dispersaoHorizontal = result.dispersaoHorizontal;
+            _dispersaoTotal = result.dispersaoTotal;
+
+          });
         });
       },
     );
@@ -535,9 +497,26 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       aoSalvar: (novoValor) {
         setState(() {
           _percEntreColunas = double.tryParse(novoValor)!;
-          _calculateTableAndDispersions();
+          final result = calculateTableAndDispersions(
+            niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
+            valorBase: valorBase,
+            penA: penA,
+            penB: penB,
+            penC: penC,
+            penD: penD,
+            penE: penE,
+            cargaHoraria: cargaHoraria,
+            percEntreColunas: _percEntreColunas,
+          );
+
+          setState(() {
+            _calculatedTableValues = result.calculatedTableValues;
+            _dispersaoHorizontal = result.dispersaoHorizontal;
+            _dispersaoTotal = result.dispersaoTotal;
+
+          });
         });
       },
     );
   }
-}//977
+}//565

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
+import '../services/calc_dispersao_valores.dart';
 import '../services/utils.dart';
 import '../widgets/line.dart';
 import '../widgets/texto.dart';
@@ -33,6 +34,8 @@ class _SimulaState extends State<Simula> {
   double totalPropostaProfessor=0;
   double totalGeralInfantil=0;
   double totalPropostaInfantil=0;
+  String _dispersaoHorizontal = '0.00%'; // Valor inicial como string formatada
+  String _dispersaoTotal = '0.00%';
 
   @override
   void initState() {
@@ -59,7 +62,6 @@ class _SimulaState extends State<Simula> {
         // Defina valores padrão ou lance um erro se esses dados são essenciais
         perAumentoInf = '0';
         percAUmAdulto = '0';
-        debugPrint("Aviso: A tabela de totais retornou vazia. Usando percentuais padrão.");
       }
 
       ///PEGA OS PROFESSORES EDUCADORES
@@ -71,8 +73,31 @@ class _SimulaState extends State<Simula> {
         Utils.calculateTotals(adulto),
         Utils.calculateTotals(infantil),
       ]);
+      final profs=await ApiMySql.get(TBProfessor,null,'ordem');
 
+      ///PROGRESSÃO ENTRE NÍVEIS EDUCADOR
+      final  valorBase = double.parse(profs[0]['valor']);
+      final penA = double.parse(profs[2]['valor']);
+      final penB = double.parse(profs[3]['valor']);
+      final penC = double.parse(profs[4]['valor']);
+      final penD = double.parse(profs[5]['valor']);
+      final penE = double.parse(profs[6]['valor']);
+      final cargaHoraria=30;
+      final _percEntreColunas=double.parse(profs[1]['percentual']);
+      //Progressão entre Classes
 
+      final result = calculateTableAndDispersions(
+        niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
+        valorBase: valorBase,
+        penA: penA,
+        penB: penB,
+        penC: penC,
+        penD: penD,
+        penE: penE,
+        cargaHoraria: cargaHoraria,
+        percEntreColunas: _percEntreColunas,
+      );
+      //_calculatedTableValues = result.calculatedTableValues;
 
       setState(() {
         _adulto = adulto;
@@ -85,9 +110,10 @@ class _SimulaState extends State<Simula> {
         _countInfantil = infantil.length;
         _isLoading = false;
         _hasError = false;
+        _dispersaoHorizontal = result.dispersaoHorizontal;
+        _dispersaoTotal = result.dispersaoTotal;
       });
 
-      debugPrint('Dados carregados e estado atualizado com sucesso');
     } on TimeoutException {
       _handleError('Tempo excedido ao carregar dados. Verifique sua conexão.');
     } catch (e, stackTrace) {
@@ -445,7 +471,6 @@ class _SimulaState extends State<Simula> {
     final difGeral=proGeral-totGeral;
     final percAumento = (totGeral > 0) ? (totGeral / proGeral) * 100 : 0.0;
 
-
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -496,27 +521,6 @@ class _SimulaState extends State<Simula> {
                         },
                       ),
                     ),
-
-                    /*
-                    Tooltip(
-                      message: 'Click aqui para simular para vários meses',
-                      child:Row(
-                        children: [
-                          lin('Proposta',true,Alignment.center),///PROPOSTA
-                         /*
-                          IconButton(
-                            onPressed: () => Utils.snak('oi', 'teste', false, Colors.green),
-                            icon: Icon(Icons.edit, size: 15, color: Colors.black38,),
-                          ),
-
-                          */
-                        ],
-                      )
-
-
-                    ),
-
-                     */
                     lin('Variação',true,Alignment.center),
                   ],
                 ),
@@ -570,6 +574,7 @@ class _SimulaState extends State<Simula> {
     );
   }
 
+  // Dentro da sua classe _SimulaState
   Widget _buildSummaryCard({
     required IconData icon,
     required Color iconColor,
@@ -577,25 +582,66 @@ class _SimulaState extends State<Simula> {
     required String label,
     required int count,
     required String tipo,
-    Widget? child, // NOVO PARÂMETRO OPCIONAL
+    Widget? child,
   }) {
+    // Helper para criar os 'chips' e evitar repetição de código
+    Widget _buildInfoChip({
+      required String text,
+      required IconData trailingIcon,
+      required VoidCallback onTap,
+      required Color bgColor,
+      required Color borderColor,
+      required Color textColor,
+      required Color iconColor,
+      String? tooltip,
+    }) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min, // Para o container não se esticar
+          children: [
+            Text(
+              text,
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textColor),
+            ),
+            const SizedBox(width: 8),
+            Tooltip(
+              message: tooltip ?? 'Clique para editar',
+              child: GestureDetector(
+                onTap: onTap,
+                child: Icon(trailingIcon, size: 18, color: iconColor),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Expanded(
       child: Card(
         elevation: 2,
         color: const Color(0xFFF9F9FB),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ==========================================================
+              // LINHA 1: TÍTULO E CONTAGEM (DISTRIBUÍDOS)
+              // ==========================================================
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween, // A MÁGICA ACONTECE AQUI
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  // Parte Esquerda: Ícone e Título
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      ///ICONE
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -605,61 +651,143 @@ class _SimulaState extends State<Simula> {
                         child: Icon(icon, color: iconColor, size: 24),
                       ),
                       const SizedBox(width: 12),
-                      ///TEXTO
-                      Text(label,
+                      Text(
+                        label,
                         style: TextStyle(
                           fontSize: 20,
-                          color: Colors.grey[600],
+                          color: Colors.grey[700],
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      Texto(tit:'Aumento ${tipo == "INFANTIL" ? perAumentoInf : percAUmAdulto}%',left: 20,negrito: true,
-                        icone: Icons.edit,
-                        aoClicarIcone: () {
-                          Utils.mostrarDialogoEditarValor(
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'[0-9,]'))
-                            ],
-                            context: context,
-                            titulo: tipo=='INFANTIL'?perAumentoInf:percAUmAdulto,
-                            labelCampo: 'Percentual',
-                            valorInicial: '10',
-                            aoSalvar: (novoValor) {
-                              setState(() {
-                                if(tipo=='INFANTIL'){
-                                  perAumentoInf=novoValor;
-                                }else{
-                                  percAUmAdulto=novoValor;
-                                }
-                               // percP = double.tryParse(novoValor)!;
-                                //_calculateTableAndDispersions();
-                              });
-                            },
-                          );
-                        },
-                      ),
                     ],
                   ),
-                  ///QUANTIDADE
-                  Text(
-                    count.toString(),
-                    style: const TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                  // Parte Direita: Contagem
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      count.toString(),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
                 ],
               ),
 
+              const SizedBox(height: 20),
+              const Divider(), // Divisor para separar as seções
+              const SizedBox(height: 20),
+
+              // ==========================================================
+              // LINHA 2: CHIPS DE INFORMAÇÃO (DISTRIBUÍDOS)
+              // ==========================================================
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween, // DISTRIBUI OS CHIPS
+                children: [
+                  // Chip de Aumento
+                  _buildInfoChip(
+                    text: 'Aumento ${tipo == "INFANTIL" ? perAumentoInf : percAUmAdulto}%',
+                    trailingIcon: Icons.edit,
+                    bgColor: Colors.grey[50]!,
+                    borderColor: Colors.grey[100]!,
+                    textColor: Colors.grey[800]!,
+                    iconColor: Colors.grey[600]!,
+                    onTap: () {
+                      Utils.mostrarDialogoEditarValor(
+                        context: context,
+                        titulo: tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
+                        labelCampo: 'Percentual',
+                        valorInicial: tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
+                        aoSalvar: (novoValor) {
+                          setState(() {
+                            if (tipo == 'INFANTIL') {
+                              perAumentoInf = novoValor;
+                            } else {
+                              percAUmAdulto = novoValor;
+                            }
+                          });
+                        },
+                      );
+                    },
+                  ),
+
+                  /// Chip de Dispersão Horizontal
+                  _buildInfoChip(
+                    text: 'Disp. Horizontal ${_dispersaoHorizontal}%',
+                    trailingIcon: Icons.info_outline,
+                    tooltip: 'Dispersão salarial entre classes \nClick Aqui Para Saber Mais',
+                    bgColor:double.parse(_dispersaoHorizontal)>29.5? Colors.red[100]!:Colors.green[100]!,
+                    borderColor: double.parse(_dispersaoHorizontal)>29.5? Colors.red[100]!:Colors.green[100]!,
+                    textColor: Colors.black54,
+                    iconColor: Colors.black54,
+                    onTap: dicas,
+                  ),
+
+                  /// Chip de Dispersão Vertical
+                  _buildInfoChip(
+                    text: 'Disp. Vertical ${_dispersaoHorizontal}%',
+                    trailingIcon: Icons.info_outline,
+                    tooltip: 'Dispersão salarial entre níveis\nClick Aqui Para Saber Mais',
+                    bgColor: double.parse(_dispersaoHorizontal)>95? Colors.red[100]!:Colors.green[100]!,
+                    borderColor: double.parse(_dispersaoHorizontal)>95? Colors.red[100]!:Colors.green[100]!,
+                    textColor: Colors.black54,
+                    iconColor: Colors.black54,
+                    onTap: dicas,
+                  ),
+                ],
+              ),
+
+              // O conteúdo expansível (tabela)
               if (child != null) ...[
                 const SizedBox(height: 24),
-                child, // ADICIONA O WIDGET DETALHADO (a tabela)
+                child,
               ],
             ],
           ),
         ),
       ),
+    );
+  }
+
+  dicas()async{
+    await showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.info_outline, color: Colors.blue),
+            SizedBox(width: 10,),
+            Texto(tit: 'Significado das cores ',tam: 20,negrito: true,),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Texto(tit:'VERDE : Significa que a progressao da sua instituição está  aceitável',cor: Colors.green[500]!,),
+              Texto(tit:'VERMELHO : Significa que a progressao da sua instituição está  ACIMA do aceitável',cor: Colors.red[600]!,),
+             SizedBox(height: 10,),
+              Texto(tit:'Valor aceitável dispersão HORIZONTAL é de 29,5%',negrito: true,),
+              Texto(tit:'Valor aceitável dispersão TOTAL é de 95%',negrito: true,)
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fechar'),
+          ),
+        ],
+      );
+    },
     );
   }
 
