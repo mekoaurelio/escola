@@ -79,65 +79,6 @@ class _ProgressaoScreenState extends State<ProgressaoScreen>
       loading = false;
     });
   }
-/*
-  @override
-  Widget build(BuildContext context) {
-    if (loading) return const Center(child: CircularProgressIndicator());
-    return prof.isEmpty
-        ? Utils.vazio('Nenhum dado para esse ano/bimestre')
-        : Center(
-          child: FractionallySizedBox(
-            widthFactor: 0.7,
-
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  _Section(
-                    title: 'SIMULADOR PCRM – PROFESSORES',
-                    table: TBProfessor,
-                    items: prof,
-                    perAumento: perAumentoAdulto,
-                    onEdited: _loadAll,
-                  ),
-                  const SizedBox(height: 24),
-                  _Section(
-                    title: 'SIMULADOR PCRM – EDUCADOR INFANTIL (40h)',
-                    table: TBInfantil,
-                    items: infantil,
-                    perAumento: perAumentoInfantil,
-                    onEdited: _loadAll,
-                  ),
-                  const SizedBox(height: 24),
-
-                  _SectionFundebExercio(
-                    title: 'FUNDEB RECEITA',
-                    table: TBReceitaFundebSimulador,
-                    items: fundeb,
-                    fundeb: [],
-                    onEdited: _loadAll,
-                    referencia: null, // Não usa referência
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  _SectionFundebExercio(
-                    title: 'EXERCÍCIO',
-                    table: TBExercicio,
-                    items: exercicio,
-                    fundeb: fundeb,
-                    onEdited: _loadAll,
-                    referencia: fundebBase, // 🔥 Usa o valor do FUNDEB
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-  }
-
- */
-  // Dentro da sua classe _ProgressaoScreenState (ou onde o build estiver)
 
   @override
   Widget build(BuildContext context) {

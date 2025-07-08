@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../const/const.dart';
 import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
 import '../services/anoBimestreListenerMixin.dart';
@@ -107,17 +108,23 @@ class _ProfessoresState extends State<Professores>
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return  Scaffold(
+          backgroundColor: corFundoOadrao,
+          body: Center(child: CircularProgressIndicator())
+      );
     }
     if (errorMessage != null) {
-      return Scaffold(body: Center(child: Text(errorMessage!)));
+      return Scaffold(
+          backgroundColor: corFundoOadrao,
+          body: Center(child: Text(errorMessage!))
+      );
     }
 
     final totalPages = (lista.length / pageSize).ceil();
     final screenSizeConfig = ScreenSizeConfig(context);
     const double maxTableWidth = 1500;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: corFundoOadrao,
       body:Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),

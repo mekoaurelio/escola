@@ -367,8 +367,8 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                         maxWidth: constraints.maxWidth * 0.45,
                       ),
                       child: _buildSummaryItem(
-                        'Carga Horária',
-                        '$cargaHoraria horas',
+                        'Quantidade de Classes',
+                        '$cargaHoraria classes',
                         Icons.access_time,
                         onTap: () => _editWorkingHours(),
                       ),

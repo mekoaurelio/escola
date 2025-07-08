@@ -6,6 +6,7 @@ import '../auxiliares/cargo_lista.dart';
 import '../grafico/grafico_fundeb.dart';
 import '../grafico/grafico_fundeb_exercicio.dart';
 import '../grafico/receita_municipio.dart';
+import '../simulador/simula.dart';
 import '../widgets/texto.dart';
 import 'tabela_receitas.dart';
 
@@ -17,250 +18,204 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[100],
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Center(
-            child: Column(
-              children: [
-                //CargoLista
-                _buildChartCard(
-                  title: 'Consolidação de Recursos',
-                  chart: TabelaReceitas(),
-                ),
-                SizedBox(height: 20),
+            child:Tooltip(
+                  message: 'Clique em um card para abrir a análise detalhada.',
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              textStyle: const TextStyle(fontSize: 14, color: Colors.white),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(),
+                borderRadius: BorderRadius.circular(8),
+              ),
 
-                _buildChartCard(
-                  title: 'Receitas do Município',
-                  chart: GraficoReceitaMunicipio(),
-                ),
-                SizedBox(height: 20),
-                _buildChartCard(
-                    title: 'Receita FUNDEB X Exercício',
-                    chart: FundebChartSelector()
-                ),
-                SizedBox(height: 20),
-                _buildChartCard(
-                  title: 'Receita FUNDEB Anualmente',
-                  chart: FundebChart(tipo:'receita',),
-                ),
-                SizedBox(height: 20),
-                _buildChartCard(
-                  title: 'Evolução da Folha Anualmente',
-                  chart: FundebChart(tipo:'Exercicio'),
-                ),
-                SizedBox(height: 20),
-                _buildLegend(),
-              ],
-            ),
+              child: Wrap(
+                    spacing: 24, // Espaço horizontal entre os cards
+                    runSpacing: 24, // Espaço vertical entre as linhas de cards
+                    alignment: WrapAlignment.center,
+                    children: [
+                      // Card 2
+                      _buildChartCard(
+                        context: context,
+                        title: 'Simulador Magistério',
+                        previewChart: IgnorePointer(
+                            child: Simula()
+                        ),
+                        fullScreenWidget:  Simula(),
+                      ),
+                      _buildChartCard(
+                        context: context,
+                        title: 'Consolidação de Recursos',
+                        // A pré-visualização pode ser um widget diferente ou mais simples
+                        previewChart: IgnorePointer(child: TabelaReceitas()),
+                        // O widget completo que será aberto
+                        fullScreenWidget:  TabelaReceitas(),
+                      ),
+
+                      // Card 3
+                      _buildChartCard(
+                        context: context,
+                        title: 'Receitas do Município',
+                        previewChart: IgnorePointer(child: GraficoReceitaMunicipio()),
+                        fullScreenWidget:  GraficoReceitaMunicipio(),
+                      ),
+
+                      // Card 4
+                      _buildChartCard(
+                          context: context,
+                          title: 'Receita FUNDEB X Exercício',
+                          previewChart: IgnorePointer(child: FundebChartSelector()),
+                          fullScreenWidget: FundebChartSelector()),
+
+                      _buildChartCard(
+                          context: context,
+                          title: 'Receita FUNDEB Anualmente',
+                          previewChart: IgnorePointer(child: FundebChart(tipo:'receita',)),
+                          fullScreenWidget: FundebChart(tipo:'receita',)),
+                      _buildChartCard(
+                          context: context,
+                          title: 'Evolução da Folha Anualmente',
+                          previewChart: IgnorePointer(child: FundebChart(tipo:'Exercicio',)),
+                          fullScreenWidget: FundebChart(tipo:'Exercicio',)),
+                    ],
+                  ),
+                )
+
           )
         ),
       ),
     );
   }
 
-  Widget _buildChartCard({required String title, required Widget chart}) {
-    return
-      Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+  Widget _buildChartCard({
+    required BuildContext context,
+    required String title,
+    required Widget previewChart,
+    required Widget fullScreenWidget,
+  }) {
+    return SizedBox(
+      width: 550,
+      height: 320,
+      child: Card(
+        elevation: 1,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => FullScreenChartPage(
+                  title: title,
+                  child: fullScreenWidget,
+                ),
+              ),
+            );
+          },
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                    child: Texto(
+                      tit: title,
+                      tam: 18,
+                      negrito: true,
+                      cor: Colors.blue.shade800,
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0), // Padding ligeiramente reduzido
+                      child: IgnorePointer(
+                        // ==========================================================
+                        // AQUI ESTÁ A CORREÇÃO FINAL E ROBUSTA
+                        // ==========================================================
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            // O LayoutBuilder nos dá as dimensões finitas (constraints)
+                            // da área disponível para a pré-visualização.
+
+                            return FittedBox(
+                              fit: BoxFit.contain,
+                              alignment: Alignment.topCenter, // Alinha pelo topo
+                              child: Container(
+                                // Usamos as dimensões do LayoutBuilder para criar um
+                                // "canvas" virtual para o previewChart se desenhar.
+                                // A proporção (width/height) é importante.
+                                // Aqui, estamos assumindo uma proporção de desktop.
+                                width: constraints.maxWidth * 2.5, // Fator de zoom virtual
+                                height: constraints.maxHeight * 2.5, // Fator de zoom virtual
+                                decoration: BoxDecoration(
+                                  // Um fundo branco para garantir que não haja transparência
+                                  // vinda do widget Simula.
+                                  color: Colors.white,
+                                  border: Border.all(color: Colors.grey.shade300),
+                                ),
+                                child: previewChart,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.open_in_full_rounded,
+                    color: Colors.grey.shade600,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class FullScreenChartPage extends StatelessWidget {
+  final String title;
+  final Widget child;
+
+  const FullScreenChartPage({
+    Key? key,
+    required this.title,
+    required this.child,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        backgroundColor: Colors.white,
+        elevation: 1,
+      ),
+      body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Texto(tit: title,tam: 20,negrito: true,cor:  Colors.blue.shade800,bottom: 8,),
-              SizedBox(
-                height: 200,
-                child: chart,
-              ),
-            ],
-          ),
+          child: child, // O widget interativo original
         ),
-      );
-
-  }
-
-  Widget _buildPieChart(BuildContext context) {
-    final double total = valores.reduce((a, b) => a + b);
-
-    return Container(
-        height: MediaQuery.of(context).size.height * 0.5, // Ocupa metade da tela
-        width:  MediaQuery.of(context).size.width * 0.5,
-        child:  PieChart(
-          PieChartData(
-            sectionsSpace: 0,
-            centerSpaceRadius: 40,
-            sections: List.generate(valores.length, (i) {
-              final percentage = (valores[i] / total * 100).round();
-              return PieChartSectionData(
-                color: _getColor(i),
-                value: valores[i],
-                title: '$percentage%',
-                radius: 20,
-                titleStyle: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              );
-            }),
-          ),
-        )
+      )
     );
-
-  }
-
-  Widget _buildBarChart() {
-    return BarChart(
-      BarChartData(
-        barTouchData: BarTouchData(enabled: false),
-        titlesData: FlTitlesData(
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, meta) {
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    labels[value.toInt()],
-                    style: TextStyle(fontSize: 10),
-                  ),
-                );
-              },
-              reservedSize: 30,
-            ),
-          ),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              interval: _calculateInterval(valores),
-              getTitlesWidget: (value, meta) {
-                return Text(
-                  currencyFormat.format(value),
-                  style: TextStyle(fontSize: 10),
-                );
-              },
-              reservedSize: 40,
-            ),
-          ),
-          rightTitles: AxisTitles(),
-          topTitles: AxisTitles(),
-        ),
-        borderData: FlBorderData(show: false),
-        barGroups: List.generate(
-          valores.length,
-              (index) => BarChartGroupData(
-            x: index,
-            barRods: [
-              BarChartRodData(
-                toY: valores[index],
-                color: _getColor(index),
-                width: 16,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ],
-          ),
-        ),
-        gridData: FlGridData(show: true),
-      ),
-    );
-  }
-
-  Widget _buildLineChart() {
-    return LineChart(
-      LineChartData(
-        lineTouchData: LineTouchData(enabled: false),
-        gridData: FlGridData(show: true),
-        titlesData: FlTitlesData(
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, meta) {
-                return Text(
-                  labels[value.toInt()],
-                  style: TextStyle(fontSize: 10),
-                );
-              },
-              reservedSize: 30,
-            ),
-          ),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              interval: _calculateInterval(valores),
-              getTitlesWidget: (value, meta) {
-                return Text(
-                  currencyFormat.format(value),
-                  style: TextStyle(fontSize: 10),
-                );
-              },
-              reservedSize: 40,
-            ),
-          ),
-          rightTitles: AxisTitles(),
-          topTitles: AxisTitles(),
-        ),
-        borderData: FlBorderData(show: false),
-        minX: 0,
-        maxX: valores.length.toDouble() - 1,
-        minY: 0,
-        maxY: valores.reduce((a, b) => a > b ? a : b) * 1.1,
-        lineBarsData: [
-          LineChartBarData(
-            spots: List.generate(valores.length, (i) => FlSpot(i.toDouble(), valores[i])),
-            isCurved: true,
-            color: Colors.blue,
-            barWidth: 2,
-            dotData: FlDotData(show: true),
-            belowBarData: BarAreaData(show: false),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLegend() {
-    return Wrap(
-      spacing: 16,
-      runSpacing: 8,
-      alignment: WrapAlignment.center,
-      children: List.generate(labels.length, (index) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: _getColor(index),
-                shape: BoxShape.circle,
-              ),
-            ),
-            SizedBox(width: 4),
-            Text(
-              '${labels[index]}: ${currencyFormat.format(valores[index])}',
-              style: TextStyle(fontSize: 12),
-            ),
-          ],
-        );
-      }),
-    );
-  }
-
-  Color _getColor(int index) {
-    const colors = [Colors.blue, Colors.green, Colors.orange];
-    return colors[index % colors.length];
-  }
-
-  double _calculateInterval(List<double> values) {
-    final max = values.reduce((a, b) => a > b ? a : b);
-    if (max <= 100000) return 20000;
-    if (max <= 1000000) return 200000;
-    if (max <= 10000000) return 2000000;
-    return 20000000;
   }
 }

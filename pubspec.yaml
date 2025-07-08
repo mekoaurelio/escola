@@ -68,12 +68,17 @@ dev_dependencies:
   #chewie: ^1.4.0  # Para controles personalizados
   #FireStore
   firebase_core: ^3.13.0
+  pdfx: ^2.6.0
   firebase_storage: ^12.4.5
   cloud_firestore: ^5.6.7
   universal_html: ^2.2.4
   currency_text_input_formatter: ^2.1.5
   excel: ^2.0.0
   fl_chart: ^0.68.00
+  url_launcher: ^6.3.1
+  web: ^1.1.1
+  js: ^0.6.7
+
 
 
 # For information on the generic Dart part of this file, see the

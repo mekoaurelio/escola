@@ -47,21 +47,6 @@ class SimuladorAlt extends StatelessWidget {
       body: GenericFormScreen(
         subTitle: data==null?'Novo Dado': data!['descricao'],
         onBack: () => Get.back(),
-        /*
-        onSave: (formValues) async {
-          if (data == null || data!['id'] == null) {
-            print('NOVO');
-             await ApiMySql.insertDynamic(formValues, tb);
-          } else {
-            print(data);
-            await ApiMySql.updateDynamic(tb,formValues,idValue: data!['id']);
-           // await ApiMySql.executaSql('UPDATE $TBTotais set $campo=$computed');
-            Get.back();
-            //Utils.snak('congra'.tr, 'success'.tr, false, Colors.green);
-          }
-        },
-
-         */
         onSave: (formValues) async {
           if (data == null || data!['id'] == null) {
             // Inserção nova (não é o seu foco aqui)

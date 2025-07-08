@@ -231,7 +231,7 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> with 
               Row(
                   children: [
                     Texto(
-                      tit: 'Carga Horária: $cargaHoraria',
+                      tit: 'Quantidade de classes: $cargaHoraria',
                       icone: Icons.edit,
                       aoClicarIcone: () {
                         Utils.mostrarDialogoEditarValor(

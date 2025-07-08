@@ -22,6 +22,7 @@ class ApiMySql {
   }
 
   ///**********************************************************************
+/*
   static get(var table, var id, var orderBy) async {
     var sql = 'select * from $table';
     if (id != null) {
@@ -30,8 +31,20 @@ class ApiMySql {
     if(orderBy!=null){
       sql+=' order by $orderBy';
     }
-    //print(sql);
+    print(sql);
     return executaSql(sql);
+  }
+
+ */
+  static Future<List<dynamic>> get(String table, dynamic id, String? orderBy) async {
+    var sql = 'select * from $table';
+    if (id != null) {
+      sql += ' WHERE id=$id'; // Corrigido de AND para WHERE
+    }
+    if (orderBy != null) {
+      sql += ' order by $orderBy';
+    }
+    return await executaSql(sql);
   }
 /*
   static Future<dynamic> executaSql(String sql) async {
@@ -68,7 +81,7 @@ class ApiMySql {
 
  */
 
-
+/*
   static Future<dynamic> executaSql(String sql) async {
     String cleanSql = sql.replaceAll(r'\"', '"');
    // print(cleanSql);
@@ -91,6 +104,22 @@ class ApiMySql {
     }
   }
 
+ */
+
+  static Future<List<dynamic>> executaSql(String sql) async {
+    try {
+      final response = await http.get(Uri.parse('https://www.xmktech.net/dados/get.php?sql=${Uri.encodeComponent(sql)}'));
+
+      if (response.statusCode == 200) {
+        final result = json.decode(response.body.trim());
+        return result is List ? result : [result].whereType<dynamic>().toList();
+      }
+      return [];
+    } catch (e) {
+      print('Erro ao executar SQL: $e');
+      return [];
+    }
+  }
 
   //******
   static Future<List<dynamic>> getProfessores(String tipo) async {
@@ -133,9 +162,7 @@ class ApiMySql {
   static Future<dynamic> insereSql(String sql) async {
     String cleanSql = sql.replaceAll(r'\"', '"');
     if(sql.contains('$TBExercicio')) {
-      //print('Inserindo Exercico');
-      //print(sql);
-      //print('Inserindo Exercico');
+
     }
     var url = pathDados + 'insert.php?sql=$cleanSql';
     try {
@@ -191,7 +218,7 @@ class ApiMySql {
     sql2+=" SUM(CASE WHEN dv.codigo IN ('21019') THEN dv.valor ELSE 0  END) AS soma_apts,";
     sql2+="(SELECT SUM(vencimento) FROM a2501 WHERE status = 'A') AS total_vencimentos_geral";
     sql2+=" FROM $TBFolha f LEFT JOIN $TBVantagens dv ON f.id = dv.folha_id WHERE f.status = 'A'GROUP BY f.id ORDER BY f.id";
-    print(sql2);
+   // print(sql2);
     return await executaSql(sql2);
   }
 
@@ -213,7 +240,7 @@ class ApiMySql {
       sql2 += " AND f.unidade NOT LIKE '%Educ%Inf%'";
     }
     sql2 += " GROUP BY f.id ORDER BY f.id";
-     print(sql2);
+    // print(sql2);
     return await executaSql(sql2);
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+ Color? corFundoOadrao=Colors.grey[100];
 const  corFundoInativo=Colors.white;
 const  corLetraAtiva=Colors.black;
 const  corLetraInativa=Colors.grey;

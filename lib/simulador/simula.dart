@@ -1,12 +1,13 @@
 import 'dart:async';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../const/const.dart';
 import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
 import '../services/calc_dispersao_valores.dart';
 import '../services/utils.dart';
-import '../widgets/line.dart';
 import '../widgets/texto.dart';
 
 class Simula extends StatefulWidget {
@@ -700,20 +701,34 @@ class _SimulaState extends State<Simula> {
                     iconColor: Colors.grey[600]!,
                     onTap: () {
                       Utils.mostrarDialogoEditarValor(
+                      inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}(\.\d{0,2})?$'))
+                      ],
                         context: context,
                         titulo: tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
                         labelCampo: 'Percentual',
                         valorInicial: tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
-                        aoSalvar: (novoValor) {
-                          setState(() {
-                            if (tipo == 'INFANTIL') {
-                              perAumentoInf = novoValor;
-                            } else {
-                              percAUmAdulto = novoValor;
-                            }
-                          });
+                        aoSalvar: (novoValor)async {
+
+                        if (tipo == 'INFANTIL') {
+                          await ApiMySql.executaSql('UPDATE $TBInfantil set percentual=$novoValor where ordem=8',);
+                          await ApiMySql.executaSql('UPDATE $TBTotais set perc_aumento_infantil=$novoValor',);
+                        }else{
+                          await ApiMySql.executaSql('UPDATE $TBProfessor set percentual=$novoValor where ordem=8',);
+                          await ApiMySql.executaSql('UPDATE $TBTotais set perc_aumento_adulto=$novoValor',);
+
+                        }
+                        setState(() {
+                          if (tipo == 'INFANTIL') {
+                            perAumentoInf = novoValor;
+                          } else {
+                            percAUmAdulto = novoValor;
+                          }
+                        });
                         },
                       );
+
+
                     },
                   ),
 
@@ -731,7 +746,7 @@ class _SimulaState extends State<Simula> {
 
                   /// Chip de Dispersão Vertical
                   _buildInfoChip(
-                    text: 'Disp. Vertical ${_dispersaoHorizontal}%',
+                    text: 'Disp. Total ${_dispersaoHorizontal}%',
                     trailingIcon: Icons.info_outline,
                     tooltip: 'Dispersão salarial entre níveis\nClick Aqui Para Saber Mais',
                     bgColor: double.parse(_dispersaoHorizontal)>95? Colors.red[100]!:Colors.green[100]!,
@@ -794,16 +809,20 @@ class _SimulaState extends State<Simula> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(appBar: AppBar(title: const Text('Simulador Magistério')), body: _buildLoading());
+      return Scaffold(
+        backgroundColor: corFundoOadrao,
+          body: _buildLoading());
     }
 
     if (_hasError) {
-      return Scaffold(appBar: AppBar(title: const Text('Simulador Magistério')), body: _buildErrorView());
+      return Scaffold(
+          backgroundColor: corFundoOadrao,
+          body: _buildErrorView());
     }
 
     if (_adulto.isEmpty && _infantil.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Simulador Magistério')),
+        backgroundColor: corFundoOadrao,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -823,16 +842,7 @@ class _SimulaState extends State<Simula> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Simulador Magistério'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadData,
-            tooltip: 'Recarregar Dados',
-          ),
-        ],
-      ),
+      backgroundColor: corFundoOadrao,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -869,6 +879,3 @@ class _SimulaState extends State<Simula> {
     );
   }
 }
-
-
-
