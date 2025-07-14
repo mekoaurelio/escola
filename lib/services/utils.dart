@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:intl/intl.dart';
+import 'package:psycostatattoo/widgets/custom_butom.dart';
 import 'package:universal_html/html.dart' as html;
 
 import 'package:flutter/material.dart';
@@ -110,6 +111,7 @@ class Utils {
     await ApiMySql.executaSql('delete from $TBReceitaFundebSimulador');
 
   }
+
   static Future<void> mostrarDialogoEditarValor({
     required BuildContext context,
     required String titulo,
@@ -126,7 +128,26 @@ class Utils {
       barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Center(child: Text(titulo)),
+          backgroundColor: Colors.white,
+          title: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade600,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            child: Center(
+              child: Texto(
+                tit: titulo,
+                cor: Colors.white,
+                tam: 16,
+                negrito: true,
+              ),
+            ),
+          ),
           content: Form(
             key: formKey,
             child: SizedBox(
@@ -137,7 +158,8 @@ class Utils {
                   TextFormField(
                     controller: controller,
                     keyboardType: TextInputType.number,
-                    inputFormatters: inputFormatters ?? [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt'),],
+                    inputFormatters: inputFormatters ??
+                        [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt')],
                     decoration: InputDecoration(
                       labelText: labelCampo,
                       border: OutlineInputBorder(
@@ -156,24 +178,36 @@ class Utils {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (formKey.currentState!.validate()) {
-                  aoSalvar(controller.text.trim());
-                  Navigator.pop(dialogContext);
-                }
-              },
-              child: Text('Salvar'),
-            ),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    text: 'Cancelar',
+                    onPressed: () => Navigator.pop(dialogContext),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppButton(
+                    text: 'Salvar',
+                    backgroundColor: Colors.blue.shade300,
+                    onPressed: () {
+                      if (formKey.currentState!.validate()) {
+                        aoSalvar(controller.text.trim());
+                        Navigator.pop(dialogContext);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            )
           ],
         );
       },
     );
   }
+
+
 
   static double somaVantagens(var partes){
     String valorStr='0';

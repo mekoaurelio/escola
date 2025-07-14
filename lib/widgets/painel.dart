@@ -31,8 +31,8 @@ class Panel extends StatelessWidget {
             child: Container(
               width: width,
               height: height,
-              color: Colors.white,
-              padding: const EdgeInsets.all(16),
+              color: Colors.transparent,
+             // padding: const EdgeInsets.all(16),
               child: child,
             ),
           ),

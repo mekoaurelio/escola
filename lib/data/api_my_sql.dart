@@ -439,7 +439,7 @@ class ApiMySql {
       ..write('INSERT INTO $tb (')..write(campos.join(', '))..write(
           ') VALUES (')..write(valores.join(', '))..write(')');
 
-    // print(sql);
+     print(sql);
     return await insereSql(sql.toString());
   }
 

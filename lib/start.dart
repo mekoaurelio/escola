@@ -1,9 +1,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:psycostatattoo/auxiliares/usuario_lista.dart';
 
 import 'auxiliares/cargo_lista.dart';
 import 'auxiliares/encargo_social_lista.dart';
+import 'cianorte/importar_vantagens.dart';
 import 'const/const.dart';
 import 'const/nome_tabelas.dart';
 import 'dashboard/dashboard_screen.dart';
@@ -187,7 +189,14 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
         'group': 'auxiliares',
         'drawerLabel': 'Encargos Sociais',
         'appBarTitle': 'Cadastro de Encargos Sociais',
-        'builder': () => EncargoSocialLista(table: 'encargos_sociais'),
+        'builder': () => ImportarVantagens(),
+      },
+      {
+        'id': 'aux_usuarios',
+        'group': 'auxiliares',
+        'drawerLabel': 'Usuários',
+        'appBarTitle': 'Usuários',
+        'builder': () => UsuariosLista(table: 'login', title: 'xxxx',),
       },
       // ... Adicione os outros auxiliares aqui no mesmo formato
     ];

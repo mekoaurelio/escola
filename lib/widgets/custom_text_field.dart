@@ -18,6 +18,9 @@ class CustomTextFiel extends StatelessWidget {
     this.iconSize = 30,
     this.prefixIconOnPressed,
     this.onChanged,
+    this.obscureText=false,
+    this.onToggleVisibility,
+    this.suffixIcon,
     //  this.validator
   });
 
@@ -32,11 +35,14 @@ class CustomTextFiel extends StatelessWidget {
   final dynamic inputFormatters;
   final TextEditingController? controller;
   final IconData? prefixIcon;
+  final IconData? suffixIcon;
   final Color prefixIconColor;
   final double iconSize;
   TextAlign? textAlign;
   final Function()? prefixIconOnPressed;
   final ValueChanged<String>? onChanged;
+  final bool obscureText;
+  final VoidCallback? onToggleVisibility;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +56,7 @@ class CustomTextFiel extends StatelessWidget {
         inputFormatters: inputFormatters,
         onChanged: onChanged,
         textAlign: textAlign!,
+        obscureText: obscureText,
         validator: (value) {
           if (value!.isEmpty && obrigatorio == true) {
             return 'Campo obrigatório';
@@ -78,9 +85,14 @@ class CustomTextFiel extends StatelessWidget {
             ),
           )
               : null,
-        ),
 
-      ),
+            suffixIcon: suffixIcon != null ? IconButton(
+              icon: Icon(suffixIcon,color: Colors.grey,),
+              onPressed: onToggleVisibility?? null,
+            ):null
+
+        )
+        )
     );
   }
 }

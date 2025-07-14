@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
-import 'package:pdfx/pdfx.dart';
 import 'lang/translation_service.dart';
+import 'login/login.dart';
 import 'services/ano_bimestre_controller.dart';
 import 'services/utils.dart';
 import 'splash_screen.dart';
@@ -64,7 +64,7 @@ class _TattooStudioAppState extends State<TattooStudioApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,  ],
 
-      home: const SplashScreen(),
+      home: Utils.getIdUser()==null? const Login():const SplashScreen()
     );
   }
 }
