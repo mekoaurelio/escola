@@ -3,9 +3,10 @@ import 'package:get/get.dart';
 import 'package:psycostatattoo/const/const.dart';
 
 import '../data/api_my_sql.dart';
+import '../login/direito_de_acesso.dart';
 import '../services/generic_form_screen.dart';
-import '../services/utils.dart';
 import '../widgets/formFieldData.dart';
+import '../widgets/painel.dart';
 
 class UsuarioDetalhe extends StatelessWidget {
   var data;
@@ -21,7 +22,6 @@ class UsuarioDetalhe extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Define aqui os campos do seu formulário
     final fields = <FormFieldData>[
       TextFormFieldData(controllerName: 'id_user', label: 'Usuário', hintText: 'Informe o nome do usuário',tipo:'String'),
       if(data==null)
@@ -36,7 +36,6 @@ class UsuarioDetalhe extends StatelessWidget {
           displayField: 'descricao', tipo:'String'
         ),
     ];
-    // Mapeia valores iniciais
     final initialValues = {
       for (var f in fields)
         f.controllerName: data?[f.controllerName]?.toString() ?? '',
@@ -49,9 +48,13 @@ class UsuarioDetalhe extends StatelessWidget {
         onBack: () => Get.back(),
         onSave: (formValues) async {
           if (data == null || data!['id'] == null) {
-            await ApiMySql.insertDynamic(formValues, table);
+            var idUser=await ApiMySql.insertDynamic(formValues, table);
+            print('insert into login_direitos (home,id_user) Values ("true",$idUser)');
+            await ApiMySql.executaSql('insert into login_direitos (home,id_user) Values (TRUE,$idUser)');
+          //  direito(context,idUser,formValues['id_user'],'INSERT');
           } else {
             await ApiMySql.updateDynamic(table,formValues,idValue: data!['id']);
+            await direito(context,data!['id'],data['id_user'],'UPDATE');
           }
           // Atualiza a lista e volta
           final listaAtualizada = await ApiMySql.get(table, null,null);
@@ -60,7 +63,31 @@ class UsuarioDetalhe extends StatelessWidget {
         fieldsData: fields,
         initialValues: initialValues,
         hasImagePicker: false,
+        idUser: data!=null?data!['id']:null,///Código
+        nmUser: data!=null?data!['id_user']:null,///Nome
       ),
     );
   }
+
+  direito(BuildContext context,var idUser,var nmUser,var tipo)async{
+    var result=await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Panel(
+        width: MediaQuery.of(context).size.width *0.40,
+        height: double.infinity,
+        child: DireitoDeAcesso(
+          acessosIniciais: {
+            "Simulador": true,
+            "Projeção dos Recursos do FUNDEB": true,
+          },
+          idUser: idUser,
+          nmUser: nmUser,
+        ),
+        onClose: () => Navigator.of(context).pop(),
+      ),
+    );
+  }
+
+
 }

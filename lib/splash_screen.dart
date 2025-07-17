@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'data/api_my_sql.dart';
+import 'services/utils.dart';
 import 'start.dart'; // IMPORTANTE: Importe sua tela principal (Start)
 
 class SplashScreen extends StatefulWidget {
@@ -31,11 +33,13 @@ class _SplashScreenState extends State<SplashScreen> {
     });
 
     // Timer principal para a duração da splash screen
-    Timer(const Duration(seconds: 4), () {
+    Timer(const Duration(seconds: 4), () async{
       if (mounted) {
+        var idUser=Utils.getIdUser();
+        var acessos=await ApiMySql.executaSql('select * from login_direitos where id_user=$idUser');
         // Navega para a tela principal substituindo a splash screen na pilha de navegação
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const Start()),
+          MaterialPageRoute(builder: (context) => Start(acessos: acessos,)),
         );
       }
     });

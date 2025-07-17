@@ -68,30 +68,30 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
       //if(!tabelaExiste){
         ///SE A TABELA NÃO EXISTE CRIA
         try{
-          await ApiMySql.seNaoExistirCriaTabela(TBFolha);
-          await ApiMySql.criaIndice(TBFolha);
-          await ApiMySql.addAutoIncremento(TBFolha);
+          //await ApiMySql.seNaoExistirCriaTabela(TBFolha);
+          //await ApiMySql.criaIndice(TBFolha);
+          //await ApiMySql.addAutoIncremento(TBFolha);
         } catch (e) {
           print("Erro ao criar TBFolha: $e");
         }
 
         ///CRIA A TABELA DE VANTAGENS
-        await ApiMySql.seNaoExistirCriaTabelaVantagens(TBVantagens);
-        await ApiMySql.criaIndice(TBVantagens);
-        await ApiMySql.addAutoIncremento(TBVantagens);
-        await ApiMySql.addChaveEStrangeira(TBVantagens,TBFolha);
+       // await ApiMySql.seNaoExistirCriaTabelaVantagens(TBVantagens);
+        //await ApiMySql.criaIndice(TBVantagens);
+       // await ApiMySql.addAutoIncremento(TBVantagens);
+       // await ApiMySql.addChaveEStrangeira(TBVantagens,TBFolha);
 
         ///CRIA TABELA DOS TOTAIS DOS PROFESSORES
-        await ApiMySql.seNaoExistirCriaProfessorTotal(TBTotalProfessor);
-        await ApiMySql.criaIndice(TBTotalProfessor);
-        await ApiMySql.addAutoIncremento(TBTotalProfessor);
+       // await ApiMySql.seNaoExistirCriaProfessorTotal(TBTotalProfessor);
+       // await ApiMySql.criaIndice(TBTotalProfessor);
+       // await ApiMySql.addAutoIncremento(TBTotalProfessor);
 
         ///CRIA AS TABELAS AUXILIARES
-        await criaTabela(TBInfantil);
-        await criaTabela(TBProfessor);
-        await criaTabela(TBExercicio);
+       // await criaTabela(TBInfantil);
+       // await criaTabela(TBProfessor);
+       // await criaTabela(TBExercicio);
 
-        await criaTabela(TBReceitaFundebSimulador);
+       // await criaTabela(TBReceitaFundebSimulador);
 
      // }else{
        // print('TABELA EXISTE');
@@ -290,16 +290,6 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
           matricula = match.group(1);
           nome      = match.group(2);
           cpf       = match.group(3);
-/*
-          print('Matrícula: $matricula');
-          print('Nome:      $nome');
-          print('CPF:       $cpf');
-          print('UNIDADE:   $unidade');//vai para unidade
-          print('CARGO:     $cargo');
-          print('LOCAL:     $local');//vai
-          print('NIVEL:     $nivel');
-          print('Admissão:  $admissao');
- */
 
          ///PEGA O VENCIMENTO
          var vencimento;
@@ -317,9 +307,6 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
             for (var v in vantagens) {
               // supondo que você tenha idProf já definido
               await ApiMySql.insertVantagens(idProf, v['codigo'], v['descricao'], v['valor'],v['percentual']!);
-              //await Future.wait(vantagens.map((v) =>
-                //  ApiMySql.insertVantagens(idProf, v['codigo'], v['descricao'], v['valor'], v['percentual']!)
-              //));
             }
 
           }

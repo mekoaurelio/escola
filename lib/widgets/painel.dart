@@ -31,7 +31,13 @@ class Panel extends StatelessWidget {
             child: Container(
               width: width,
               height: height,
-              color: Colors.transparent,
+              decoration: BoxDecoration(
+                color: Colors.blue.shade600,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+              ),
              // padding: const EdgeInsets.all(16),
               child: child,
             ),

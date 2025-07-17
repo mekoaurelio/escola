@@ -9,6 +9,53 @@ import '../services/utils.dart';
 class ApiMySql {
   static String pathDados = 'https://www.xmktech.net/dados/';
 
+  static Future<List<dynamic>> gerarInsertQuery(int idUser, Map<String, bool> acessos) async {
+    final colunas = ['id_user'];
+    final valores = [idUser.toString()];
+
+    acessos.forEach((chave, valor) {
+      colunas.add(_formatarColuna(chave));
+      valores.add(valor ? 'TRUE' : 'FALSE');
+    });
+
+    final query = '''
+INSERT INTO login_direitos (${colunas.join(', ')})
+VALUES (${valores.join(', ')});
+''';
+   // print(query);
+    return await executaSql(query);
+  }
+
+  static Future<List<dynamic>> gerarUpdateQuery(int idUser, Map<String, bool> acessos) async{
+    final sets = acessos.entries.map((e) {
+      final coluna = _formatarColuna(e.key);
+      final valor = e.value ? 'TRUE' : 'FALSE';
+      return '$coluna = $valor';
+    }).join(', ');
+
+    final query = '''
+UPDATE login_direitos
+SET $sets
+WHERE id_user = $idUser;
+''';
+    //print(query);
+    return await executaSql(query);
+  }
+
+  static  String _formatarColuna(String nomeOriginal) {
+    return nomeOriginal
+        .toLowerCase()
+        .replaceAll('ç', 'c')
+        .replaceAll('ã', 'a')
+        .replaceAll('á', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ú', 'u')
+        .replaceAll(RegExp(r'[^a-z0-9 ]'), '')
+        .replaceAll(' ', '_');
+  }
+
   static Future<String> fetchPdfText() async {
     final resp = await http.get(Uri.parse('https://www.xmktech.net/dados/extra.php'));
     if (resp.statusCode != 200) {

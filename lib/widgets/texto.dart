@@ -11,6 +11,8 @@ class Texto extends StatelessWidget {
   final IconData? icone;  // Alterado para nullable
   final VoidCallback? aoClicarIcone;
   final String? tooltip;  // Alterado para nullable
+  final FontWeight? fontWeight;
+  final IconData? prefixIcon;
 
   Texto({
     required this.tit,
@@ -26,6 +28,8 @@ class Texto extends StatelessWidget {
     this.icone,  // Removido o valor padrão
     this.aoClicarIcone,
     this.tooltip = 'Editar',
+    this.fontWeight,
+    this.prefixIcon,
   });
 
   @override
@@ -40,6 +44,18 @@ class Texto extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (prefixIcon != null) ...[  // Verificação simplificada
+            SizedBox(width: 15),
+            IconButton(
+              icon: Icon(prefixIcon, size: tam + 2, color: Colors.black87),
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints(),
+              onPressed: aoClicarIcone,
+              //tooltip: tooltip,
+            ),
+          ],
+          if (prefixIcon != null)
+            SizedBox(width: 5,),
           Flexible(
             child: Text(
               tit,
@@ -49,7 +65,7 @@ class Texto extends StatelessWidget {
               style: TextStyle(
                 fontSize: tam,
                 color: cor,
-                fontWeight: negrito ? FontWeight.bold : FontWeight.normal,
+                fontWeight: fontWeight ?? FontWeight.normal,
               ),
             ),
           ),

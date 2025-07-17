@@ -7,6 +7,7 @@ class AppButton extends StatelessWidget {
   final Color? backgroundColor;
   final Color? textColor;
   final double? fontSize;
+  final double? width;
   final BorderRadius? borderRadius;
   final bool isLoading;
   final double top;
@@ -23,6 +24,7 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.top=20,
     this.bottom=30,
+    this.width=200,
 
   }) : super(key: key);
 
@@ -30,6 +32,7 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(padding: EdgeInsets.only(top:top,bottom:bottom),
       child: ElevatedButton(
+
       style: ElevatedButton.styleFrom(
         backgroundColor: backgroundColor ?? Colors.white, // Use provided color or default
         textStyle: TextStyle(fontSize: fontSize),

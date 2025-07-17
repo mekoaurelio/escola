@@ -1,9 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:psycostatattoo/data/api_my_sql.dart';
+import 'package:psycostatattoo/widgets/custom_butom.dart';
+import 'package:get/get.dart';
+
+import '../const/const.dart';
+import '../services/utils.dart';
 
 class DireitoDeAcesso extends StatefulWidget {
   final Map<String, bool> acessosIniciais;
+  final String? idUser;
+  final String? nmUser;
+  final String? tipo;
 
-  const DireitoDeAcesso({super.key, required this.acessosIniciais});
+  const DireitoDeAcesso({
+    super.key,
+    required this.acessosIniciais,
+    this.idUser,
+    this.nmUser,
+    this.tipo,
+  });
 
   @override
   State<DireitoDeAcesso> createState() => _DireitoDeAcessoState();
@@ -25,10 +40,14 @@ class _DireitoDeAcessoState extends State<DireitoDeAcesso> {
   }
 
   Future<void> salvarAcessos() async {
-    // Aqui você salva os dados no MySQL via API
-    // Exemplo:
-    // await ApiMySql.salvarAcessos(usuarioId, acessos);
-    print('Acessos salvos: $acessos');
+    int idUser=int.parse(widget.idUser!);
+    if(widget.tipo=='INSERT'){
+      await ApiMySql.gerarInsertQuery(idUser, acessos);
+      Utils.snak('Parabéns', 'Direitos inseridos com sucesso!', false, Colors.green);
+    }else{
+      await ApiMySql.gerarUpdateQuery(idUser, acessos);
+      Utils.snak('Parabéns', 'Direitos Atualizados com sucesso!', false, Colors.green);
+    }
   }
 
   Widget _buildGrupo(String titulo, List<String> itens) {
@@ -52,41 +71,89 @@ class _DireitoDeAcessoState extends State<DireitoDeAcesso> {
     );
   }
 
+  Widget _buildTituloVisual(String titulo) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: const BoxDecoration(
+        color: Color(0xFF2196F3), // azul padrão
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(10),
+          topRight: Radius.circular(10),
+        ),
+      ),
+      child: Center(
+        child: Text(
+          titulo,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Direitos de Acesso")),
+      backgroundColor: corFundoOadrao,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildGrupo("Simulador", [
-              "Simulador",
-              "Projeção dos Recursos do FUNDEB",
-              "Projeção de Recursos",
-              "Simulador Magistério",
-            ]),
-            _buildGrupo("Professores", [
-              "Professores",
-              "Professor Educador",
-              "Educador Infantil",
-              "Folha de Pagamento",
-            ]),
-            _buildGrupo("Impacto", [
-              "Impacto",
-            ]),
-            _buildGrupo("Auxiliares", [
-              "Documentação",
-              "Encargos Sociais",
-            ]),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: salvarAcessos,
-              icon: const Icon(Icons.save),
-              label: const Text("Salvar Direitos"),
+        child: Center(
+          child: Container(
+            width: MediaQuery.of(context).size.width *0.44,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTituloVisual("Direitos de Acesso de ${widget.nmUser!}"),
+                const SizedBox(height: 12),
+                _buildGrupo("Simulador", [
+                  "Simulador",
+                  "Projeção dos Recursos do FUNDEB",
+                  "Projeção de Recursos",
+                  "Simulador Magistério",
+                ]),
+                _buildGrupo("Professores", [
+                  "Professores",
+                  "Professor Educador",
+                  "Educador Infantil",
+                  "Folha de Pagamento",
+                ]),
+                _buildGrupo("Impacto", [
+                  "Impacto",
+                ]),
+                _buildGrupo("Auxiliares", [
+                  "Documentação",
+                  "Encargos Sociais",
+                ]),
+                const SizedBox(height: 20),
+                Center(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: AppButton(
+                            text: 'Cancelar',
+                            onPressed: Get.back,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: AppButton(
+                            text: 'Salvar',
+                            backgroundColor: Colors.blue.shade300,
+                            onPressed: salvarAcessos,
+                          ),
+                        ),
+
+                      ],
+                    ),
+                )
+            ]
             )
-          ],
-        ),
+          ),
+        )
       ),
     );
   }

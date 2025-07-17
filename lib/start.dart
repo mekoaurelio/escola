@@ -2,9 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:psycostatattoo/auxiliares/usuario_lista.dart';
-
-import 'auxiliares/cargo_lista.dart';
-import 'auxiliares/encargo_social_lista.dart';
 import 'cianorte/importar_vantagens.dart';
 import 'const/const.dart';
 import 'const/nome_tabelas.dart';
@@ -25,7 +22,12 @@ import 'simulador/projecao_recursos_fundeb.dart';
 import 'widgets/texto.dart';
 
 class Start extends StatefulWidget {
-  const Start({Key? key}) : super(key: key);
+  var acessos;
+
+   Start({
+    super.key,
+    this.acessos,
+  });
 
   @override
   State<Start> createState() => _StartState();
@@ -33,7 +35,7 @@ class Start extends StatefulWidget {
 
 class _StartState extends State<Start> with AnoBimestreListenerMixin {
   final Color appBarColorCrypto = const Color(0xFF2459A9);
-  late final List<Map<String, dynamic>> _allPages;
+  late List<Map<String, dynamic>> _allPages=[];
   String _currentPageId = 'home';
   String _currentAno = '25'; // Default para evitar '00'
   String _currentBimestre = '01'; // Default para evitar '00'
@@ -76,10 +78,11 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
     }
   }
 
-  void _initializePages() {
-    Utils.setAno('25');
-    Utils.setBimestre('01');
-    // Definimos todas as páginas em um só lugar
+  void _initializePages(){
+   // Utils.setAno('25');
+   // Utils.setBimestre('01');
+    ///pega os direitos de acesso
+
     _allPages = [
       // === GRUPO: MAIN ===
       {
@@ -189,7 +192,13 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
         'group': 'auxiliares',
         'drawerLabel': 'Encargos Sociais',
         'appBarTitle': 'Cadastro de Encargos Sociais',
-        'builder': () => ImportarVantagens(),
+
+        'builder': () => PdfExtractorPage(),//importação dois vizinhos
+        //'builder': () => ImportarVantagens(),// importação Rio Negrinho
+
+
+
+
       },
       {
         'id': 'aux_usuarios',
@@ -198,7 +207,6 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
         'appBarTitle': 'Usuários',
         'builder': () => UsuariosLista(table: 'login', title: 'xxxx',),
       },
-      // ... Adicione os outros auxiliares aqui no mesmo formato
     ];
   }
 
@@ -298,7 +306,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
           if (constraints.maxWidth < 800) { // Ponto de quebra para mobile/tablet
             return _buildMobileLayout();
           } else {
-            return _buildDesktopLayout();
+            return _allPages.isEmpty?Container(): _buildDesktopLayout();
           }
         },
       ),
@@ -427,15 +435,21 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
                   child: Image.asset('assets/images/Xmktec_logo.jpeg', height: 105),
                 ),
               ),
-              Texto(tit:'V.016'),
+              Texto(tit:'V.017'),
             ],
           ),
 
           ..._allPages.where((p) => p['group'] == 'main').map((item) => _buildDrawerItem(item)),
           const Divider(),
-          _buildExpansionTile('simulador', 'Simulador', Icons.swap_vertical_circle_rounded),
-          _buildExpansionTile('professores', 'Professores', Icons.perm_contact_cal_sharp),
-          _buildExpansionTile('impacto', 'Impácto', Icons.auto_graph_outlined),
+          if(widget.acessos!=null)
+            if(widget.acessos[0]['simulador']=='1')
+              _buildExpansionTile('simulador', 'Simulador', Icons.swap_vertical_circle_rounded),
+
+          if(widget.acessos[0]['professores']=='1')
+            _buildExpansionTile('professores', 'Professores', Icons.perm_contact_cal_sharp),
+          if(widget.acessos[0]['impacto']=='1')
+            _buildExpansionTile('impacto', 'Impácto', Icons.auto_graph_outlined),
+          if(widget.acessos[0]['documentacao']=='1')
           _buildExpansionTile('auxiliares', 'Auxiliares', Icons.settings),
         ],
       ),
