@@ -13,6 +13,7 @@ class Texto extends StatelessWidget {
   final String? tooltip;  // Alterado para nullable
   final FontWeight? fontWeight;
   final IconData? prefixIcon;
+  final Color? iconColor;
 
   Texto({
     required this.tit,
@@ -30,6 +31,7 @@ class Texto extends StatelessWidget {
     this.tooltip = 'Editar',
     this.fontWeight,
     this.prefixIcon,
+    this.iconColor,
   });
 
   @override
@@ -47,7 +49,7 @@ class Texto extends StatelessWidget {
           if (prefixIcon != null) ...[  // Verificação simplificada
             SizedBox(width: 15),
             IconButton(
-              icon: Icon(prefixIcon, size: tam + 2, color: Colors.black87),
+              icon: Icon(prefixIcon, size: tam + 2,color: iconColor ?? Colors.grey),
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(),
               onPressed: aoClicarIcone,
@@ -72,7 +74,7 @@ class Texto extends StatelessWidget {
           if (icone != null) ...[  // Verificação simplificada
             SizedBox(width: 5),
             IconButton(
-              icon: Icon(icone, size: tam + 2, color: Colors.grey),
+              icon: Icon(icone, size: tam + 2, color: iconColor ?? Colors.grey),
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(),
               onPressed: aoClicarIcone,

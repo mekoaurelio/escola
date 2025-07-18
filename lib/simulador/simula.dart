@@ -842,7 +842,7 @@ class _SimulaState extends State<Simula> {
     }
 
     return Scaffold(
-      backgroundColor: corFundoOadrao,
+      backgroundColor: Colors.transparent,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

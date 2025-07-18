@@ -2,7 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'data/api_my_sql.dart';
 import 'services/utils.dart';
-import 'start.dart'; // IMPORTANTE: Importe sua tela principal (Start)
+import 'start.dart';
+import 'widgets/texto.dart'; // IMPORTANTE: Importe sua tela principal (Start)
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -60,10 +61,12 @@ class _SplashScreenState extends State<SplashScreen> {
             children: [
               // Seu logo
               Image.asset(
-                'assets/images/Xmktec_logo.jpeg', // Certifique-se que o caminho e nome estão corretos
+                'assets/images/logo_edu.png', // Certifique-se que o caminho e nome estão corretos
                 width: 220, // Ajuste o tamanho conforme necessário
               ),
-              const SizedBox(height: 50),
+              const SizedBox(height: 20),
+              Texto(tit:'GEM',cor: Colors.white70,tam: 30,),
+              Texto(tit:'Gestão da Educação Municipal',cor: Colors.blue.shade300,),
 
               // Indicador de progresso sutil
               const SizedBox(

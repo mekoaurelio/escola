@@ -34,7 +34,6 @@ class Start extends StatefulWidget {
 }
 
 class _StartState extends State<Start> with AnoBimestreListenerMixin {
-  final Color appBarColorCrypto = const Color(0xFF2459A9);
   late List<Map<String, dynamic>> _allPages=[];
   String _currentPageId = 'home';
   String _currentAno = '25'; // Default para evitar '00'
@@ -192,12 +191,8 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
         'group': 'auxiliares',
         'drawerLabel': 'Encargos Sociais',
         'appBarTitle': 'Cadastro de Encargos Sociais',
-
         'builder': () => PdfExtractorPage(),//importação dois vizinhos
         //'builder': () => ImportarVantagens(),// importação Rio Negrinho
-
-
-
 
       },
       {
@@ -291,7 +286,6 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
     }
   }
 
-
   // ===================================================================
   // ESTRUTURA DE UI RESPONSIVA
   // ===================================================================
@@ -332,7 +326,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
 
   PreferredSizeWidget _buildDesktopAppBar() {
     return AppBar(
-      backgroundColor: appBarColorCrypto,
+      backgroundColor: appBarColor,
       elevation: 1,
       automaticallyImplyLeading: false, // Não mostra o botão de voltar/menu
       title: Texto(tit: _currentPageData['appBarTitle'], cor: Colors.white, tam: 20),
@@ -362,7 +356,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
 
   PreferredSizeWidget _buildMobileAppBar() {
     return AppBar(
-      backgroundColor: appBarColorCrypto,
+      backgroundColor: appBarColor,
       elevation: 1,
       // O ícone da gaveta (hambúrguer) aparecerá automaticamente
       title: Text(_currentPageData['appBarTitle'], style: const TextStyle(color: Colors.white, fontSize: 18)),
@@ -375,7 +369,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
   Widget _buildFilterControls() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: appBarColorCrypto, // Fundo consistente
+      color: appBarColor, // Fundo consistente
       child: Row(
         mainAxisSize: MainAxisSize.min, // Para não ocupar a linha toda no mobile
         mainAxisAlignment: MainAxisAlignment.end,
@@ -421,36 +415,53 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
   }
 
   /// Gaveta de Navegação - Usada por AMBOS os layouts.
+
   Widget _buildNavigationDrawer() {
     return Container(
       width: 250,
       color: Colors.grey[100],
-      child: ListView(
+      child: Column(
         children: [
-          Column(
-            children: [
-              SizedBox(
-                height: 150,
-                child: Center(
-                  child: Image.asset('assets/images/Xmktec_logo.jpeg', height: 105),
+          Expanded(
+            child: ListView(
+              children: [
+                Column(
+                  children: [
+                    SizedBox(
+                      height: 150,
+                      child: Center(
+                        child: Image.asset('assets/images/logo_toledo.png', height: 105),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              Texto(tit:'V.017'),
-            ],
+                ..._allPages.where((p) => p['group'] == 'main').map((item) => _buildDrawerItem(item)),
+                const Divider(),
+                if(widget.acessos!=null)
+                  if(widget.acessos[0]['simulador']=='1')
+                    _buildExpansionTile('simulador', 'Simulador', Icons.swap_vertical_circle_rounded),
+                if(widget.acessos[0]['professores']=='1')
+                  _buildExpansionTile('professores', 'Professores', Icons.perm_contact_cal_sharp),
+                if(widget.acessos[0]['impacto']=='1')
+                  _buildExpansionTile('impacto', 'Impácto', Icons.auto_graph_outlined),
+                if(widget.acessos[0]['documentacao']=='1')
+                  _buildExpansionTile('auxiliares', 'Auxiliares', Icons.settings),
+              ],
+            ),
           ),
-
-          ..._allPages.where((p) => p['group'] == 'main').map((item) => _buildDrawerItem(item)),
-          const Divider(),
-          if(widget.acessos!=null)
-            if(widget.acessos[0]['simulador']=='1')
-              _buildExpansionTile('simulador', 'Simulador', Icons.swap_vertical_circle_rounded),
-
-          if(widget.acessos[0]['professores']=='1')
-            _buildExpansionTile('professores', 'Professores', Icons.perm_contact_cal_sharp),
-          if(widget.acessos[0]['impacto']=='1')
-            _buildExpansionTile('impacto', 'Impácto', Icons.auto_graph_outlined),
-          if(widget.acessos[0]['documentacao']=='1')
-          _buildExpansionTile('auxiliares', 'Auxiliares', Icons.settings),
+          // Rodapé adicionado aqui
+          Container(
+            padding: const EdgeInsets.all(16),
+            width: double.infinity,
+            child: const Text(
+              'Copyright © 2025 XmkTech. V.001\nAll rights reserved (41-9-9558-2579)',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+              ),
+            ),
+          ),
         ],
       ),
     );

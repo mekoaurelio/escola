@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
  Color? corFundoOadrao=Colors.grey[100];
+const Color appBarColor =  Color(0xFF2459A9);
 const  corFundoInativo=Colors.white;
 const  corLetraAtiva=Colors.black;
 const  corLetraInativa=Colors.grey;

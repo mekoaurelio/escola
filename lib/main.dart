@@ -3,8 +3,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'auxiliares/deep.dart';
-import 'auxiliares/google.dart';
-import 'auxiliares/gpt.dart';
+import 'indicadores/aceleracao_do_crescimento.dart';
+import 'indicadores/dados_do_municipio.dart';
+import 'indicadores/receitas_educacionais.dart';
+import 'indicadores/indicadores_educacionais.dart';
+import 'indicadores/situacao_toledo.dart';
 import 'lang/translation_service.dart';
 import 'login/login.dart';
 import 'services/ano_bimestre_controller.dart';
@@ -67,9 +70,9 @@ class _TattooStudioAppState extends State<TattooStudioApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,  ],
 
-      home: IndicatorsDashboard()
+    //  home: ReceitasEducacionais2025()
+        home: Utils.getIdUser()==null? const Login():const SplashScreen()
       //IndicatorsDashboard()
-        // home: Utils.getIdUser()==null? const Login():const SplashScreen()
     );
   }
 }
