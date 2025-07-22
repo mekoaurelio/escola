@@ -1,12 +1,10 @@
+import 'package:GEM/auxiliares/usuario_detalhe.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:psycostatattoo/auxiliares/usuario_detalhe.dart';
 
 import '../services/base_lista.dart';
 import '../widgets/line.dart';
 import '../widgets/painel.dart';
-import 'cargo_detalhe.dart';
-import 'cod_descri.dart';
 
 class UsuariosLista extends ListaBase {
   final String table;

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:psycostatattoo/const/nome_tabelas.dart';
 import 'package:get/get.dart';
 
 import '../const/const.dart';
+import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
 import '../services/ano_bimestre_controller.dart';
 import '../services/calc_dispersao_valores.dart';

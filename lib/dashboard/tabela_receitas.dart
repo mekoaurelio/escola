@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:psycostatattoo/services/utils.dart';
-import 'package:psycostatattoo/widgets/texto.dart';
-import 'package:psycostatattoo/data/api_my_sql.dart';
 
 import '../const/nome_tabelas.dart';
+import '../data/api_my_sql.dart';
+import '../services/utils.dart';
+import '../widgets/texto.dart';
 
 class TabelaReceitas extends StatefulWidget {
   @override

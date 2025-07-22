@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:psycostatattoo/data/api_my_sql.dart';
-import 'package:psycostatattoo/widgets/custom_butom.dart';
 import 'package:get/get.dart';
 
 import '../const/const.dart';
+import '../data/api_my_sql.dart';
 import '../services/utils.dart';
+import '../widgets/custom_butom.dart';
 
 class DireitoDeAcesso extends StatefulWidget {
   final Map<String, bool> acessosIniciais;

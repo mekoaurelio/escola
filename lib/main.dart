@@ -55,7 +55,7 @@ class _TattooStudioAppState extends State<TattooStudioApp> {
   Widget build(BuildContext context) {
     return  GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Meu App',
+      title: 'GEM',
       // locale: state.locale,
       supportedLocales: const [
         Locale('pt'), // Português

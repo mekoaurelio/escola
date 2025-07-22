@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:psycostatattoo/data/api_my_sql.dart';
-import 'package:psycostatattoo/widgets/custom_butom.dart';
 import 'package:get/get.dart';
 
+import '../data/api_my_sql.dart';
 import '../login/direito_de_acesso.dart';
+import '../widgets/custom_butom.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/formFieldData.dart';
 import '../widgets/painel.dart';

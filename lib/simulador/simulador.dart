@@ -1,6 +1,6 @@
 
 import 'package:flutter/material.dart';
-import 'package:psycostatattoo/const/nome_tabelas.dart';
+import '../const/nome_tabelas.dart';
 import 'simulador_lista.dart';
 
 class Simulador extends StatelessWidget {

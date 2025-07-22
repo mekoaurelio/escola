@@ -1,8 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:psycostatattoo/auxiliares/usuario_lista.dart';
-import 'cianorte/importar_vantagens.dart';
+import 'auxiliares/usuario_lista.dart';
 import 'const/const.dart';
 import 'const/nome_tabelas.dart';
 import 'dashboard/dashboard_screen.dart';
@@ -124,6 +123,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
         'appBarTitle': 'Projeção de Recursos',
         'builder': () => ProjecaoDeRecursos(),
       },
+
       {
         'id': 'simulador_magisterio',
         'group': 'simulador',
@@ -131,6 +131,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
         'appBarTitle': 'Simulador Magistério',
         'builder': () => const Simula(), // A tela que você está trabalhando
       },
+
 
       // === GRUPO: PROFESSORES ===
       {
@@ -315,7 +316,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
         Expanded(
           child: Column(
             children: [
-              _buildDesktopAppBar(),
+             // _buildDesktopAppBar(),
               Expanded(child: _getContent()),
             ],
           ),

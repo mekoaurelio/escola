@@ -1,5 +1,5 @@
+import 'package:GEM/folha/professor_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:psycostatattoo/folha/professor_utils.dart';
 
 import '../services/utils.dart';
 import '../widgets/texto.dart';

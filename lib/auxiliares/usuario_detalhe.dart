@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:psycostatattoo/const/const.dart';
 
+import '../const/const.dart';
 import '../data/api_my_sql.dart';
 import '../login/direito_de_acesso.dart';
 import '../services/generic_form_screen.dart';
