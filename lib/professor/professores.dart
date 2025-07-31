@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:GEM/services/GlobalFilterController.dart';
 
 import '../const/const.dart';
 import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
 import '../services/anoBimestreListenerMixin.dart';
-import '../services/ano_bimestre_controller.dart';
-import '../services/screenSize.dart';
 import '../services/utils.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/line.dart';
@@ -20,8 +19,7 @@ class Professores extends StatefulWidget {
   State<Professores> createState() => _ProfessoresState();
 }
 
-class _ProfessoresState extends State<Professores>
-    with AnoBimestreListenerMixin {
+class _ProfessoresState extends State<Professores> {
   final TextEditingController controller = TextEditingController();
   List<dynamic> lista = [];
   List<dynamic> listaCompleta = [];
@@ -29,7 +27,7 @@ class _ProfessoresState extends State<Professores>
   int pageSize = 10;
   bool isLoading = true;
   String? errorMessage;
-  final anoBimestreController = Get.find<AnoBimestreController>();
+  final GlobalFilterController filterController = Get.find<GlobalFilterController>();
 
   @override
   void onAnoBimestreMudou(String ano, String bimestre) {
@@ -39,7 +37,34 @@ class _ProfessoresState extends State<Professores>
   @override
   void initState() {
     super.initState();
+    // Registra os listeners. Eles reagirão a mudanças SE a tela estiver visível.
+    filterController.municipio.listen((_) => _reactToFilterChange());
+    filterController.ano.listen((_) => _reactToFilterChange());
+    filterController.bimestre.listen((_) => _reactToFilterChange());
+
+    _loadDataBasedOnCurrentFilters();
+  }
+
+  void _loadDataBasedOnCurrentFilters() {
+    // Pega os valores atuais diretamente do controller
+    String muni = filterController.municipio.value;
+    String ano = filterController.ano.value;
+    String bimestre = filterController.bimestre.value;
+    setState(() {
+      TBFolha=TBFolha='${muni}$ano$bimestre';
+      TBVantagens=TBVantagens='${muni}vantagens$ano$bimestre';
+      TBProfessor = '${muni}professor$ano$bimestre';
+      TBInfantil = '${muni}infantil$ano$bimestre'; // Corrigido: removido espaço
+      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
+      TBExercicio = '${muni}exercicio$ano$bimestre';
+      TBTotais='${muni}totais$ano$bimestre';
+    });
     _loadData();
+  }
+
+  void _reactToFilterChange() {
+    print("Listener do GetX acionado! (Mudança ocorreu com a tela aberta)");
+    _loadDataBasedOnCurrentFilters();
   }
 
   atualizaTela(var ano, var bimestre) {
@@ -121,7 +146,6 @@ class _ProfessoresState extends State<Professores>
     }
 
     final totalPages = (lista.length / pageSize).ceil();
-    final screenSizeConfig = ScreenSizeConfig(context);
     const double maxTableWidth = 1500;
     return Scaffold(
       backgroundColor: corFundoOadrao,
@@ -285,8 +309,7 @@ class __ProfessorListItemState extends State<_ProfessorListItem> {
     final item = widget.item;
     final DateTime parsedDate = Utils.parseDate(item['admissao']);
     final int yearsDifference = Utils.calculateYearsDifference(parsedDate);
-    final double somaVantagens =
-        double.tryParse(item['soma_vantagens'] ?? '0.0') ?? 0.0;
+   // final double somaVantagens = double.tryParse(item['soma_vantagens'] ?? '0.0') ?? 0.0;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),

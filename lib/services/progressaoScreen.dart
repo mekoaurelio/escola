@@ -5,9 +5,8 @@ import '../data/api_my_sql.dart';
 import '../simulador/simulador_alt.dart';
 import '../widgets/line.dart';
 import '../widgets/painel.dart';
-import '../widgets/texto.dart';
-import 'anoBimestreListenerMixin.dart';
-import 'ano_bimestre_controller.dart';
+
+import 'package:GEM/services/GlobalFilterController.dart';
 import 'utils.dart';
 
 class ProgressaoScreen extends StatefulWidget {
@@ -17,49 +16,60 @@ class ProgressaoScreen extends StatefulWidget {
   _ProgressaoScreenState createState() => _ProgressaoScreenState();
 }
 
-class _ProgressaoScreenState extends State<ProgressaoScreen>
-    with AnoBimestreListenerMixin {
+class _ProgressaoScreenState extends State<ProgressaoScreen> {
   List<Map<String, dynamic>> prof = [];
   List<Map<String, dynamic>> infantil = [];
   List<Map<String, dynamic>> fundeb = [];
   List<Map<String, dynamic>> exercicio = [];
-  final anoBimestreController = Get.find<AnoBimestreController>();
   double perAumentoAdulto = 0.00;
   double perAumentoInfantil = 0.00;
-
   double? fundebBase; // Valor da ordem 1 do FUNDEB RECEITA
-
   bool loading = true;
+  final GlobalFilterController filterController = Get.find<GlobalFilterController>();
 
-  @override
-  void onAnoBimestreMudou(String ano, String bimestre) {
-    _atualizaTela(ano, bimestre);
-  }
 
   @override
   void initState() {
     super.initState();
+    // Registra os listeners. Eles reagirão a mudanças SE a tela estiver visível.
+    filterController.municipio.listen((_) => _reactToFilterChange());
+    filterController.ano.listen((_) => _reactToFilterChange());
+    filterController.bimestre.listen((_) => _reactToFilterChange());
+
+    _loadDataBasedOnCurrentFilters();
+  }
+
+  void _loadDataBasedOnCurrentFilters() {
+    print("Iniciando carregamento de dados para ProgressaoScreen...");
+
+    // Pega os valores atuais diretamente do controller
+    String muni = filterController.municipio.value;
+    String ano = filterController.ano.value;
+    String bimestre = filterController.bimestre.value;
+
+    // Atualiza as variáveis de estado com os novos nomes de tabela
+    setState(() {
+      TBProfessor = '${muni}professor$ano$bimestre';
+      TBInfantil = '${muni}infantil$ano$bimestre'; // Corrigido: removido espaço
+      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
+      TBExercicio = '${muni}exercicio$ano$bimestre';
+    });
     _loadAll();
   }
 
-  _atualizaTela(var ano, var bimestre) {
-    setState(() {
-      TBProfessor = '${muni}professor$ano$bimestre';
-      TBInfantil = ' ${muni}infantil$ano$bimestre';
-      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
-      TBExercicio = '${muni}exercicio$ano$bimestre';
-      _loadAll();
-    });
+  void _reactToFilterChange() {
+    print("Listener do GetX acionado! (Mudança ocorreu com a tela aberta)");
+    _loadDataBasedOnCurrentFilters();
   }
 
   Future<void> _loadAll() async {
     setState(() => loading = true);
 
-    print('receita fundeb');
-    print(TBReceitaFundebSimulador);
-
     final f = await ApiMySql.get(TBProfessor, null, 'ordem');
+    print('11111');
+
     final i = await ApiMySql.get(TBInfantil, null, 'ordem');
+    print('222222');
     final g = await ApiMySql.get(TBReceitaFundebSimulador, null, 'ordem');
     final h = await ApiMySql.get(TBExercicio, null, 'ordem');
     print(g.length);
@@ -76,8 +86,6 @@ class _ProgressaoScreenState extends State<ProgressaoScreen>
       prof = List<Map<String, dynamic>>.from(f);
       infantil = List<Map<String, dynamic>>.from(i);
       fundeb = List<Map<String, dynamic>>.from(g);
-      print('total registros fundeb');
-      print(fundeb.length);
       exercicio = List<Map<String, dynamic>>.from(h);
       loading = false;
     });
@@ -567,37 +575,26 @@ class _SectionFundebExercio extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Card(
-      color: Colors.grey.shade300,
-      elevation: 0,
-      shape: Utils.borda(),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Texto(tit: title, cor: Colors.black, alin: TextAlign.center),
-          IconButton(
-            icon: const Icon(
-              Icons.add_circle_outline,
-              color: Colors.black,
-              size: 20,
+    return
+      Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        clipBehavior: Clip.antiAlias,
+        color: Colors.white,
+        child:
+            Container(
+              width: double.infinity, // Ocupa toda a largura disponível
+              color: Colors.blue,
+              padding: EdgeInsets.all(10), // Ajuste o padding conforme necessário
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade300),
+              ),
             ),
-            onPressed: () async {
-              await showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder:
-                    (_) => Panel(
-                      width: MediaQuery.of(context).size.width * 0.44,
-                      height: MediaQuery.of(context).size.height * 0.44,
-                      child: SimuladorAlt(data: null, tb: table, tipo: 'valor'),
-                      onClose: () => Navigator.of(context).pop(),
-                    ),
-              );
-              onEdited();
-            },
-          ),
-        ],
-      ),
-    );
+          //  Column(children: cards),
+
+      );
+
   }
 }

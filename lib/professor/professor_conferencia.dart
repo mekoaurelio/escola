@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:GEM/services/GlobalFilterController.dart';
 
 import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
 import '../services/ano_bimestre_controller.dart';
-import '../services/screenSize.dart';
 import '../services/utils.dart';
-import '../simulador/simulador_alt.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/line.dart';
 import '../widgets/paginationFooter.dart';
-import '../widgets/painel.dart';
-import '../widgets/texto.dart';
 
 class ProfessorConferencia extends StatefulWidget {
   const ProfessorConferencia();
@@ -43,8 +40,7 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
   List<double> matrizInfantil =[];
   double percP=0,percI=0;
   int hoverIndex = -1;
-  final anoBimestreController = Get.find<AnoBimestreController>();
-  var _anoLocal='',_bimestreLocal='';
+  final GlobalFilterController filterController = Get.find<GlobalFilterController>();
 
   @override
   void dispose() {
@@ -54,28 +50,40 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
   @override
   void initState() {
     super.initState();
+    // Registra os listeners. Eles reagirão a mudanças SE a tela estiver visível.
+    filterController.municipio.listen((_) => _reactToFilterChange());
+    filterController.ano.listen((_) => _reactToFilterChange());
+    filterController.bimestre.listen((_) => _reactToFilterChange());
 
-    ever(anoBimestreController.ano, (novoAno) {
-      _bimestreLocal=anoBimestreController.bimestre.toString();
-      Utils.setAno(novoAno);
-      atualizaTela(novoAno,_bimestreLocal);
+    _loadDataBasedOnCurrentFilters();
+  }
+
+  void _loadDataBasedOnCurrentFilters() {
+    // Pega os valores atuais diretamente do controller
+    String muni = filterController.municipio.value;
+    String ano = filterController.ano.value;
+    String bimestre = filterController.bimestre.value;
+    setState(() {
+      TBFolha=TBFolha='${muni}$ano$bimestre';
+      TBVantagens=TBVantagens='${muni}vantagens$ano$bimestre';
+      TBProfessor = '${muni}professor$ano$bimestre';
+      TBInfantil = '${muni}infantil$ano$bimestre'; // Corrigido: removido espaço
+      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
+      TBExercicio = '${muni}exercicio$ano$bimestre';
+      TBTotais='${muni}totais$ano$bimestre';
     });
-
-    ever(anoBimestreController.bimestre, (novoBimestre) {
-      _anoLocal=anoBimestreController.ano.toString();
-      Utils.setBimestre(novoBimestre);
-      atualizaTela(_anoLocal,novoBimestre);
-    });
-
+    atualizaTela(ano,bimestre);
     carregarFolha();
   }
 
+  void _reactToFilterChange() {
+    print("Listener do GetX acionado! (Mudança ocorreu com a tela aberta)");
+    _loadDataBasedOnCurrentFilters();
+  }
+
+
   atualizaTela(var ano,var bimestre){
     setState(() {
-      TBProfessor='a_professor$ano$bimestre';
-      TBInfantil='a_infantil$ano$bimestre';
-      TBFolha='a$ano$bimestre';
-      TBVantagens='a_vantagens$ano$bimestre';
       listaCompleta=[];
       lista=[];
       carregarFolha();
@@ -108,6 +116,7 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
     await carregaMatriz(infantil,'I');
 
     listaCompleta = await ApiMySql.getProfessor(); // Salva a lista completa
+
     lista = listaCompleta; // Inicialmente, lista exibida é igual à completa
     setState(() {
       pageSize=lista.length;
@@ -348,7 +357,6 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
       aoSalvar: (novoValor) async{
         String _a=Utils.getAno();
         String _b=Utils.getBimestre();
-        print("Update $TBFolha  set nivel='$novoValor' WHERE matricula=$matricula");
         await ApiMySql.executaSql("Update $TBFolha  set nivel='$novoValor' WHERE matricula=$matricula");
         setState(() => atualizaTela(_a,_b));
 

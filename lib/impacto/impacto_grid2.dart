@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Adicionado para formatação
+import 'package:GEM/services/GlobalFilterController.dart';
+import 'package:get/get.dart';
 import '../const/const.dart';
 import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
-import '../services/anoBimestreListenerMixin.dart';
 import '../services/utils.dart';
 import '../widgets/texto.dart';
 import 'hoverableDataRow.dart';
@@ -16,7 +17,7 @@ class ImpactoGrid2 extends StatefulWidget {
   _ImpactoGrid2State createState() => _ImpactoGrid2State();
 }
 
-class _ImpactoGrid2State extends State<ImpactoGrid2> with AnoBimestreListenerMixin{
+class _ImpactoGrid2State extends State<ImpactoGrid2> {
   final ValueNotifier<Map<String, String>> valueUpdates = ValueNotifier({});
   ImpactoFinanceiroData? _impactoData;
   bool _isLoading = true;
@@ -26,12 +27,7 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> with AnoBimestreListenerMix
   double nro4=4;
   static  List<Texto> _dadosDoExercicio=[];
   final _currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: '');
-  //String ano='',bimestre='';
-
-  @override
-  void onAnoBimestreMudou(String ano, String bimestre) {
-    _atualizaTela(ano,bimestre);
-  }
+  final GlobalFilterController filterController = Get.find<GlobalFilterController>();
 
   _atualizaTela(var ano,var bimestre){
     setState(() {
@@ -58,8 +54,36 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> with AnoBimestreListenerMix
   @override
   void initState() {
     super.initState();
+    // Registra os listeners. Eles reagirão a mudanças SE a tela estiver visível.
+    filterController.municipio.listen((_) => _reactToFilterChange());
+    filterController.ano.listen((_) => _reactToFilterChange());
+    filterController.bimestre.listen((_) => _reactToFilterChange());
+
+    _loadDataBasedOnCurrentFilters();
+  }
+
+  void _loadDataBasedOnCurrentFilters() {
+    // Pega os valores atuais diretamente do controller
+    String muni = filterController.municipio.value;
+    String ano = filterController.ano.value;
+    String bimestre = filterController.bimestre.value;
+    setState(() {
+      TBFolha=TBFolha='${muni}$ano$bimestre';
+      TBVantagens=TBVantagens='${muni}vantagens$ano$bimestre';
+      TBProfessor = '${muni}professor$ano$bimestre';
+      TBInfantil = '${muni}infantil$ano$bimestre'; // Corrigido: removido espaço
+      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
+      TBExercicio = '${muni}exercicio$ano$bimestre';
+      TBTotais='${muni}totais$ano$bimestre';
+    });
     _loadData();
   }
+
+  void _reactToFilterChange() {
+    print("Listener do GetX acionado! (Mudança ocorreu com a tela aberta)");
+    _loadDataBasedOnCurrentFilters();
+  }
+
 
   Future<void> _loadData() async {
     try {

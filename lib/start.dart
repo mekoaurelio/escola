@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'auxiliares/usuario_lista.dart';
 import 'const/const.dart';
 import 'const/nome_tabelas.dart';
@@ -11,14 +12,14 @@ import 'import/pdfExtractorPage.dart';
 import 'professor/professor_conferencia.dart';
 import 'professor/professores.dart';
 import 'folha/tabela_professor.dart';
-import 'services/anoBimestreListenerMixin.dart';
-import 'services/ano_bimestre_controller.dart';
+import 'services/escolher_municipio.dart';
 import 'services/progressaoScreen.dart';
 import 'services/utils.dart';
 import 'simulador/simula.dart';
 import 'simulador/tabela_simulador.dart';
 import 'simulador/projecao_recursos_fundeb.dart';
 import 'widgets/texto.dart';
+import 'package:GEM/services/GlobalFilterController.dart';
 
 class Start extends StatefulWidget {
   var acessos;
@@ -32,18 +33,14 @@ class Start extends StatefulWidget {
   State<Start> createState() => _StartState();
 }
 
-class _StartState extends State<Start> with AnoBimestreListenerMixin {
+class _StartState extends State<Start> {
   late List<Map<String, dynamic>> _allPages=[];
   String _currentPageId = 'home';
   String _currentAno = '25'; // Default para evitar '00'
   String _currentBimestre = '01'; // Default para evitar '00'
-  final anoBimestreController = Get.find<AnoBimestreController>();
   bool temAnoBimestre=false;
-
-  @override
-  void onAnoBimestreMudou(String ano, String bimestre) {
-    // Sua lógica aqui, se necessário
-  }
+  String _cidadeSelecionada = 'Dois Vizinhos';
+  final GlobalFilterController filterController = Get.find<GlobalFilterController>();
 
   final List<Map<String, String>> _anos = [
     {'code': '00','name': 'Escolha o Ano'},
@@ -77,8 +74,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
   }
 
   void _initializePages(){
-   // Utils.setAno('25');
-   // Utils.setBimestre('01');
+   // Utils.setUserMunicipio('a_');
     String muni=Utils.getUserMunicipio();
     ///pega os direitos de acesso
 
@@ -90,7 +86,7 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
         'drawerLabel': 'Home',
         'appBarTitle': 'Dashboard',
         'icon': Icons.home,
-        'builder': () => DashboardScreen(),
+        'builder': () => DashboardScreen(userName: Utils.getUserName(),),
       },
       ///EXTRACÃO DE DADOS
       {
@@ -232,17 +228,12 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
     return _allPages.firstWhere((p) => p['id'] == _currentPageId, orElse: () => _allPages.firstWhere((p) => p['id'] == 'home'));
   }
 
-  start(){
-    try {
-      final controller = Get.find<AnoBimestreController>();
-      controller.atualizaAnoEBimestre('25','01'); // atualiza o controller
-      atualizaNomeDasTabelas();
-      setState(() => temAnoBimestre = true);
-    }catch (e) {
-      setState(() => temAnoBimestre = false);
-    }
+  void start() {
+    atualizaNomeDasTabelas();
+    setState(() => temAnoBimestre = true);
   }
 
+  /*
   void _changeAno(String? ano) {
     if (ano != null && ano != '00') {
       var bimestre=Utils.getBimestre()?? 'Primeiro Bimestre';
@@ -269,6 +260,30 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
     }
   }
 
+   */
+
+  void _changeAno(String? ano) {
+    if (ano != null && ano != '00') {
+      // Usa o novo controller para atualizar o estado global
+      filterController.updateFilters(novoAno: ano);
+      atualizaNomeDasTabelas();
+      setState(() {
+        _currentAno = ano;
+      });
+    }
+  }
+
+  // 6. CORRIJA a função _changeBimestre()
+  void _changeBimestre(String? bimestre) {
+    if (bimestre != null && bimestre != '00') { // O código do bimestre é '01', '02', etc.
+      filterController.updateFilters(novoBimestre: bimestre);
+      atualizaNomeDasTabelas();
+      setState(() {
+        _currentBimestre = bimestre;
+      });
+    }
+  }
+/*
   atualizaNomeDasTabelas(){
     try{
       String muni=Utils.getUserMunicipio();
@@ -286,6 +301,35 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
       TBReceitaFundebSimulador='${muni}receita_fundeb_simulador$ano$bimestre';
     }catch (e) {
       Utils.snak('Atenção', 'Não tem imposrtação', false, Colors.red);
+    }
+  }
+
+ */
+
+  void atualizaNomeDasTabelas() {
+    try {
+      // Lê os valores reativos diretamente do controller
+      String muni = filterController.municipio.value;
+      String ano = filterController.ano.value;
+      String bimestre = filterController.bimestre.value;
+
+      TBFolha = '${muni}$ano$bimestre';
+      TBVantagens = '${muni}vantagens$ano$bimestre';
+      TBTotalProfessor='${muni}total_professor$ano$bimestre';
+
+      ///USADAS NO SIMMULADOR
+       TBInfantil='${muni}infantil$ano$bimestre';
+       TBExercicio='${muni}exercicio$ano$bimestre';
+       TBProfessor='${muni}professor$ano$bimestre';
+       TBReceitaFundebSimulador='${muni}receita_fundeb_simulador$ano$bimestre';
+       TBVaaf='${muni}vaaf$ano$bimestre';
+       TBTotais='${muni}totais$ano$bimestre';
+       TBDecenio='${muni}decenio$ano$bimestre';
+       TBImpostos='${muni}impostos$ano$bimestre';
+
+      print('Tabelas atualizadas para: $TBFolha'); // Bom para depuração
+    } catch (e) {
+      Utils.snak('Atenção', 'Não tem importação', false, Colors.red);
     }
   }
 
@@ -416,9 +460,6 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
       ),
     );
   }
-
-  /// Gaveta de Navegação - Usada por AMBOS os layouts.
-
   Widget _buildNavigationDrawer() {
     return Container(
       width: 250,
@@ -428,47 +469,86 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
           Expanded(
             child: ListView(
               children: [
-                Column(
-                  children: [
-                    SizedBox(
-                      height: 150,
-                      child: Center(
-                        child: Image.asset('assets/images/logo_toledo.png', height: 105),
-                      ),
-                    ),
-                  ],
+                /// Seletor de cidade
+                if(Utils.getUserType()=='M')
+                  Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: CidadeSelector(
+                    cidadeSelecionada: _cidadeSelecionada,
+                    onChanged: (novaCidade) {
+                      // O setState é apenas para a UI da Start (mudar o nome da cidade e a imagem)
+                      setState(() {
+                        _cidadeSelecionada = novaCidade;
+                      });
+
+                      // A lógica de negócio é centralizada
+                      String novoMunicipioCode = 'a_'; // Padrão
+                      if (novaCidade == 'Cianorte') {
+                        novoMunicipioCode = 'cia_';
+                      }
+
+                      // ATUALIZE APENAS O CONTROLLER. Ele cuidará de persistir o dado com o Utils.
+                      filterController.updateFilters(novoMunicipio: novoMunicipioCode);
+
+                      // A chamada _initializePages() aqui pode ser necessária se a lista de páginas
+                      // realmente depende do município (como no seu caso com SimuladorTabelaProfessor).
+                      _initializePages();
+                    },
+
+                  ),
                 ),
+
+                /// Logo da cidade
+                SizedBox(
+                  height: 110,
+                  child: Center(
+                    child: Image.asset(
+                      'assets/images/${_cidadeSelecionada}.png',
+                      height: 105,
+                    ),
+                  ),
+                ),
+                ///Nome do município
+                /*
+                Texto(
+                  tit: _cidadeSelecionada,
+                  cor: Colors.black87,
+                  tam: 18,
+                ),
+
+                 */
+
                 ..._allPages.where((p) => p['group'] == 'main').map((item) => _buildDrawerItem(item)),
                 const Divider(),
-                if(widget.acessos!=null)
-                  if(widget.acessos[0]['simulador']=='1')
+
+                if (widget.acessos != null)
+                  if (widget.acessos[0]['simulador'] == '1')
                     _buildExpansionTile('simulador', 'Simulador', Icons.swap_vertical_circle_rounded),
-                if(widget.acessos[0]['professores']=='1')
+                if (widget.acessos[0]['professores'] == '1')
                   _buildExpansionTile('professores', 'Professores', Icons.perm_contact_cal_sharp),
-                if(widget.acessos[0]['impacto']=='1')
+                if (widget.acessos[0]['impacto'] == '1')
                   _buildExpansionTile('impacto', 'Impácto', Icons.auto_graph_outlined),
-                if(widget.acessos[0]['documentacao']=='1')
+                if (widget.acessos[0]['documentacao'] == '1')
                   _buildExpansionTile('auxiliares', 'Auxiliares', Icons.settings),
               ],
             ),
           ),
-          // Rodapé adicionado aqui
+
+          // Rodapé
           Container(
             padding: const EdgeInsets.all(16),
             width: double.infinity,
             child: const Text(
-              'Copyright © 2025 XmkTech. V.002\nAll rights reserved (41-9-9558-2579)',
+              'Copyright © 2025 XmkTech. V.003\nAll rights reserved (41-9-9558-2579)',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ),
         ],
       ),
     );
   }
+
 
   Widget _buildDrawerItem(Map<String, dynamic> pageData) {
     final isSelected = _currentPageId == pageData['id'];
@@ -519,4 +599,3 @@ class _StartState extends State<Start> with AnoBimestreListenerMixin {
     );
   }
 }
-

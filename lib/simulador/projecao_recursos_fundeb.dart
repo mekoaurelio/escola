@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:GEM/services/GlobalFilterController.dart';
+import 'package:get/get.dart';
 
 import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
-import '../services/anoBimestreListenerMixin.dart';
 import '../services/utils.dart';
 import '../widgets/line.dart';
 import '../widgets/texto.dart';
@@ -28,19 +29,43 @@ class FUNDEBCalculatorScreen extends StatefulWidget {
   State<FUNDEBCalculatorScreen> createState() => _FUNDEBCalculatorScreenState();
 }
 
-class _FUNDEBCalculatorScreenState extends State<FUNDEBCalculatorScreen> with AnoBimestreListenerMixin {
+class _FUNDEBCalculatorScreenState extends State<FUNDEBCalculatorScreen> {
   final double ProjecaoRecursosFundebPr = 6290.1;
-  final _controller = TextEditingController();
+  final GlobalFilterController filterController = Get.find<GlobalFilterController>();
   Map<String, dynamic>? tabela;
   bool isLoading = true;
 
   @override
-  void onAnoBimestreMudou(String ano, String bimestre) { /* ... */ }
-  _atualizaTela(var ano,var bimestre) { /* ... */ }
-  @override
   void initState() {
     super.initState();
+    // Registra os listeners. Eles reagirão a mudanças SE a tela estiver visível.
+    filterController.municipio.listen((_) => _reactToFilterChange());
+    filterController.ano.listen((_) => _reactToFilterChange());
+    filterController.bimestre.listen((_) => _reactToFilterChange());
+
+    _loadDataBasedOnCurrentFilters();
+  }
+
+  void _loadDataBasedOnCurrentFilters() {
+    // Pega os valores atuais diretamente do controller
+    String muni = filterController.municipio.value;
+    String ano = filterController.ano.value;
+    String bimestre = filterController.bimestre.value;
+    setState(() {
+      TBFolha=TBFolha='${muni}$ano$bimestre';
+      TBVantagens=TBVantagens='${muni}vantagens$ano$bimestre';
+      TBProfessor = '${muni}professor$ano$bimestre';
+      TBInfantil = '${muni}infantil$ano$bimestre'; // Corrigido: removido espaço
+      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
+      TBExercicio = '${muni}exercicio$ano$bimestre';
+      TBTotais='${muni}totais$ano$bimestre';
+    });
     _carregarDadosBanco();
+  }
+
+  void _reactToFilterChange() {
+    print("Listener do GetX acionado! (Mudança ocorreu com a tela aberta)");
+    _loadDataBasedOnCurrentFilters();
   }
 
   Future<void> _carregarDadosBanco() async {

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:GEM/services/GlobalFilterController.dart';
 
 import '../const/const.dart';
 import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
-import '../services/ano_bimestre_controller.dart';
 import '../services/calc_dispersao_valores.dart';
 import '../services/utils.dart'; // Assumindo que Utils.formatVr existe
 import '../widgets/texto.dart';
@@ -28,8 +28,6 @@ class SimuladorTabelaProfessor extends StatefulWidget {
 }
 
 class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
-
-  final anoBimestreController = Get.find<AnoBimestreController>();
   int cargaHoraria = 30;
   double _percEntreColunas=0;
   final List<String> niveis = ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'];
@@ -58,6 +56,8 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   double perAumentoAdulto=0.00;
   double _custoMensal = 0.0;
   double totalFolha=0;
+  final GlobalFilterController filterController = Get.find<GlobalFilterController>();
+
 
   _atualizaTela(var ano,var bimestre){
     setState(() {
@@ -154,9 +154,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   }
 
   Future<void> _loadDataAndCalculate() async {
-    print('11111');
-    professores = await ApiMySql.getProfessores(widget.tipo.trim().toUpperCase()).timeout(const Duration(seconds: 30));
-    print('2222');
+    professores = await ApiMySql.getProfessores('ADULTO',TBFolha,TBVantagens).timeout(const Duration(seconds: 30));
     ///Pega os totais
     final totais = await ApiMySql.get(TBTotais,null,null);
     perAumentoInfantil=double.parse(totais[0]['perc_aumento_infantil']);
@@ -240,8 +238,41 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   @override
   void initState() {
     super.initState();
-    final controller = Get.find<AnoBimestreController>();
-    _atualizaTela(controller.ano, controller.bimestre);
+    // Registra os listeners. Eles reagirão a mudanças SE a tela estiver visível.
+    filterController.municipio.listen((_) => _reactToFilterChange());
+    filterController.ano.listen((_) => _reactToFilterChange());
+    filterController.bimestre.listen((_) => _reactToFilterChange());
+
+    _loadDataBasedOnCurrentFilters();
+  }
+
+  void _loadDataBasedOnCurrentFilters() {
+    // Pega os valores atuais diretamente do controller
+    String muni = filterController.municipio.value;
+    String ano = filterController.ano.value;
+    String bimestre = filterController.bimestre.value;
+    var tb=widget.table;
+
+    // Atualiza as variáveis de estado com os novos nomes de tabela
+    setState(() {
+
+      TBVantagens='${muni}vantagens$ano$bimestre';
+      TBProfessor='$tb$ano$bimestre';
+      TBFolha='$muni$ano$bimestre';
+      TBProfessor = '${muni}professor$ano$bimestre';
+      TBInfantil = '${muni}infantil$ano$bimestre'; // Corrigido: removido espaço
+      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
+      TBExercicio = '${muni}exercicio$ano$bimestre';
+    });
+
+    _calculatedTableValues=[];
+    professores=null;
+    _loadDataAndCalculate();
+  }
+
+  void _reactToFilterChange() {
+    print("Listener do GetX acionado! (Mudança ocorreu com a tela aberta)");
+    _loadDataBasedOnCurrentFilters();
   }
 
   @override

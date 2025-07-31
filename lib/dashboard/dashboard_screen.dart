@@ -4,7 +4,9 @@ import '../indicadores/educationImpactPage.dart';
 import '../indicadores/educationalReceiptsScreen.dart';
 import '../indicadores/pacDashboardPage.dart';
 import '../indicadores/receiptsDemonstrativePage.dart';
+import '../services/utils.dart';
 import '../simulador/simula.dart';
+import '../widgets/texto.dart';
 // ==========================================================
 // 1. O Layout Principal da Aplicação
 // ==========================================================
@@ -30,7 +32,7 @@ class MainLayout extends StatelessWidget {
 
                 // O conteúdo da tela (seu DashboardScreen) ocupa o restante do espaço
                 Expanded(
-                  child: DashboardScreen(),
+                  child: DashboardScreen(userName: Utils.getUserName(),),
                 ),
               ],
             ),
@@ -154,6 +156,13 @@ class CustomAppBar extends StatelessWidget {
 // 4. O seu DashboardScreen, agora como conteúdo principal
 // ==========================================================
 class DashboardScreen extends StatelessWidget {
+  final String userName;
+
+  const DashboardScreen({
+    Key? key,
+    required this.userName,
+  }) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -169,7 +178,7 @@ class DashboardScreen extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Bem-vindo, Júlio!',
+                     Text('Bem-vindo, ${userName}!',
                       style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 16),
@@ -184,17 +193,22 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 SizedBox(width: 10,),
                 // --- Banner de Educação ---
-                Container(
-                  width: 720,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    image: DecorationImage(
-                      image: AssetImage('assets/images/logo_main.jpg'),
-                      fit: BoxFit.cover,
+                Column(
+                  children: [
+                    Container(
+                      width: 720,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        image: DecorationImage(
+                          image: AssetImage('assets/images/logo_main.jpg'),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  ],
+                )
+
               ],
             ),
             const SizedBox(height: 24),

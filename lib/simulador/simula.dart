@@ -1,6 +1,6 @@
-
+import 'package:GEM/services/GlobalFilterController.dart';
 import 'dart:async';
-
+import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../const/const.dart';
@@ -37,11 +37,39 @@ class _SimulaState extends State<Simula> {
   double totalPropostaInfantil=0;
   String _dispersaoHorizontal = '0.00%'; // Valor inicial como string formatada
   String _dispersaoTotal = '0.00%';
+  final GlobalFilterController filterController = Get.find<GlobalFilterController>();
 
   @override
   void initState() {
     super.initState();
+    // Registra os listeners. Eles reagirão a mudanças SE a tela estiver visível.
+    filterController.municipio.listen((_) => _reactToFilterChange());
+    filterController.ano.listen((_) => _reactToFilterChange());
+    filterController.bimestre.listen((_) => _reactToFilterChange());
+
+    _loadDataBasedOnCurrentFilters();
+  }
+
+  void _loadDataBasedOnCurrentFilters() {
+    // Pega os valores atuais diretamente do controller
+    String muni = filterController.municipio.value;
+    String ano = filterController.ano.value;
+    String bimestre = filterController.bimestre.value;
+    setState(() {
+      TBFolha=TBFolha='${muni}$ano$bimestre';
+      TBVantagens=TBVantagens='${muni}vantagens$ano$bimestre';
+      TBProfessor = '${muni}professor$ano$bimestre';
+      TBInfantil = '${muni}infantil$ano$bimestre'; // Corrigido: removido espaço
+      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
+      TBExercicio = '${muni}exercicio$ano$bimestre';
+      TBTotais='${muni}totais$ano$bimestre';
+    });
     _loadData();
+  }
+
+  void _reactToFilterChange() {
+    print("Listener do GetX acionado! (Mudança ocorreu com a tela aberta)");
+    _loadDataBasedOnCurrentFilters();
   }
 
   Future<void> _loadData() async {
@@ -54,7 +82,6 @@ class _SimulaState extends State<Simula> {
 
     try {
       ///PEGA OS PERCENTUAIS DE AUMENTO
-      print('NOME DA TABELA=>$TBTotais');
       final totais = await ApiMySql.get(TBTotais, null, null);
 
       if (totais.isNotEmpty) {
@@ -67,9 +94,9 @@ class _SimulaState extends State<Simula> {
       }
 
       ///PEGA OS PROFESSORES EDUCADORES
-      final adulto = await ApiMySql.getProfessores('ADULTO').timeout(const Duration(seconds: 30));
+      final adulto = await ApiMySql.getProfessores('ADULTO',TBFolha,TBVantagens).timeout(const Duration(seconds: 30));
       ///PEGA OSPROFESSORES INFANTIL
-      final infantil = await ApiMySql.getProfessores('INFANTIL').timeout(const Duration(seconds: 30));
+      final infantil = await ApiMySql.getProfessores('INFANTIL',TBFolha,TBVantagens).timeout(const Duration(seconds: 30));
 
       final totals = await Future.wait([
         Utils.calculateTotals(adulto),

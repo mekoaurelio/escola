@@ -91,6 +91,7 @@ WHERE id_user = $idUser;
     if (orderBy != null) {
       sql += ' order by $orderBy';
     }
+  //  print(sql);
     return await executaSql(sql);
   }
 /*
@@ -169,15 +170,15 @@ WHERE id_user = $idUser;
   }
 
   //******
-  static Future<List<dynamic>> getProfessores(String tipo) async {
+  static Future<List<dynamic>> getProfessores(String tipo,String tbFolha,String tbVantagem) async {
     var url = Uri.parse('https://www.xmktech.net/dados/get_prof_infan.php?nocache=${DateTime.now().millisecondsSinceEpoch}');
 
     // Corpo da requisição em formato JSON
     final body = json.encode({
       'action': 'getProfessor', // O nome da ação que o PHP vai identificar
       'tipo': tipo, // Os parâmetros que o PHP precisa
-      'tbfolha': TBFolha,
-      'tbvantagem': TBVantagens,
+      'tbfolha': tbFolha,
+      'tbvantagem': tbVantagem,
     });
 
     try {
@@ -192,7 +193,6 @@ WHERE id_user = $idUser;
       if (response.statusCode == 200) {
         // Sucesso
         final List<dynamic> data = json.decode(response.body);
-        print('Dados de professores ($tipo) recebidos com sucesso!');
         return data;
       } else {
         // Erro retornado pelo PHP

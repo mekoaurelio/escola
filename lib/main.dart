@@ -2,30 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
-import 'auxiliares/deep.dart';
-import 'indicadores/aceleracao_do_crescimento.dart';
-import 'indicadores/dados_do_municipio.dart';
-import 'indicadores/receitas_educacionais.dart';
-import 'indicadores/indicadores_educacionais.dart';
-import 'indicadores/situacao_toledo.dart';
+import 'package:GEM/services/GlobalFilterController.dart';
 import 'lang/translation_service.dart';
 import 'login/login.dart';
-import 'services/ano_bimestre_controller.dart';
 import 'services/utils.dart';
 import 'splash_screen.dart';
-import 'start.dart';
 
 void main()async {
   WidgetsFlutterBinding.ensureInitialized();
-  //await Pdfx.ensureInitialized();
-
-  final ano = Utils.getAno() ?? '25';
-  final bimestre = Utils.getBimestre() ?? "Primeiro Bimestre";
-
-  Get.put(AnoBimestreController(
-    anoInicial: ano,
-    bimestreInicial: bimestre,
-  ));
 
   await Firebase.initializeApp(
     // Replace with actual values
@@ -38,6 +22,7 @@ void main()async {
       storageBucket: "bolinha-e9545.appspot.com",
     ),
   );
+  Get.put(GlobalFilterController(), permanent: true);
 
   runApp(const TattooStudioApp());
 }
@@ -50,6 +35,25 @@ class TattooStudioApp extends StatefulWidget {
 }
 
 class _TattooStudioAppState extends State<TattooStudioApp> {
+  Widget? _initialScreen;
+
+  @override
+  void initState() {
+    super.initState();
+    // A decisão é tomada AQUI, dentro do ciclo de vida do widget
+    _setInitialScreen();
+  }
+
+
+  void _setInitialScreen() {
+    // Agora é seguro chamar Utils, pois o widget está sendo inicializado.
+    final userId = Utils.getIdUser();
+    if (userId == null || userId.isEmpty) {
+      _initialScreen = const Login();
+    } else {
+      _initialScreen = const SplashScreen();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,8 +74,9 @@ class _TattooStudioAppState extends State<TattooStudioApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,  ],
 
+      home: _initialScreen!,
     //  home: ReceitasEducacionais2025()
-        home: Utils.getIdUser()==null? const Login():const SplashScreen()
+        //home: Utils.getIdUser()==null || Utils.getIdUser()=='' ? const Login():const SplashScreen()
       //IndicatorsDashboard()
     );
   }

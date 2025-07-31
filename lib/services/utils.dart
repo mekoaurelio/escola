@@ -18,6 +18,7 @@ import '../widgets/texto.dart';
 
 class Utils {
 
+
   static final formKeyListNotificacaoDetalhe = GlobalKey<FormState>();
   static final maskPerc = MaskTextInputFormatter(mask: '###', filter: { "#": RegExp(r'[0-9]') });
   static final doisDigitos = MaskTextInputFormatter(mask: '##', filter: { "#": RegExp(r'[0-9]') });
@@ -429,6 +430,14 @@ class Utils {
 
   static void setUserName(var UserName) {
     html.window.localStorage['UserName'] = UserName;
+  }
+
+  static getUserType(){
+    return html.window.localStorage['userType'];
+  }
+
+  static void setUserType(var UserType) {
+    html.window.localStorage['userType'] = UserType;
   }
 
   static getUserName(){
