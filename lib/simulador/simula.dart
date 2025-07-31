@@ -1,5 +1,5 @@
+
 import 'dart:async';
-import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -54,6 +54,7 @@ class _SimulaState extends State<Simula> {
 
     try {
       ///PEGA OS PERCENTUAIS DE AUMENTO
+      print('NOME DA TABELA=>$TBTotais');
       final totais = await ApiMySql.get(TBTotais, null, null);
 
       if (totais.isNotEmpty) {
@@ -576,7 +577,8 @@ class _SimulaState extends State<Simula> {
   }
 
   // Dentro da sua classe _SimulaState
-  Widget _buildSummaryCard({
+  Widget _buildSummaryCard(
+      {
     required IconData icon,
     required Color iconColor,
     required Color backgroundColor,
@@ -604,12 +606,9 @@ class _SimulaState extends State<Simula> {
           border: Border.all(color: borderColor),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min, // Para o container não se esticar
+         // mainAxisSize: MainAxisSize.min, // Para o container não se esticar
           children: [
-            Text(
-              text,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textColor),
-            ),
+            Text(text, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textColor),),
             const SizedBox(width: 8),
             Tooltip(
               message: tooltip ?? 'Clique para editar',
@@ -622,11 +621,9 @@ class _SimulaState extends State<Simula> {
         ),
       );
     }
-
-    return Expanded(
-      child: Card(
+    return Card(
         elevation: 2,
-        color: const Color(0xFFF9F9FB),
+        color:  const Color(0xFFF9F9FB),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -689,51 +686,55 @@ class _SimulaState extends State<Simula> {
               // LINHA 2: CHIPS DE INFORMAÇÃO (DISTRIBUÍDOS)
               // ==========================================================
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween, // DISTRIBUI OS CHIPS
+
                 children: [
                   // Chip de Aumento
-                  _buildInfoChip(
-                    text: 'Aumento ${tipo == "INFANTIL" ? perAumentoInf : percAUmAdulto}%',
-                    trailingIcon: Icons.edit,
-                    bgColor: Colors.grey[50]!,
-                    borderColor: Colors.grey[100]!,
-                    textColor: Colors.grey[800]!,
-                    iconColor: Colors.grey[600]!,
-                    onTap: () {
-                      Utils.mostrarDialogoEditarValor(
-                      inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}(\.\d{0,2})?$'))
-                      ],
-                        context: context,
-                        titulo: tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
-                        labelCampo: 'Percentual',
-                        valorInicial: tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
-                        aoSalvar: (novoValor)async {
+                  Expanded(
+                    child:
+                    _buildInfoChip(
+                        text: 'Aumento ${tipo == "INFANTIL" ? perAumentoInf : percAUmAdulto}%',
+                        trailingIcon: Icons.edit,
+                        bgColor: Colors.grey[50]!,
+                        borderColor: Colors.grey[100]!,
+                        textColor: Colors.grey[800]!,
+                        iconColor: Colors.grey[600]!,
+                        onTap: () {
+                          Utils.mostrarDialogoEditarValor(
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}(\.\d{0,2})?$'))
+                            ],
+                            context: context,
+                            titulo: tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
+                            labelCampo: 'Percentual',
+                            valorInicial: tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
+                            aoSalvar: (novoValor)async {
 
-                        if (tipo == 'INFANTIL') {
-                          await ApiMySql.executaSql('UPDATE $TBInfantil set percentual=$novoValor where ordem=8',);
-                          await ApiMySql.executaSql('UPDATE $TBTotais set perc_aumento_infantil=$novoValor',);
-                        }else{
-                          await ApiMySql.executaSql('UPDATE $TBProfessor set percentual=$novoValor where ordem=8',);
-                          await ApiMySql.executaSql('UPDATE $TBTotais set perc_aumento_adulto=$novoValor',);
+                              if (tipo == 'INFANTIL') {
+                                await ApiMySql.executaSql('UPDATE $TBInfantil set percentual=$novoValor where ordem=8',);
+                                await ApiMySql.executaSql('UPDATE $TBTotais set perc_aumento_infantil=$novoValor',);
+                              }else{
+                                await ApiMySql.executaSql('UPDATE $TBProfessor set percentual=$novoValor where ordem=8',);
+                                await ApiMySql.executaSql('UPDATE $TBTotais set perc_aumento_adulto=$novoValor',);
 
-                        }
-                        setState(() {
-                          if (tipo == 'INFANTIL') {
-                            perAumentoInf = novoValor;
-                          } else {
-                            percAUmAdulto = novoValor;
-                          }
-                        });
+                              }
+                              setState(() {
+                                if (tipo == 'INFANTIL') {
+                                  perAumentoInf = novoValor;
+                                } else {
+                                  percAUmAdulto = novoValor;
+                                }
+                              });
+                            },
+                          );
                         },
-                      );
-
-
-                    },
+                      ),
                   ),
 
+                  const SizedBox(width: 8),
                   /// Chip de Dispersão Horizontal
-                  _buildInfoChip(
+                  Expanded(
+                    child:
+                    _buildInfoChip(
                     text: 'Disp. Horizontal ${_dispersaoHorizontal}%',
                     trailingIcon: Icons.info_outline,
                     tooltip: 'Dispersão salarial entre classes \nClick Aqui Para Saber Mais',
@@ -743,30 +744,36 @@ class _SimulaState extends State<Simula> {
                     iconColor: Colors.black54,
                     onTap: dicas,
                   ),
+    ),
 
+                  const SizedBox(width: 8),
                   /// Chip de Dispersão Vertical
-                  _buildInfoChip(
-                    text: 'Disp. Total ${_dispersaoHorizontal}%',
-                    trailingIcon: Icons.info_outline,
-                    tooltip: 'Dispersão salarial entre níveis\nClick Aqui Para Saber Mais',
-                    bgColor: double.parse(_dispersaoHorizontal)>95? Colors.red[100]!:Colors.green[100]!,
-                    borderColor: double.parse(_dispersaoHorizontal)>95? Colors.red[100]!:Colors.green[100]!,
-                    textColor: Colors.black54,
-                    iconColor: Colors.black54,
-                    onTap: dicas,
-                  ),
+                  Expanded(
+                    child:
+                    _buildInfoChip(
+                   text: 'Disp. Total ${_dispersaoTotal}%',
+                   trailingIcon: Icons.info_outline,
+                   tooltip: 'Dispersão salarial entre níveis\nClick Aqui Para Saber Mais',
+                   bgColor: double.parse(_dispersaoTotal)>95? Colors.red[100]!:Colors.green[100]!,
+                   borderColor: double.parse(_dispersaoTotal)>95? Colors.red[100]!:Colors.green[100]!,
+                   textColor: Colors.black54,
+                   iconColor: Colors.black54,
+                   onTap: dicas,
+                 ),
+    ),
+
                 ],
               ),
 
               // O conteúdo expansível (tabela)
               if (child != null) ...[
-                const SizedBox(height: 24),
+                const SizedBox(height: 34),
                 child,
               ],
             ],
           ),
         ),
-      ),
+
     );
   }
 
@@ -840,8 +847,9 @@ class _SimulaState extends State<Simula> {
         ),
       );
     }
-
-    return Scaffold(
+/*
+    return
+      Scaffold(
       backgroundColor: Colors.transparent,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -877,5 +885,89 @@ class _SimulaState extends State<Simula> {
         ),
       ),
     );
+
+ */
+
+    return Scaffold(
+      backgroundColor: Colors.transparent, // Ou corFundoOadrao
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Define um "breakpoint": a largura a partir da qual mudamos o layout.
+            // 900 é um bom valor para este tipo de card.
+            const double breakpointWidth = 900;
+            final bool isWideScreen = constraints.maxWidth > breakpointWidth;
+
+            // SE a tela for larga, usamos um Row.
+            if (isWideScreen) {
+              return Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Envolvemos cada card em um Expanded para que dividam o espaço
+                      Expanded(
+                        child: _buildSummaryCard(
+                            icon: Icons.groups_rounded,
+                            iconColor: const Color(0xFF007BFF),
+                            backgroundColor: const Color(0xFFD6EAF8),
+                            label: 'Professores',
+                            count: _countAdulto,
+                            child: _buildProfessorTable(),
+                            tipo: 'ADULTO'),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildSummaryCard(
+                            icon: Icons.face_retouching_natural,
+                            iconColor: const Color(0xFFE67E22),
+                            backgroundColor: const Color(0xFFFCF3CF),
+                            label: 'Educ. Infantil',
+                            count: _countInfantil,
+                            child: _buildEducInfantilTable(),
+                            tipo: 'INFANTIL'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16), // Espaço antes da tabela de resumo
+                  _buildResumoTable(),
+                ],
+              );
+            }
+            // SENÃO (tela estreita), usamos uma Column.
+            else {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Os cards são colocados diretamente na Column, sem Expanded.
+                  _buildSummaryCard(
+                      icon: Icons.groups_rounded,
+                      iconColor: const Color(0xFF007BFF),
+                      backgroundColor: const Color(0xFFD6EAF8),
+                      label: 'Professores',
+                      count: _countAdulto,
+                      child: _buildProfessorTable(),
+                      tipo: 'ADULTO'),
+                  const SizedBox(height: 16), // Espaço entre os cards
+                  _buildSummaryCard(
+                      icon: Icons.face_retouching_natural,
+                      iconColor: const Color(0xFFE67E22),
+                      backgroundColor: const Color(0xFFFCF3CF),
+                      label: 'Educ. Infantil',
+                      count: _countInfantil,
+                      child: _buildEducInfantilTable(),
+                      tipo: 'INFANTIL'),
+                  const SizedBox(height: 16), // Espaço antes da tabela de resumo
+                  _buildResumoTable(),
+                ],
+              );
+            }
+          },
+        ),
+      ),
+    );
   }
 }
+
+

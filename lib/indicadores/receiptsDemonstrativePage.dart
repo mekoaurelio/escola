@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../const/nome_tabelas.dart';
+import '../data/api_my_sql.dart';
+import '../services/utils.dart';
 
 // Define os tipos de ícones que uma linha pode ter
 enum RowIconType { none, dollar, emptyCircle }
@@ -71,23 +76,37 @@ class ReceiptsDemonstrativePage extends StatelessWidget {
               children: const [
                 DataRowItem(
                   iconType: RowIconType.dollar,
-                  label: '10. Receitas Destinadas ao FUNDEB',
+                  label: 'Receitas Destinadas ao FUNDEB (20% das Transf.)',
                   value: 'R\$ 83.029.413,57',
                 ),
                 DataRowItem(
                   iconType: RowIconType.dollar,
-                  label: '10. Receitas Recebidas do FUNDEB',
+                  label: 'Receitas Recebidas do FUNDEB (FUNDEB, impostos, transf. + fundo FUND. Comple. União:VAAT,VAAF,VAAR)',
                   value: 'R\$ 171.356.979,58',
                 ),
                 DataRowItem(
                   iconType: RowIconType.dollar,
-                  label: '13. Pagamento dos professores do Magistério (70%)',
-                  value: 'R\$ 34.549.863,34',
-                  isAlert: true,
+                  label: 'Despesas com recursos do FUNDEB',
+                  value: '',
+                ),
+                DataRowItem(
+                  iconType: RowIconType.dollar,
+                  label: '1-Profissionais educaçao básica (mínimo 70%)',
+                  value: 'R\$ 39.455.311,34',
+                ),
+                DataRowItem(
+                  iconType: RowIconType.dollar,
+                  label: '1.2-Minimo 70% FUNDEB na remuneração dos profs. ed. básica',
+                  value: '84,22%',
+                ),
+                DataRowItem(
+                  iconType: RowIconType.dollar,
+                  label: '2- Outras despesas máximo 30%',
+                  value: 'R\$ 3.945.178,77',
                 ),
                 DataRowItem(
                   iconType: RowIconType.emptyCircle,
-                  label: 'Ganho/Perda',
+                  label: 'Resultado líquido das Transf. do FUNDEB',
                   value: 'R\$ 171.356.979,58',
                 ),
               ],
@@ -96,16 +115,16 @@ class ReceiptsDemonstrativePage extends StatelessWidget {
 
             // --- CARD 4: INVESTIMENTO EM EDUCAÇÃO ---
             InfoCard(
-              title: 'INVESTIMENTO EM EDUCAÇÃO',
+              title: 'INVESTIMENTO EM EDUCAÇÃO ',
               icon: Icons.school,//#FF7228
               headerColor: const Color(0xFFFF7228), // Laranja
               children: const [
-                DataRowItem(iconType: RowIconType.emptyCircle, label: 'Conta 25% (1.104)', value: 'R\$ 83.029.413,57'),
-                DataRowItem(iconType: RowIconType.emptyCircle, label: 'Conta 5% (1.103)', value: 'R\$ 171.356.979,58'),
+                DataRowItem(iconType: RowIconType.emptyCircle, label: 'Conta 25% (1.104) 25% da receita de impostos', value: 'R\$ 83.029.413,57'),
+                DataRowItem(iconType: RowIconType.emptyCircle, label: 'Conta 5% (1.103) 5% da receita das transferências', value: 'R\$ 171.356.979,58'),
                 DataRowItem(iconType: RowIconType.emptyCircle, label: 'Conta 1000 (Livre)', value: 'R\$ 34.549.863,34'),
-                DataRowItem(iconType: RowIconType.emptyCircle, label: '19.1. Mínimo 70%', value: 'R\$ 171.356.979,58'),
-                DataRowItem(label: '38. PERCENTUAL DE APLICAÇÃO MDE', value: '80,54%', isHighlighted: true),
-                DataRowItem(label: 'TOTAL DE INVESTIMENTO EM EDUCAÇÃO', value: 'R\$ 66.318.427,81', value2: '20,26%', isHighlighted: true),
+                DataRowItem(iconType: RowIconType.emptyCircle, label: '', value: 'R\$ 171.356.979,58'),
+                DataRowItem(label: 'PERCENTUAL DE APLICAÇÃO MDE', value: '80,54%', isHighlighted: true),
+                DataRowItem(label: 'TOTAL DE INVESTIMENTO EM EDUCAÇÃO', value: 'R\$ 66.318.427,81', isHighlighted: true),
               ],
             ),
           ],
@@ -256,14 +275,44 @@ class DataRowItem extends StatelessWidget {
             ),
           if (value != null)
             Expanded(
-              flex: 3,
-              child: Text(value!,
-                textAlign: TextAlign.right,
-                style: TextStyle(fontSize: 13, color: valueColor, fontWeight: FontWeight.bold),
-              ),
-            ),
+                child:  Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Text(value!,
+                        textAlign: TextAlign.right,
+                        style: TextStyle(fontSize: 13, color: valueColor, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Expanded(
+                        child: IconButton(
+                          onPressed: () => _editarValor(context,'10'),
+                          icon: Icon(Icons.edit, size:18, color: Colors.grey,),
+                        ),
+
+                    ),
+                  ],
+                )
+            )
         ],
       ),
+    );
+  }
+  Future<void> _editarValor(BuildContext context,var vrinicial) async {
+    await Utils.mostrarDialogoEditarValor(
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9,]'))
+      ],
+      context: context,
+      titulo: 'Editar Valor',
+      labelCampo: 'Valor',
+      valorInicial: vrinicial,
+      aoSalvar: (novoValor) async {
+        double valorNumerico = Utils.vrStringToDouble(novoValor);
+        await ApiMySql.executaSql('Update $TBDemonReceitas set fundeb_10_5=$valorNumerico');
+        //var r = totais[0]['receita'];
+        //double nv = valorNumerico + double.parse(r);
+      },
     );
   }
 }

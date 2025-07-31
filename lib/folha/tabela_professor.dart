@@ -61,9 +61,10 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
 
   _atualizaTela(var ano,var bimestre){
     setState(() {
-      TBFolha='a$ano$bimestre';
+      String muni=Utils.getUserMunicipio();
+      TBFolha='$muni$ano$bimestre';
       var tb=widget.table;
-      TBVantagens='a_vantagens$ano$bimestre';
+      TBVantagens='${muni}vantagens$ano$bimestre';
       TBProfessor='$tb$ano$bimestre';
       _calculatedTableValues=[];
       professores=null;
@@ -153,8 +154,9 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   }
 
   Future<void> _loadDataAndCalculate() async {
+    print('11111');
     professores = await ApiMySql.getProfessores(widget.tipo.trim().toUpperCase()).timeout(const Duration(seconds: 30));
-
+    print('2222');
     ///Pega os totais
     final totais = await ApiMySql.get(TBTotais,null,null);
     perAumentoInfantil=double.parse(totais[0]['perc_aumento_infantil']);
@@ -495,6 +497,9 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       labelCampo: 'Percentual',
       valorInicial: _percEntreColunas.toString(),
       aoSalvar: (novoValor) {
+        novoValor=novoValor.replaceAll('R\$', '');
+        novoValor=novoValor.replaceAll(',', '.');
+        print(novoValor);
         setState(() {
           _percEntreColunas = double.tryParse(novoValor)!;
           final result = calculateTableAndDispersions(

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'data/api_my_sql.dart';
 import 'services/utils.dart';
 import 'start.dart';
-import 'widgets/texto.dart'; // IMPORTANTE: Importe sua tela principal (Start)
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -49,32 +48,41 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Fundo escuro que combina com o seu logo
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: Colors.green, // Ou a cor que preferir
       body: Center(
         child: AnimatedOpacity(
           opacity: _opacity,
-          duration: const Duration(seconds: 2), // Duração suave para o fade-in
+          duration: const Duration(seconds: 2),
           curve: Curves.easeIn,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Seu logo
-              Image.asset(
-                'assets/images/logo_edu.png', // Certifique-se que o caminho e nome estão corretos
-                width: 220, // Ajuste o tamanho conforme necessário
+              // **** A CORREÇÃO ESTÁ AQUI ****
+              // Envolvemos o Container em um Expanded
+              Expanded(
+                child: Container(
+                  // A altura agora é controlada pelo Expanded, então podemos remover.
+                   width: 500, // O width pode ser desnecessário se a imagem deve preencher
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/robo_login.png'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(height: 20),
-              Texto(tit:'GEM',cor: Colors.white70,tam: 30,),
-              Texto(tit:'Gestão da Educação Municipal',cor: Colors.blue.shade300,),
 
-              // Indicador de progresso sutil
-              const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white38),
+              // O Indicador de progresso agora tem seu espaço garantido
+              // Adicionamos um padding para não ficar colado na parte inferior
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24.0),
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white38),
+                  ),
                 ),
               ),
             ],
@@ -84,3 +92,5 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 }
+
+

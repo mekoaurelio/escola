@@ -44,8 +44,8 @@ class _ProfessoresState extends State<Professores>
 
   atualizaTela(var ano, var bimestre) {
     setState(() {
-      TBFolha = 'a$ano$bimestre';
-      TBVantagens = 'a_vantagens$ano$bimestre';
+      TBFolha = '${muni}$ano$bimestre';
+      TBVantagens = '${muni}vantagens$ano$bimestre';
       listaCompleta = [];
       lista = [];
       _loadData();

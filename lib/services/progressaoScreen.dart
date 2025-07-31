@@ -44,10 +44,10 @@ class _ProgressaoScreenState extends State<ProgressaoScreen>
 
   _atualizaTela(var ano, var bimestre) {
     setState(() {
-      TBProfessor = 'a_professor$ano$bimestre';
-      TBInfantil = 'a_infantil$ano$bimestre';
-      TBReceitaFundebSimulador = 'a_receita_fundeb_simulador$ano$bimestre';
-      TBExercicio = 'a_exercicio$ano$bimestre';
+      TBProfessor = '${muni}professor$ano$bimestre';
+      TBInfantil = ' ${muni}infantil$ano$bimestre';
+      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
+      TBExercicio = '${muni}exercicio$ano$bimestre';
       _loadAll();
     });
   }
@@ -55,16 +55,17 @@ class _ProgressaoScreenState extends State<ProgressaoScreen>
   Future<void> _loadAll() async {
     setState(() => loading = true);
 
+    print('receita fundeb');
+    print(TBReceitaFundebSimulador);
+
     final f = await ApiMySql.get(TBProfessor, null, 'ordem');
     final i = await ApiMySql.get(TBInfantil, null, 'ordem');
-    final g = await ApiMySql.get(TBReceitaFundebSimulador, null, null);
+    final g = await ApiMySql.get(TBReceitaFundebSimulador, null, 'ordem');
     final h = await ApiMySql.get(TBExercicio, null, 'ordem');
+    print(g.length);
 
     fundebBase = double.tryParse(
-      g
-          .firstWhere(
-            (e) => e['ordem'] == '1',
-            orElse: () => {'valor': 0},
+      g.firstWhere((e) => e['ordem'] == '1', orElse: () => {'valor': 0},
           )['valor']
           .toString(),
     );
@@ -75,6 +76,8 @@ class _ProgressaoScreenState extends State<ProgressaoScreen>
       prof = List<Map<String, dynamic>>.from(f);
       infantil = List<Map<String, dynamic>>.from(i);
       fundeb = List<Map<String, dynamic>>.from(g);
+      print('total registros fundeb');
+      print(fundeb.length);
       exercicio = List<Map<String, dynamic>>.from(h);
       loading = false;
     });

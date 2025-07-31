@@ -409,6 +409,15 @@ class Utils {
     html.window.localStorage['idEntidade'] = idEntidade;
   }
 
+  ///MUNICIPIO DO USUÁRIO
+  static void setUserMunicipio(var idMuni) {
+    html.window.localStorage['UserMuni'] = idMuni;
+  }
+
+  static getUserMunicipio(){
+    return html.window.localStorage['UserMuni'];
+  }
+
   ///USUÄRIO
   static void setIdUser(var idClinica) {
     html.window.localStorage['idUser'] = idClinica;

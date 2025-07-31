@@ -29,12 +29,13 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
 
   /// === UPLOAD + EXTRAÇÃO ===
   Future<void> selecionarEEnviarArquivo() async {
-    Utils.limpaBanco();///NÃO DELETE AS TABELAS APENAS OS DADOS
+   // Utils.limpaBanco();///NÃO DELETE AS TABELAS APENAS OS DADOS
     ///CRIA A ESTRUTURA DAS TABELAS
     setState(() =>  status = 'Criando a estrutura das tabelas');
     await criaStruturaDasTabelas();
     setState(() =>  status = 'Fazendo upLoad do arquivo');
 
+    /*
     final html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
     uploadInput.accept = '.pdf';
     uploadInput.click();
@@ -53,6 +54,9 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
         await uploadFile(file.name, data);
       });
     });
+
+     */
+
   }
 
   Future<void> criaStruturaDasTabelas()async{
@@ -63,39 +67,56 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
       bimestre=Utils.getBimestre();
 
       ///VERIFICA SE A TABELA EXISTE NO BANCO DE DADOS
-      //var result=await ApiMySql.tabelaExiste('a$ano$bimestre');
-      //bool tabelaExiste=result.toString().contains('1');
-      //if(!tabelaExiste){
+      var result=await ApiMySql.tabelaExiste('${muni}$ano$bimestre');
+      bool tabelaExiste=result.toString().contains('1');
+      if(!tabelaExiste){
         ///SE A TABELA NÃO EXISTE CRIA
         try{
-          //await ApiMySql.seNaoExistirCriaTabela(TBFolha);
-          //await ApiMySql.criaIndice(TBFolha);
-          //await ApiMySql.addAutoIncremento(TBFolha);
+          await ApiMySql.seNaoExistirCriaTabela('${muni}$ano$bimestre');
+          await ApiMySql.criaIndice('${muni}$ano$bimestre');
+          await ApiMySql.addAutoIncremento( '${muni}$ano$bimestre');
         } catch (e) {
           print("Erro ao criar TBFolha: $e");
         }
 
         ///CRIA A TABELA DE VANTAGENS
-       // await ApiMySql.seNaoExistirCriaTabelaVantagens(TBVantagens);
-        //await ApiMySql.criaIndice(TBVantagens);
-       // await ApiMySql.addAutoIncremento(TBVantagens);
-       // await ApiMySql.addChaveEStrangeira(TBVantagens,TBFolha);
+        await ApiMySql.seNaoExistirCriaTabelaVantagens(TBVantagens);
+        await ApiMySql.criaIndice(TBVantagens);
+        await ApiMySql.addAutoIncremento(TBVantagens);
+        await ApiMySql.addChaveEStrangeira(TBVantagens,TBFolha);
 
         ///CRIA TABELA DOS TOTAIS DOS PROFESSORES
-       // await ApiMySql.seNaoExistirCriaProfessorTotal(TBTotalProfessor);
-       // await ApiMySql.criaIndice(TBTotalProfessor);
-       // await ApiMySql.addAutoIncremento(TBTotalProfessor);
+        await ApiMySql.seNaoExistirCriaProfessorTotal(TBTotalProfessor);
+        await ApiMySql.criaIndice(TBTotalProfessor);
+        await ApiMySql.addAutoIncremento(TBTotalProfessor);
 
         ///CRIA AS TABELAS AUXILIARES
-       // await criaTabela(TBInfantil);
-       // await criaTabela(TBProfessor);
-       // await criaTabela(TBExercicio);
+        await criaTabela(TBInfantil);
+        await criaTabela(TBProfessor);
+        await criaTabela(TBExercicio);
 
-       // await criaTabela(TBReceitaFundebSimulador);
+        await criaTabela(TBReceitaFundebSimulador);
+        ///CRIA TABELA DECENIO
+        await ApiMySql.seNaoExistirCriaTabelaDecenio(TBDecenio);
+        await ApiMySql.criaIndice(TBDecenio);
+        await ApiMySql.addAutoIncremento(TBDecenio);
 
-     // }else{
-       // print('TABELA EXISTE');
-     // }
+        ///CRIA TABELA IMPOSTOS
+        await ApiMySql.seNaoExistirCriaTabelaImpostos(TBImpostos);
+        await ApiMySql.criaIndice(TBImpostos);
+        await ApiMySql.addAutoIncremento(TBImpostos);
+
+        ///CRIA TABELA TOTAIS
+        await ApiMySql.seNaoExistirCriaTabelaTotais(TBTotais);
+        await ApiMySql.criaIndice(TBTotais);
+        await ApiMySql.addAutoIncremento(TBTotais);
+
+        ///CRIA TABELA VAAF
+        await ApiMySql.seNaoExistirCriaTabelaVaaf(TBVaaf);
+        await ApiMySql.criaIndice(TBVaaf);
+        await ApiMySql.addAutoIncremento(TBVaaf);
+
+      }
     } catch (e) {
       Utils.snak('Atenção', 'Escolha o Ano e o Bimestre $e', false, Colors.red);
       //return;
@@ -193,7 +214,7 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
   /// === EXTRAÇÃO + CARREGAMENTO ===
   Future<void> iniciaExtracao() async {
     setState(() =>  status = 'Limpando o Banco de Dados...');
-    Utils.limpaBanco();///NÃO DELETE AS TABELAS APENAS OS DADOS
+   // Utils.limpaBanco();///NÃO DELETE AS TABELAS APENAS OS DADOS
     setState(() =>  status = 'Processando PDF...');
     final dados = await ApiMySql.fetchPdfText();
     setState(() =>  status = 'Extraindo os dados da folha...');

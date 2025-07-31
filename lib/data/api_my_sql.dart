@@ -176,6 +176,8 @@ WHERE id_user = $idUser;
     final body = json.encode({
       'action': 'getProfessor', // O nome da ação que o PHP vai identificar
       'tipo': tipo, // Os parâmetros que o PHP precisa
+      'tbfolha': TBFolha,
+      'tbvantagem': TBVantagens,
     });
 
     try {
@@ -252,20 +254,23 @@ WHERE id_user = $idUser;
     sql+='vencimento decimal(10,2) DEFAULT NULL,';
     sql+="status varchar(1) DEFAULT 'A',";
     sql+='created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP);';
+    print(sql);
     await executaSql(sql);
   }
 
 
   static getProfessor() async {
+    print('NOME TB VATAGENS');
+    print(TBVantagens);
     var sql2 = "SELECT  f.id AS folha_id,f.id_municipio,f.matricula,f.nome,f.cpf,f.unidade,f.local_lotacao,f.vencimento,";
     sql2+="f.cargo,f.nivel,DATE_FORMAT(f.admissao, '%d/%m/%Y') AS admissao,f.competencia_mes,f.vantagens_total,";
     sql2+="f.descontos_total,f.liquido_total,f.fgts_total,GROUP_CONCAT(CONCAT(dv.codigo, ':',dv.descricao, ':',";
     sql2+="dv.percentual, ':',' R/\$ ', FORMAT(dv.valor, 2)) SEPARATOR ' | ') AS vantagens_detalhadas,";
     sql2+=" SUM(CASE WHEN dv.codigo NOT IN ('21003', '21019') THEN dv.valor ELSE 0  END) AS soma_vantagens,";
     sql2+=" SUM(CASE WHEN dv.codigo IN ('21019') THEN dv.valor ELSE 0  END) AS soma_apts,";
-    sql2+="(SELECT SUM(vencimento) FROM a2501 WHERE status = 'A') AS total_vencimentos_geral";
+    sql2+="(SELECT SUM(vencimento) FROM $TBFolha WHERE status = 'A') AS total_vencimentos_geral";
     sql2+=" FROM $TBFolha f LEFT JOIN $TBVantagens dv ON f.id = dv.folha_id WHERE f.status = 'A'GROUP BY f.id ORDER BY f.id";
-   // print(sql2);
+    print(sql2);
     return await executaSql(sql2);
   }
 
@@ -310,7 +315,7 @@ WHERE id_user = $idUser;
     sql+='descricao varchar(255) NOT NULL,';
     sql+='valor decimal(10,2) NOT NULL,';
     sql+='percentual decimal(4,2) NOT NULL)';
-  //  print(sql);
+    //print(sql);
     await executaSql(sql);
   }
 
@@ -328,7 +333,7 @@ WHERE id_user = $idUser;
     sql+='tot_gratificacao_orientacao decimal(10,2) NOT NULL,';
     sql+='tot_diferenca_enquadramento decimal(10,2) NOT NULL,';
     sql+='tot_encargos_sociais decimal(10,2) NOT NULL)';
-    await executaSql(sql);
+  //  await executaSql(sql);
   }
 
   static seNaoExistirCriaTabelaGenerica(String tb)async{
@@ -339,7 +344,7 @@ WHERE id_user = $idUser;
     sql+='valor decimal(10,2) NOT NULL,';
     sql+='percentual decimal(4,2) NOT NULL,';
     sql+='ordem int(11) NOT NULL)';
-    await executaSql(sql);
+  //  await executaSql(sql);
   }
 
   static seNaoExistirCriaTabelaFundeb(String tb)async{
@@ -349,8 +354,71 @@ WHERE id_user = $idUser;
     sql+='ano int(11) NOT NULL,';
     sql+='valor decimal(10,2) NOT NULL DEFAULT "0",';
     sql+='percentual_crescimento decimal(5,2) NOT NULL DEFAULT "0")';
+   // await executaSql(sql);
+  }
+
+  static seNaoExistirCriaTabelaDecenio(String tb)async{
+    var sql='CREATE TABLE IF NOT EXISTS $tb (';
+    sql+='id int(11) NOT NULL,';
+    sql+='descricao varchar(100) NOT NULL,';
+    sql+='vr1 decimal(15,2) NOT NULL DEFAULT "0",';
+    sql+='vr12 decimal(15,2) NOT NULL DEFAULT "0")';
+    print(sql);
+    //await executaSql(sql);
+  }
+  static seNaoExistirCriaTabelaImpostos(String tb)async{
+    var sql='CREATE TABLE IF NOT EXISTS $tb (';
+    sql+='id int(11) NOT NULL,';
+    sql+='descricao varchar(100) NOT NULL,';
+    sql+='vr1 decimal(15,2) NOT NULL DEFAULT "0",';
+    sql+='vr12 decimal(15,2) NOT NULL DEFAULT "0")';
+    //print(sql);
     await executaSql(sql);
   }
+  static seNaoExistirCriaTabelaTotais(String tb)async{
+    var sql='CREATE TABLE IF NOT EXISTS $tb (';
+    sql+='id int(11) NOT NULL,';
+    sql+= 'decendio_projetado decimal(15,2) NOT NULL DEFAULT "0.00",';
+    sql+= 'decendio_5 decimal(15,2) NOT NULL DEFAULT "0.00",';
+    sql+= 'imposto_projetado decimal(15,2) NOT NULL DEFAULT "0.00",';
+    sql+= 'imposto_25 decimal(15,2) NOT NULL DEFAULT "0.00",';
+    sql+= 'matricula decimal(15,2) NOT NULL DEFAULT "0.00",';
+    sql+= 'receita decimal(15,2) NOT NULL DEFAULT "0.00",';
+    sql+= 'fundeb_10_5 decimal(15,2) NOT NULL DEFAULT "0.00",';
+    sql+= 'perc_aumento_adulto decimal(15,2) NOT NULL DEFAULT "0.00",';
+    sql+= 'perc_aumento_infantil decimal(15,2) NOT NULL DEFAULT "0.00")';
+    //print(sql);
+    await executaSql(sql);
+  }
+
+  static seNaoExistirCriaTabelaVaaf(String tb)async{
+    var sql='CREATE TABLE IF NOT EXISTS $tb (';
+    sql+='id int(11) NOT NULL,';
+    sql+= 'vr1 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr2 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr3 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr4 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr5 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr6 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr7 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr8 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr9 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr10 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr11 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr12 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr13 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr14 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr15 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr16 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr17 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr18 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr19 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr20 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr21 decimal(10,3) NOT NULL DEFAULT "0.00")';
+    print(sql);
+    await executaSql(sql);
+  }
+
 
   static criaIndiceVantagem(String tb)async{
     await executaSql('ALTER TABLE $tb ADD PRIMARY KEY (id),ADD KEY folha_id (folha_id)');
@@ -365,6 +433,7 @@ WHERE id_user = $idUser;
   static tabelaExiste(String tb)async{
     var sql='SELECT COUNT(*) as table_exists FROM information_schema.tables';
     sql+=" WHERE table_schema = DATABASE() AND table_name = '$tb'";
+    print(sql);
     return await executaSql(sql);
   }
 

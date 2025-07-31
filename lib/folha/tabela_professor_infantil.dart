@@ -45,9 +45,10 @@ class _TabelaProfessorInfantilState extends State<TabelaProfessorInfantil> with 
     _atualizaTela(ano,bimestre);
   }
   _atualizaTela(var ano,var bimestre){
+    String muni=Utils.getUserMunicipio();
     setState(() {
-      TBFolha='a$ano$bimestre';
-      TBProfessor='a_professor$ano$bimestre';
+      TBFolha='$muni$ano$bimestre';
+      TBProfessor='$muni"professor"$ano$bimestre';
       _calculatedTableValues=[];
       professores=null;
       _loadDataAndCalculate();
