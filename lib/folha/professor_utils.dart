@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../const/nome_tabelas.dart';
+import 'package:GEM/services/table_name_service.dart';
 import '../data/api_my_sql.dart';
 import '../widgets/texto.dart';
 

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../const/nome_tabelas.dart';
+import 'package:GEM/services/table_name_service.dart';
 import '../data/api_my_sql.dart';
 import '../simulador/simulador_alt.dart';
 import '../widgets/line.dart';
 import '../widgets/painel.dart';
-
+import 'package:GEM/services/table_name_service.dart';
 import 'package:GEM/services/GlobalFilterController.dart';
 import 'utils.dart';
 
@@ -31,48 +31,24 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> {
   @override
   void initState() {
     super.initState();
-    // Registra os listeners. Eles reagirão a mudanças SE a tela estiver visível.
-    filterController.municipio.listen((_) => _reactToFilterChange());
-    filterController.ano.listen((_) => _reactToFilterChange());
-    filterController.bimestre.listen((_) => _reactToFilterChange());
-
+    filterController.municipio.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.ano.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.bimestre.listen((_) => _loadDataBasedOnCurrentFilters());
     _loadDataBasedOnCurrentFilters();
   }
 
   void _loadDataBasedOnCurrentFilters() {
-    print("Iniciando carregamento de dados para ProgressaoScreen...");
-
-    // Pega os valores atuais diretamente do controller
-    String muni = filterController.municipio.value;
-    String ano = filterController.ano.value;
-    String bimestre = filterController.bimestre.value;
-
-    // Atualiza as variáveis de estado com os novos nomes de tabela
-    setState(() {
-      TBProfessor = '${muni}professor$ano$bimestre';
-      TBInfantil = '${muni}infantil$ano$bimestre'; // Corrigido: removido espaço
-      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
-      TBExercicio = '${muni}exercicio$ano$bimestre';
-    });
     _loadAll();
   }
 
-  void _reactToFilterChange() {
-    print("Listener do GetX acionado! (Mudança ocorreu com a tela aberta)");
-    _loadDataBasedOnCurrentFilters();
-  }
-
   Future<void> _loadAll() async {
-    setState(() => loading = true);
-
+    if (mounted) {
+      setState(() => loading = true);
+    }
     final f = await ApiMySql.get(TBProfessor, null, 'ordem');
-    print('11111');
-
     final i = await ApiMySql.get(TBInfantil, null, 'ordem');
-    print('222222');
     final g = await ApiMySql.get(TBReceitaFundebSimulador, null, 'ordem');
     final h = await ApiMySql.get(TBExercicio, null, 'ordem');
-    print(g.length);
 
     fundebBase = double.tryParse(
       g.firstWhere((e) => e['ordem'] == '1', orElse: () => {'valor': 0},
@@ -80,15 +56,17 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> {
           .toString(),
     );
     final totais = await ApiMySql.get(TBTotais, null, null);
-    setState(() {
-      perAumentoInfantil = double.parse(totais[0]['perc_aumento_infantil']);
-      perAumentoAdulto = double.parse(totais[0]['perc_aumento_adulto']);
-      prof = List<Map<String, dynamic>>.from(f);
-      infantil = List<Map<String, dynamic>>.from(i);
-      fundeb = List<Map<String, dynamic>>.from(g);
-      exercicio = List<Map<String, dynamic>>.from(h);
-      loading = false;
-    });
+    if (mounted) {
+      setState(() {
+        perAumentoInfantil = double.parse(totais[0]['perc_aumento_infantil']);
+        perAumentoAdulto = double.parse(totais[0]['perc_aumento_adulto']);
+        prof = List<Map<String, dynamic>>.from(f);
+        infantil = List<Map<String, dynamic>>.from(i);
+        fundeb = List<Map<String, dynamic>>.from(g);
+        exercicio = List<Map<String, dynamic>>.from(h);
+        loading = false;
+      });
+    }
   }
 
   @override

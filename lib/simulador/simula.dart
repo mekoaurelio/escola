@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../const/const.dart';
-import '../const/nome_tabelas.dart';
+import 'package:GEM/services/table_name_service.dart';
 import '../data/api_my_sql.dart';
 import '../services/calc_dispersao_valores.dart';
 import '../services/utils.dart';
@@ -29,41 +29,27 @@ class _SimulaState extends State<Simula> {
   double _atsInfantil = 0;
   int _countAdulto = 0;
   int _countInfantil = 0;
-  var percAUmAdulto='0';
-  var perAumentoInf='0';
-  double totalGeralProfessor=0;
-  double totalPropostaProfessor=0;
-  double totalGeralInfantil=0;
-  double totalPropostaInfantil=0;
+  var percAUmAdulto = '0';
+  var perAumentoInf = '0';
+  double totalGeralProfessor = 0;
+  double totalPropostaProfessor = 0;
+  double totalGeralInfantil = 0;
+  double totalPropostaInfantil = 0;
   String _dispersaoHorizontal = '0.00%'; // Valor inicial como string formatada
   String _dispersaoTotal = '0.00%';
-  final GlobalFilterController filterController = Get.find<GlobalFilterController>();
+  final GlobalFilterController filterController =
+      Get.find<GlobalFilterController>();
 
   @override
   void initState() {
     super.initState();
-    // Registra os listeners. Eles reagirão a mudanças SE a tela estiver visível.
     filterController.municipio.listen((_) => _reactToFilterChange());
     filterController.ano.listen((_) => _reactToFilterChange());
     filterController.bimestre.listen((_) => _reactToFilterChange());
-
     _loadDataBasedOnCurrentFilters();
   }
 
   void _loadDataBasedOnCurrentFilters() {
-    // Pega os valores atuais diretamente do controller
-    String muni = filterController.municipio.value;
-    String ano = filterController.ano.value;
-    String bimestre = filterController.bimestre.value;
-    setState(() {
-      TBFolha=TBFolha='${muni}$ano$bimestre';
-      TBVantagens=TBVantagens='${muni}vantagens$ano$bimestre';
-      TBProfessor = '${muni}professor$ano$bimestre';
-      TBInfantil = '${muni}infantil$ano$bimestre'; // Corrigido: removido espaço
-      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
-      TBExercicio = '${muni}exercicio$ano$bimestre';
-      TBTotais='${muni}totais$ano$bimestre';
-    });
     _loadData();
   }
 
@@ -94,29 +80,39 @@ class _SimulaState extends State<Simula> {
       }
 
       ///PEGA OS PROFESSORES EDUCADORES
-      final adulto = await ApiMySql.getProfessores('ADULTO',TBFolha,TBVantagens).timeout(const Duration(seconds: 30));
+      final adulto = await ApiMySql.getProfessores(
+        'ADULTO',
+        TBFolha,
+        TBVantagens,
+      ).timeout(const Duration(seconds: 30));
+
       ///PEGA OSPROFESSORES INFANTIL
-      final infantil = await ApiMySql.getProfessores('INFANTIL',TBFolha,TBVantagens).timeout(const Duration(seconds: 30));
+      final infantil = await ApiMySql.getProfessores(
+        'INFANTIL',
+        TBFolha,
+        TBVantagens,
+      ).timeout(const Duration(seconds: 30));
 
       final totals = await Future.wait([
         Utils.calculateTotals(adulto),
         Utils.calculateTotals(infantil),
       ]);
-      final profs=await ApiMySql.get(TBProfessor,null,'ordem');
+      final profs = await ApiMySql.get(TBProfessor, null, 'ordem');
 
       ///PROGRESSÃO ENTRE NÍVEIS EDUCADOR
-      final  valorBase = double.parse(profs[0]['valor']);
+      final valorBase = double.parse(profs[0]['valor']);
       final penA = double.parse(profs[2]['valor']);
       final penB = double.parse(profs[3]['valor']);
       final penC = double.parse(profs[4]['valor']);
       final penD = double.parse(profs[5]['valor']);
       final penE = double.parse(profs[6]['valor']);
-      final cargaHoraria=30;
-      final _percEntreColunas=double.parse(profs[1]['percentual']);
+      final cargaHoraria = 30;
+      final _percEntreColunas = double.parse(profs[1]['percentual']);
       //Progressão entre Classes
 
       final result = calculateTableAndDispersions(
-        niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
+        niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'],
+        // Exemplo de níveis
         valorBase: valorBase,
         penA: penA,
         penB: penB,
@@ -142,7 +138,6 @@ class _SimulaState extends State<Simula> {
         _dispersaoHorizontal = result.dispersaoHorizontal;
         _dispersaoTotal = result.dispersaoTotal;
       });
-
     } on TimeoutException {
       _handleError('Tempo excedido ao carregar dados. Verifique sua conexão.');
     } catch (e, stackTrace) {
@@ -203,39 +198,54 @@ class _SimulaState extends State<Simula> {
     );
   }
 
-  Widget lin(var text,bool negrito,Alignment alin,{Color cor=Colors.black54}){
-    return  Padding(
+  Widget lin(
+    var text,
+    bool negrito,
+    Alignment alin, {
+    Color cor = Colors.black54,
+  }) {
+    return Padding(
       padding: EdgeInsets.all(8),
       child: Align(
         alignment: alin, // Alinha o conteúdo à direita
-        child: Texto(tit:text,negrito: negrito,cor: cor,),
-      )
+        child: Texto(tit: text, negrito: negrito, cor: cor),
+      ),
     );
   }
 
   Widget _buildProfessorTable() {
     final encargos = _totalAdulto * 0.14;
-    final proposta = _totalAdulto + (_totalAdulto * (double.parse(percAUmAdulto) / 100));
+    final proposta =
+        _totalAdulto + (_totalAdulto * (double.parse(percAUmAdulto) / 100));
     final dif = proposta - _totalAdulto;
 
     ///APTS
-    final proAPTS = _atsAdulto + (_atsAdulto * (double.parse(percAUmAdulto) / 100));
+    final proAPTS =
+        _atsAdulto + (_atsAdulto * (double.parse(percAUmAdulto) / 100));
     final difAPTS = proAPTS - _atsAdulto;
 
     ///VATAGENS PECUNIÁRIAS
-    final vatagensPecuniarias=_totalAdulto * 0.1;
-    final proVatagensPecuniarias=vatagensPecuniarias + (vatagensPecuniarias * (double.parse(percAUmAdulto) / 100));
-    final difVatagensPecuniarias=proVatagensPecuniarias-vatagensPecuniarias;
+    final vatagensPecuniarias = _totalAdulto * 0.1;
+    final proVatagensPecuniarias =
+        vatagensPecuniarias +
+        (vatagensPecuniarias * (double.parse(percAUmAdulto) / 100));
+    final difVatagensPecuniarias = proVatagensPecuniarias - vatagensPecuniarias;
 
     ///ENCARGOS
-    final proEncargos = encargos + (encargos * (double.parse(percAUmAdulto) / 100));
+    final proEncargos =
+        encargos + (encargos * (double.parse(percAUmAdulto) / 100));
     final difEncargos = proEncargos - encargos;
 
     ///TOTAL REMUNERAÇÃO
-    final _proTot = proposta + proAPTS + proEncargos+proVatagensPecuniarias; // Corrigido o cálculo
-    final difTot = dif+difAPTS+difEncargos+difVatagensPecuniarias;
-    totalGeralProfessor=_totalAdulto + _atsAdulto + encargos+(_totalAdulto * 0.1);
-    totalPropostaProfessor=_proTot;
+    final _proTot =
+        proposta +
+        proAPTS +
+        proEncargos +
+        proVatagensPecuniarias; // Corrigido o cálculo
+    final difTot = dif + difAPTS + difEncargos + difVatagensPecuniarias;
+    totalGeralProfessor =
+        _totalAdulto + _atsAdulto + encargos + (_totalAdulto * 0.1);
+    totalPropostaProfessor = _proTot;
     return Column(
       children: [
         Table(
@@ -262,8 +272,16 @@ class _SimulaState extends State<Simula> {
             TableRow(
               children: [
                 lin('Vencimento Básico', false, Alignment.centerLeft),
-                lin(Utils.formatVr.format(_totalAdulto), false, Alignment.centerRight),
-                lin(Utils.formatVr.format(proposta), false, Alignment.centerRight),
+                lin(
+                  Utils.formatVr.format(_totalAdulto),
+                  false,
+                  Alignment.centerRight,
+                ),
+                lin(
+                  Utils.formatVr.format(proposta),
+                  false,
+                  Alignment.centerRight,
+                ),
                 lin(Utils.formatVr.format(dif), false, Alignment.centerRight),
               ],
             ),
@@ -272,9 +290,21 @@ class _SimulaState extends State<Simula> {
             TableRow(
               children: [
                 lin('Adicional Tempo Serviço', false, Alignment.centerLeft),
-                lin(Utils.formatVr.format(_atsAdulto), false, Alignment.centerRight),
-                lin(Utils.formatVr.format(proAPTS), false, Alignment.centerRight),
-                lin(Utils.formatVr.format(difAPTS), false, Alignment.centerRight),
+                lin(
+                  Utils.formatVr.format(_atsAdulto),
+                  false,
+                  Alignment.centerRight,
+                ),
+                lin(
+                  Utils.formatVr.format(proAPTS),
+                  false,
+                  Alignment.centerRight,
+                ),
+                lin(
+                  Utils.formatVr.format(difAPTS),
+                  false,
+                  Alignment.centerRight,
+                ),
               ],
             ),
 
@@ -282,9 +312,21 @@ class _SimulaState extends State<Simula> {
             TableRow(
               children: [
                 lin('Vantagens Pecuniárias', false, Alignment.centerLeft),
-                lin(Utils.formatVr.format(vatagensPecuniarias), false, Alignment.centerRight),
-                lin(Utils.formatVr.format(proVatagensPecuniarias), false, Alignment.centerRight),
-                lin(Utils.formatVr.format(difVatagensPecuniarias), false, Alignment.centerRight),
+                lin(
+                  Utils.formatVr.format(vatagensPecuniarias),
+                  false,
+                  Alignment.centerRight,
+                ),
+                lin(
+                  Utils.formatVr.format(proVatagensPecuniarias),
+                  false,
+                  Alignment.centerRight,
+                ),
+                lin(
+                  Utils.formatVr.format(difVatagensPecuniarias),
+                  false,
+                  Alignment.centerRight,
+                ),
               ],
             ),
 
@@ -292,9 +334,21 @@ class _SimulaState extends State<Simula> {
             TableRow(
               children: [
                 lin('Encargos Sociais (14%)', false, Alignment.centerLeft),
-                lin(Utils.formatVr.format(encargos), false, Alignment.centerRight),
-                lin(Utils.formatVr.format(proEncargos), true, Alignment.centerRight),
-                lin(Utils.formatVr.format(difEncargos), true, Alignment.centerRight),
+                lin(
+                  Utils.formatVr.format(encargos),
+                  false,
+                  Alignment.centerRight,
+                ),
+                lin(
+                  Utils.formatVr.format(proEncargos),
+                  true,
+                  Alignment.centerRight,
+                ),
+                lin(
+                  Utils.formatVr.format(difEncargos),
+                  true,
+                  Alignment.centerRight,
+                ),
               ],
             ),
 
@@ -302,10 +356,34 @@ class _SimulaState extends State<Simula> {
             TableRow(
               decoration: BoxDecoration(color: Colors.grey[100]),
               children: [
-                lin('TOTAL REMUNERAÇÃO', true, Alignment.centerLeft, cor: Colors.blue.shade800),
-                lin(Utils.formatVr.format(_totalAdulto + _atsAdulto + encargos+(_totalAdulto * 0.1)), true, Alignment.centerRight, cor: Colors.blue.shade800),
-                lin(Utils.formatVr.format(_proTot), true, Alignment.centerRight, cor: Colors.blue.shade800),///Proposta
-                lin(Utils.formatVr.format(difTot), true, Alignment.centerRight, cor: Colors.blue.shade800),//DIF
+                lin(
+                  'TOTAL REMUNERAÇÃO',
+                  true,
+                  Alignment.centerLeft,
+                  cor: Colors.blue.shade800,
+                ),
+                lin(
+                  Utils.formatVr.format(
+                    _totalAdulto + _atsAdulto + encargos + (_totalAdulto * 0.1),
+                  ),
+                  true,
+                  Alignment.centerRight,
+                  cor: Colors.blue.shade800,
+                ),
+                lin(
+                  Utils.formatVr.format(_proTot),
+                  true,
+                  Alignment.centerRight,
+                  cor: Colors.blue.shade800,
+                ),
+
+                ///Proposta
+                lin(
+                  Utils.formatVr.format(difTot),
+                  true,
+                  Alignment.centerRight,
+                  cor: Colors.blue.shade800,
+                ), //DIF
               ],
             ),
           ],
@@ -316,28 +394,40 @@ class _SimulaState extends State<Simula> {
 
   Widget _buildEducInfantilTable() {
     final encargos = _totalInfantil * 0.14;
-    final proposta = _totalInfantil + (_totalInfantil * (double.parse(perAumentoInf) / 100));
+    final proposta =
+        _totalInfantil + (_totalInfantil * (double.parse(perAumentoInf) / 100));
     final dif = proposta - _totalInfantil;
 
     ///APTS
-    final proAPTS = _atsInfantil + (_atsInfantil * (double.parse(perAumentoInf) / 100));
-    final difAPTS = proAPTS - _atsInfantil; // Corrigido: usando _atsInfantil em vez de _atsAdulto
+    final proAPTS =
+        _atsInfantil + (_atsInfantil * (double.parse(perAumentoInf) / 100));
+    final difAPTS =
+        proAPTS -
+        _atsInfantil; // Corrigido: usando _atsInfantil em vez de _atsAdulto
 
     ///VATAGENS PECUNIÁRIAS
-    final vatagensPecuniarias=_atsInfantil * 0.1;
-    final proVatagensPecuniarias=vatagensPecuniarias + (vatagensPecuniarias * (double.parse(perAumentoInf) / 100));
-    final difVatagensPecuniarias=proVatagensPecuniarias-vatagensPecuniarias;
+    final vatagensPecuniarias = _atsInfantil * 0.1;
+    final proVatagensPecuniarias =
+        vatagensPecuniarias +
+        (vatagensPecuniarias * (double.parse(perAumentoInf) / 100));
+    final difVatagensPecuniarias = proVatagensPecuniarias - vatagensPecuniarias;
 
     ///ENCARGOS
-    final proEncargos = encargos + (encargos * (double.parse(perAumentoInf) / 100));
+    final proEncargos =
+        encargos + (encargos * (double.parse(perAumentoInf) / 100));
     final difEncargos = proEncargos - encargos;
 
     ///TOTAL REMUNERAÇÃO - Cálculo corrigido incluindo todos os componentes
-    final totalAtual = _totalInfantil + _atsInfantil + encargos+vatagensPecuniarias;
-    final _proTot = proposta + proAPTS + proEncargos+proVatagensPecuniarias; // Corrigido o cálculo
-    final difTot = dif+difAPTS+difEncargos+difVatagensPecuniarias;
-    totalGeralInfantil=totalAtual;
-    totalPropostaInfantil=_proTot;
+    final totalAtual =
+        _totalInfantil + _atsInfantil + encargos + vatagensPecuniarias;
+    final _proTot =
+        proposta +
+        proAPTS +
+        proEncargos +
+        proVatagensPecuniarias; // Corrigido o cálculo
+    final difTot = dif + difAPTS + difEncargos + difVatagensPecuniarias;
+    totalGeralInfantil = totalAtual;
+    totalPropostaInfantil = _proTot;
 
     return Column(
       children: [
@@ -365,8 +455,16 @@ class _SimulaState extends State<Simula> {
             TableRow(
               children: [
                 lin('Vencimento Básico', false, Alignment.centerLeft),
-                lin(Utils.formatVr.format(_totalInfantil), false, Alignment.centerRight),
-                lin(Utils.formatVr.format(proposta), false, Alignment.centerRight),
+                lin(
+                  Utils.formatVr.format(_totalInfantil),
+                  false,
+                  Alignment.centerRight,
+                ),
+                lin(
+                  Utils.formatVr.format(proposta),
+                  false,
+                  Alignment.centerRight,
+                ),
                 lin(Utils.formatVr.format(dif), false, Alignment.centerRight),
               ],
             ),
@@ -375,9 +473,21 @@ class _SimulaState extends State<Simula> {
             TableRow(
               children: [
                 lin('Adicional Tempo Serviço', false, Alignment.centerLeft),
-                lin(Utils.formatVr.format(_atsInfantil), false, Alignment.centerRight), // Corrigido: usando _atsInfantil
-                lin(Utils.formatVr.format(proAPTS), false, Alignment.centerRight),
-                lin(Utils.formatVr.format(difAPTS), false, Alignment.centerRight),
+                lin(
+                  Utils.formatVr.format(_atsInfantil),
+                  false,
+                  Alignment.centerRight,
+                ), // Corrigido: usando _atsInfantil
+                lin(
+                  Utils.formatVr.format(proAPTS),
+                  false,
+                  Alignment.centerRight,
+                ),
+                lin(
+                  Utils.formatVr.format(difAPTS),
+                  false,
+                  Alignment.centerRight,
+                ),
               ],
             ),
 
@@ -385,9 +495,21 @@ class _SimulaState extends State<Simula> {
             TableRow(
               children: [
                 lin('Vantagens Pecuniárias', false, Alignment.centerLeft),
-                lin(Utils.formatVr.format(vatagensPecuniarias), false,Alignment.centerRight), // Corrigido: usando _totalInfantil
-                lin(Utils.formatVr.format(proVatagensPecuniarias), false, Alignment.centerRight), // Corrigido: usando _totalInfantil
-                lin(Utils.formatVr.format(difVatagensPecuniarias), false, Alignment.centerRight),
+                lin(
+                  Utils.formatVr.format(vatagensPecuniarias),
+                  false,
+                  Alignment.centerRight,
+                ), // Corrigido: usando _totalInfantil
+                lin(
+                  Utils.formatVr.format(proVatagensPecuniarias),
+                  false,
+                  Alignment.centerRight,
+                ), // Corrigido: usando _totalInfantil
+                lin(
+                  Utils.formatVr.format(difVatagensPecuniarias),
+                  false,
+                  Alignment.centerRight,
+                ),
               ],
             ),
 
@@ -395,9 +517,27 @@ class _SimulaState extends State<Simula> {
             TableRow(
               children: [
                 lin('Encargos Sociais (14%)', false, Alignment.centerLeft),
-                lin(Utils.formatVr.format(encargos), false, Alignment.centerRight),///Atual
-                lin(Utils.formatVr.format(proEncargos), false, Alignment.centerRight),///Proposta
-                lin(Utils.formatVr.format(difEncargos), false, Alignment.centerRight),///Dif
+                lin(
+                  Utils.formatVr.format(encargos),
+                  false,
+                  Alignment.centerRight,
+                ),
+
+                ///Atual
+                lin(
+                  Utils.formatVr.format(proEncargos),
+                  false,
+                  Alignment.centerRight,
+                ),
+
+                ///Proposta
+                lin(
+                  Utils.formatVr.format(difEncargos),
+                  false,
+                  Alignment.centerRight,
+                ),
+
+                ///Dif
               ],
             ),
 
@@ -405,12 +545,32 @@ class _SimulaState extends State<Simula> {
             TableRow(
               decoration: BoxDecoration(color: Colors.grey[100]),
               children: [
-                lin('TOTAL REMUNERAÇÃO', true, Alignment.centerLeft, cor: Colors.blue.shade800),
-                lin(Utils.formatVr.format(totalAtual), true, Alignment.centerRight, cor: Colors.blue.shade800),
+                lin(
+                  'TOTAL REMUNERAÇÃO',
+                  true,
+                  Alignment.centerLeft,
+                  cor: Colors.blue.shade800,
+                ),
+                lin(
+                  Utils.formatVr.format(totalAtual),
+                  true,
+                  Alignment.centerRight,
+                  cor: Colors.blue.shade800,
+                ),
                 // Total atual correto
-                lin(Utils.formatVr.format(_proTot), true, Alignment.centerRight, cor: Colors.blue.shade800),
+                lin(
+                  Utils.formatVr.format(_proTot),
+                  true,
+                  Alignment.centerRight,
+                  cor: Colors.blue.shade800,
+                ),
                 // Proposta total correta
-                lin(Utils.formatVr.format(difTot), true, Alignment.centerRight, cor: Colors.blue.shade800),
+                lin(
+                  Utils.formatVr.format(difTot),
+                  true,
+                  Alignment.centerRight,
+                  cor: Colors.blue.shade800,
+                ),
                 // Diferença correta
               ],
             ),
@@ -429,9 +589,9 @@ class _SimulaState extends State<Simula> {
     final Color chipColor;
     final IconData iconData;
 
-    String espaco='';
-    if(percentage.toString().length==1){
-      espaco=' ';
+    String espaco = '';
+    if (percentage.toString().length == 1) {
+      espaco = ' ';
     }
     if (percentage > 0.01) {
       chipColor = Colors.green.shade700;
@@ -466,7 +626,8 @@ class _SimulaState extends State<Simula> {
             ),
           ),
 
-          const SizedBox(width: 8.0), // Espaço entre o valor e o chip
+          const SizedBox(width: 8.0),
+          // Espaço entre o valor e o chip
 
           // 2. O "Chip" dentro de um SizedBox de largura fixa
           SizedBox(
@@ -495,9 +656,9 @@ class _SimulaState extends State<Simula> {
 
   Widget _buildResumoTable() {
     ///TOTAL GERAL
-    final totGeral=totalGeralProfessor+totalGeralInfantil;
-    final proGeral=totalPropostaInfantil+totalPropostaProfessor;
-    final difGeral=proGeral-totGeral;
+    final totGeral = totalGeralProfessor + totalGeralInfantil;
+    final proGeral = totalPropostaInfantil + totalPropostaProfessor;
+    final difGeral = proGeral - totGeral;
     final percAumento = (totGeral > 0) ? (totGeral / proGeral) * 100 : 0.0;
 
     return Card(
@@ -507,7 +668,8 @@ class _SimulaState extends State<Simula> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const Text('RESUMO GERAL',
+            const Text(
+              'RESUMO GERAL',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
@@ -523,18 +685,25 @@ class _SimulaState extends State<Simula> {
               children: [
                 TableRow(
                   decoration: BoxDecoration(color: Colors.grey[200]),
-                  children:  [
-                    lin('Cargo',true,Alignment.centerLeft),
-                    lin('Total',true,Alignment.center),
+                  children: [
+                    lin('Cargo', true, Alignment.centerLeft),
+                    lin('Total', true, Alignment.center),
                     Align(
-                      alignment: Alignment.center, // Alinha o conteúdo à direita
-                      child: Texto(tit:'Proposta',negrito: true,top: 10,alin: TextAlign.center,
+                      alignment: Alignment.center,
+                      // Alinha o conteúdo à direita
+                      child: Texto(
+                        tit: 'Proposta',
+                        negrito: true,
+                        top: 10,
+                        alin: TextAlign.center,
                         icone: Icons.edit,
                         tooltip: 'Click aqui para ....',
                         aoClicarIcone: () {
                           Utils.mostrarDialogoEditarValor(
                             inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'[0-9,]'))
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[0-9,]'),
+                              ),
                             ],
                             context: context,
                             titulo: 'Simular para quantos meses ',
@@ -550,41 +719,93 @@ class _SimulaState extends State<Simula> {
                         },
                       ),
                     ),
-                    lin('Variação',true,Alignment.center),
+                    lin('Variação', true, Alignment.center),
                   ],
                 ),
                 TableRow(
                   children: [
-                    lin('Professores',true,Alignment.centerLeft),
-                    lin(Utils.formatVr.format(totalGeralProfessor),true,Alignment.centerRight),///TOTAL
-                    lin(Utils.formatVr.format(totalPropostaProfessor),true,Alignment.centerRight),///PROPOSTA
+                    lin('Professores', true, Alignment.centerLeft),
+                    lin(
+                      Utils.formatVr.format(totalGeralProfessor),
+                      true,
+                      Alignment.centerRight,
+                    ),
+
+                    ///TOTAL
+                    lin(
+                      Utils.formatVr.format(totalPropostaProfessor),
+                      true,
+                      Alignment.centerRight,
+                    ),
+
+                    ///PROPOSTA
                     _buildVariationCell(
-                      variationValue: totalPropostaProfessor-totalGeralProfessor,
-                      percentage: (totalGeralProfessor > 0) ? totalGeralProfessor / totalPropostaProfessor * 100 : 0.0,
+                      variationValue:
+                          totalPropostaProfessor - totalGeralProfessor,
+                      percentage:
+                          (totalGeralProfessor > 0)
+                              ? totalGeralProfessor /
+                                  totalPropostaProfessor *
+                                  100
+                              : 0.0,
                       textStyle: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
                 TableRow(
                   children: [
-                    lin('Educador Infantil',true,Alignment.centerLeft),
-                    lin(Utils.formatVr.format(totalGeralInfantil),true,Alignment.centerRight),///TOTAL
-                    lin(Utils.formatVr.format(totalPropostaInfantil),true,Alignment.centerRight),///PROPOSTA
-
-                    _buildVariationCell(
-                      variationValue: totalPropostaInfantil - totalGeralInfantil,
-                      percentage: (totalGeralInfantil > 0) ? (totalGeralInfantil / totalPropostaInfantil) * 100 : 0.0,
-                      textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                    lin('Educador Infantil', true, Alignment.centerLeft),
+                    lin(
+                      Utils.formatVr.format(totalGeralInfantil),
+                      true,
+                      Alignment.centerRight,
                     ),
 
+                    ///TOTAL
+                    lin(
+                      Utils.formatVr.format(totalPropostaInfantil),
+                      true,
+                      Alignment.centerRight,
+                    ),
+
+                    ///PROPOSTA
+                    _buildVariationCell(
+                      variationValue:
+                          totalPropostaInfantil - totalGeralInfantil,
+                      percentage:
+                          (totalGeralInfantil > 0)
+                              ? (totalGeralInfantil / totalPropostaInfantil) *
+                                  100
+                              : 0.0,
+                      textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ],
                 ),
                 TableRow(
                   decoration: BoxDecoration(color: Colors.grey[100]),
                   children: [
-                    lin('Total Geral',true,Alignment.centerLeft,cor: Colors.blue.shade800 ),
-                    lin(Utils.formatVr.format(totGeral),true,Alignment.centerRight,cor: Colors.blue.shade800),///TOTAL
-                    lin(Utils.formatVr.format(proGeral),true,Alignment.centerRight,cor: Colors.blue.shade800),///PROPOSTA
+                    lin(
+                      'Total Geral',
+                      true,
+                      Alignment.centerLeft,
+                      cor: Colors.blue.shade800,
+                    ),
+                    lin(
+                      Utils.formatVr.format(totGeral),
+                      true,
+                      Alignment.centerRight,
+                      cor: Colors.blue.shade800,
+                    ),
+
+                    ///TOTAL
+                    lin(
+                      Utils.formatVr.format(proGeral),
+                      true,
+                      Alignment.centerRight,
+                      cor: Colors.blue.shade800,
+                    ),
+
+                    ///PROPOSTA
                     _buildVariationCell(
                       variationValue: difGeral,
                       percentage: percAumento,
@@ -604,8 +825,7 @@ class _SimulaState extends State<Simula> {
   }
 
   // Dentro da sua classe _SimulaState
-  Widget _buildSummaryCard(
-      {
+  Widget _buildSummaryCard({
     required IconData icon,
     required Color iconColor,
     required Color backgroundColor,
@@ -614,7 +834,7 @@ class _SimulaState extends State<Simula> {
     required String tipo,
     Widget? child,
   }) {
-    // Helper para criar os 'chips' e evitar repetição de código
+    /*
     Widget _buildInfoChip({
       required String text,
       required IconData trailingIcon,
@@ -626,17 +846,73 @@ class _SimulaState extends State<Simula> {
       String? tooltip,
     }) {
       return Container(
+        width: 40,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: bgColor,
+          color: Colors.yellow,//bgColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: borderColor),
         ),
         child: Row(
-         // mainAxisSize: MainAxisSize.min, // Para o container não se esticar
+           mainAxisSize: MainAxisSize.min, // Para o container não se esticar
           children: [
-            Text(text, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textColor),),
+            ///TEXTO
+            Texto(tit: text,tam: 11,fontWeight:FontWeight.w600 ,cor: textColor,
+              tooltip: 'Clique para editar' ,),
             const SizedBox(width: 8),
+
+            Tooltip(
+              message: tooltip ?? 'Clique para editar',
+              child: GestureDetector(
+                onTap: onTap,
+                child: Icon(trailingIcon, size: 18, color: iconColor),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+     */
+
+    // dentro do _buildSummaryCard
+
+    Widget _buildInfoChip({
+      required String text,
+      required IconData trailingIcon,
+      required VoidCallback onTap,
+      required Color bgColor,
+      required Color borderColor,
+      required Color textColor,
+      required Color iconColor,
+      String? tooltip,
+    }) {
+      return Container(
+        // REMOVA a largura fixa. Deixe o Expanded controlar.
+        // width: 40,
+
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: bgColor, // Removido o amarelo de debug
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          // mainAxisSize foi removido para permitir que a Row preencha o Container
+          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Espaça o texto e o ícone
+          children: [
+            // 1. O Texto agora é Flexible, ele pode quebrar a linha.
+            Flexible(
+              child: Texto(
+                tit: text,
+                tam: 11,
+                fontWeight: FontWeight.w600,
+                cor: textColor,
+                tooltip: 'Clique para editar',
+              ),
+            ),
+            const SizedBox(width: 4), // Pequeno espaço
+            // 2. O ícone tem tamanho fixo, então não precisa ser flexível.
             Tooltip(
               message: tooltip ?? 'Clique para editar',
               child: GestureDetector(
@@ -649,209 +925,238 @@ class _SimulaState extends State<Simula> {
       );
     }
     return Card(
-        elevation: 2,
-        color:  const Color(0xFFF9F9FB),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ==========================================================
-              // LINHA 1: TÍTULO E CONTAGEM (DISTRIBUÍDOS)
-              // ==========================================================
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween, // A MÁGICA ACONTECE AQUI
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Parte Esquerda: Ícone e Título
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: backgroundColor,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(icon, color: iconColor, size: 24),
+      elevation: 2,
+      color: const Color(0xFFF9F9FB),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ==========================================================
+            // LINHA 1: TÍTULO E CONTAGEM (DISTRIBUÍDOS)
+            // ==========================================================
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // A MÁGICA ACONTECE AQUI
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Parte Esquerda: Ícone e Título
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: backgroundColor,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        label,
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.grey[700],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Parte Direita: Contagem
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(10),
+                      child: Icon(icon, color: iconColor, size: 24),
                     ),
-                    child: Text(
-                      count.toString(),
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                    const SizedBox(width: 12),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
+                  ],
+                ),
+                // Parte Direita: Contagem
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
                   ),
-                ],
-              ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    count.toString(),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ],
+            ),
 
-              const SizedBox(height: 20),
-              const Divider(), // Divisor para separar as seções
-              const SizedBox(height: 20),
+            const SizedBox(height: 20),
+            const Divider(), // Divisor para separar as seções
+            const SizedBox(height: 20),
 
-              // ==========================================================
-              // LINHA 2: CHIPS DE INFORMAÇÃO (DISTRIBUÍDOS)
-              // ==========================================================
-              Row(
-
-                children: [
-                  // Chip de Aumento
-                  Expanded(
-                    child:
-                    _buildInfoChip(
-                        text: 'Aumento ${tipo == "INFANTIL" ? perAumentoInf : percAUmAdulto}%',
-                        trailingIcon: Icons.edit,
-                        bgColor: Colors.grey[50]!,
-                        borderColor: Colors.grey[100]!,
-                        textColor: Colors.grey[800]!,
-                        iconColor: Colors.grey[600]!,
-                        onTap: () {
-                          Utils.mostrarDialogoEditarValor(
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}(\.\d{0,2})?$'))
-                            ],
-                            context: context,
-                            titulo: tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
-                            labelCampo: 'Percentual',
-                            valorInicial: tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
-                            aoSalvar: (novoValor)async {
-
-                              if (tipo == 'INFANTIL') {
-                                await ApiMySql.executaSql('UPDATE $TBInfantil set percentual=$novoValor where ordem=8',);
-                                await ApiMySql.executaSql('UPDATE $TBTotais set perc_aumento_infantil=$novoValor',);
-                              }else{
-                                await ApiMySql.executaSql('UPDATE $TBProfessor set percentual=$novoValor where ordem=8',);
-                                await ApiMySql.executaSql('UPDATE $TBTotais set perc_aumento_adulto=$novoValor',);
-
-                              }
-                              setState(() {
-                                if (tipo == 'INFANTIL') {
-                                  perAumentoInf = novoValor;
-                                } else {
-                                  percAUmAdulto = novoValor;
-                                }
-                              });
-                            },
-                          );
+            // ==========================================================
+            // LINHA 2: CHIPS DE INFORMAÇÃO (DISTRIBUÍDOS)
+            // ==========================================================
+            Row(
+              children: [
+                // Chip de Aumento
+                Expanded(
+                  flex: 2,
+                  child: _buildInfoChip(
+                    text: 'Aumento ${tipo == "INFANTIL" ? perAumentoInf : percAUmAdulto}%',
+                    trailingIcon: Icons.edit,
+                    bgColor: Colors.grey[50]!,
+                    borderColor: Colors.grey[100]!,
+                    textColor: Colors.grey[800]!,
+                    iconColor: Colors.grey[600]!,
+                    onTap: () {
+                      Utils.mostrarDialogoEditarValor(
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d{0,3}(\.\d{0,2})?$'),
+                          ),
+                        ],
+                        context: context,
+                        titulo:
+                            tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
+                        labelCampo: 'Percentual',
+                        valorInicial:
+                            tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
+                        aoSalvar: (novoValor) async {
+                          if (tipo == 'INFANTIL') {
+                            await ApiMySql.executaSql(
+                              'UPDATE $TBInfantil set percentual=$novoValor where ordem=8',
+                            );
+                            await ApiMySql.executaSql(
+                              'UPDATE $TBTotais set perc_aumento_infantil=$novoValor',
+                            );
+                          } else {
+                            await ApiMySql.executaSql(
+                              'UPDATE $TBProfessor set percentual=$novoValor where ordem=8',
+                            );
+                            await ApiMySql.executaSql(
+                              'UPDATE $TBTotais set perc_aumento_adulto=$novoValor',
+                            );
+                          }
+                          setState(() {
+                            if (tipo == 'INFANTIL') {
+                              perAumentoInf = novoValor;
+                            } else {
+                              percAUmAdulto = novoValor;
+                            }
+                          });
                         },
-                      ),
+                      );
+                    },
                   ),
-
-                  const SizedBox(width: 8),
-                  /// Chip de Dispersão Horizontal
-                  Expanded(
-                    child:
-                    _buildInfoChip(
+                ),
+                const SizedBox(width: 8),
+                /// Chip de Dispersão Horizontal
+                Expanded(
+                  flex: 2,
+                  child: _buildInfoChip(
                     text: 'Disp. Horizontal ${_dispersaoHorizontal}%',
                     trailingIcon: Icons.info_outline,
                     tooltip: 'Dispersão salarial entre classes \nClick Aqui Para Saber Mais',
-                    bgColor:double.parse(_dispersaoHorizontal)>29.5? Colors.red[100]!:Colors.green[100]!,
-                    borderColor: double.parse(_dispersaoHorizontal)>29.5? Colors.red[100]!:Colors.green[100]!,
+                    bgColor:
+                        double.parse(_dispersaoHorizontal) > 29.5
+                            ? Colors.red[100]!
+                            : Colors.green[100]!,
+                    borderColor:
+                        double.parse(_dispersaoHorizontal) > 29.5
+                            ? Colors.red[100]!
+                            : Colors.green[100]!,
                     textColor: Colors.black54,
                     iconColor: Colors.black54,
                     onTap: dicas,
                   ),
-    ),
-
-                  const SizedBox(width: 8),
-                  /// Chip de Dispersão Vertical
-                  Expanded(
-                    child:
-                    _buildInfoChip(
-                   text: 'Disp. Total ${_dispersaoTotal}%',
-                   trailingIcon: Icons.info_outline,
-                   tooltip: 'Dispersão salarial entre níveis\nClick Aqui Para Saber Mais',
-                   bgColor: double.parse(_dispersaoTotal)>95? Colors.red[100]!:Colors.green[100]!,
-                   borderColor: double.parse(_dispersaoTotal)>95? Colors.red[100]!:Colors.green[100]!,
-                   textColor: Colors.black54,
-                   iconColor: Colors.black54,
-                   onTap: dicas,
-                 ),
-    ),
-
-                ],
-              ),
-
-              // O conteúdo expansível (tabela)
-              if (child != null) ...[
-                const SizedBox(height: 34),
-                child,
+                ),
+                const SizedBox(width: 8),
+                /// Chip de Dispersão Vertical
+                Expanded(
+                  flex: 2,
+                  child: _buildInfoChip(
+                    text: 'Disp. Total ${_dispersaoTotal}%',
+                    trailingIcon: Icons.info_outline,
+                    tooltip:
+                        'Dispersão salarial entre níveis\nClick Aqui Para Saber Mais',
+                    bgColor:
+                        double.parse(_dispersaoTotal) > 95
+                            ? Colors.red[100]!
+                            : Colors.green[100]!,
+                    borderColor:
+                        double.parse(_dispersaoTotal) > 95
+                            ? Colors.red[100]!
+                            : Colors.green[100]!,
+                    textColor: Colors.black54,
+                    iconColor: Colors.black54,
+                    onTap: dicas,
+                  ),
+                ),
               ],
-            ],
-          ),
-        ),
+            ),
 
+            // O conteúdo expansível (tabela)
+            if (child != null) ...[const SizedBox(height: 34), child],
+          ],
+        ),
+      ),
     );
   }
 
-  dicas()async{
+  dicas() async {
     await showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.info_outline, color: Colors.blue),
-            SizedBox(width: 10,),
-            Texto(tit: 'Significado das cores ',tam: 20,negrito: true,),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
             children: [
-              Texto(tit:'VERDE : Significa que a progressao da sua instituição está  aceitável',cor: Colors.green[500]!,),
-              Texto(tit:'VERMELHO : Significa que a progressao da sua instituição está  ACIMA do aceitável',cor: Colors.red[600]!,),
-             SizedBox(height: 10,),
-              Texto(tit:'Valor aceitável dispersão HORIZONTAL é de 29,5%',negrito: true,),
-              Texto(tit:'Valor aceitável dispersão TOTAL é de 95%',negrito: true,)
+              const Icon(Icons.info_outline, color: Colors.blue),
+              SizedBox(width: 10),
+              Texto(tit: 'Significado das cores ', tam: 20, negrito: true),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Fechar'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Texto(
+                  tit:
+                      'VERDE : Significa que a progressao da sua instituição está  aceitável',
+                  cor: Colors.green[500]!,
+                ),
+                Texto(
+                  tit:
+                      'VERMELHO : Significa que a progressao da sua instituição está  ACIMA do aceitável',
+                  cor: Colors.red[600]!,
+                ),
+                SizedBox(height: 10),
+                Texto(
+                  tit: 'Valor aceitável dispersão HORIZONTAL é de 29,5%',
+                  negrito: true,
+                ),
+                Texto(
+                  tit: 'Valor aceitável dispersão TOTAL é de 95%',
+                  negrito: true,
+                ),
+              ],
+            ),
           ),
-        ],
-      );
-    },
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Fechar'),
+            ),
+          ],
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        backgroundColor: corFundoOadrao,
-          body: _buildLoading());
+      return Scaffold(backgroundColor: corFundoOadrao, body: _buildLoading());
     }
 
     if (_hasError) {
-      return Scaffold(
-          backgroundColor: corFundoOadrao,
-          body: _buildErrorView());
+      return Scaffold(backgroundColor: corFundoOadrao, body: _buildErrorView());
     }
 
     if (_adulto.isEmpty && _infantil.isEmpty) {
@@ -861,10 +1166,7 @@ class _SimulaState extends State<Simula> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.warning_amber, color: Colors.orange, size: 50),
-              const SizedBox(height: 20),
-              const Text('Nenhum dado encontrado', style: TextStyle(fontSize: 18)),
-              const SizedBox(height: 20),
+              Utils.vazio('Nenhum dado encontrado'),
               ElevatedButton(
                 onPressed: _loadData,
                 child: const Text('Recarregar dados'),
@@ -874,46 +1176,6 @@ class _SimulaState extends State<Simula> {
         ),
       );
     }
-/*
-    return
-      Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSummaryCard(
-                  icon: Icons.groups_rounded,
-                  iconColor: const Color(0xFF007BFF),
-                  backgroundColor: const Color(0xFFD6EAF8),
-                  label: 'Professores',
-                  count: _countAdulto,
-                  child: _buildProfessorTable(),
-                  tipo: 'ADULTO'
-                ),
-                const SizedBox(width: 16),
-                _buildSummaryCard(
-                  icon: Icons.face_retouching_natural,
-                  iconColor: const Color(0xFFE67E22),
-                  backgroundColor: const Color(0xFFFCF3CF),
-                  label: 'Educ. Infantil',
-                  count: _countInfantil,
-                  child: _buildEducInfantilTable(),
-                  tipo: 'INFANTIL'
-                ),
-              ],
-            ),
-            _buildResumoTable(),
-          ],
-        ),
-      ),
-    );
-
- */
 
     return Scaffold(
       backgroundColor: Colors.transparent, // Ou corFundoOadrao
@@ -936,28 +1198,31 @@ class _SimulaState extends State<Simula> {
                       // Envolvemos cada card em um Expanded para que dividam o espaço
                       Expanded(
                         child: _buildSummaryCard(
-                            icon: Icons.groups_rounded,
-                            iconColor: const Color(0xFF007BFF),
-                            backgroundColor: const Color(0xFFD6EAF8),
-                            label: 'Professores',
-                            count: _countAdulto,
-                            child: _buildProfessorTable(),
-                            tipo: 'ADULTO'),
+                          icon: Icons.groups_rounded,
+                          iconColor: const Color(0xFF007BFF),
+                          backgroundColor: const Color(0xFFD6EAF8),
+                          label: 'Professores',
+                          count: _countAdulto,
+                          child: _buildProfessorTable(),
+                          tipo: 'ADULTO',
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildSummaryCard(
-                            icon: Icons.face_retouching_natural,
-                            iconColor: const Color(0xFFE67E22),
-                            backgroundColor: const Color(0xFFFCF3CF),
-                            label: 'Educ. Infantil',
-                            count: _countInfantil,
-                            child: _buildEducInfantilTable(),
-                            tipo: 'INFANTIL'),
+                          icon: Icons.face_retouching_natural,
+                          iconColor: const Color(0xFFE67E22),
+                          backgroundColor: const Color(0xFFFCF3CF),
+                          label: 'Educ. Infantil',
+                          count: _countInfantil,
+                          child: _buildEducInfantilTable(),
+                          tipo: 'INFANTIL',
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16), // Espaço antes da tabela de resumo
+                  const SizedBox(height: 16),
+                  // Espaço antes da tabela de resumo
                   _buildResumoTable(),
                 ],
               );
@@ -969,23 +1234,27 @@ class _SimulaState extends State<Simula> {
                 children: [
                   // Os cards são colocados diretamente na Column, sem Expanded.
                   _buildSummaryCard(
-                      icon: Icons.groups_rounded,
-                      iconColor: const Color(0xFF007BFF),
-                      backgroundColor: const Color(0xFFD6EAF8),
-                      label: 'Professores',
-                      count: _countAdulto,
-                      child: _buildProfessorTable(),
-                      tipo: 'ADULTO'),
-                  const SizedBox(height: 16), // Espaço entre os cards
+                    icon: Icons.groups_rounded,
+                    iconColor: const Color(0xFF007BFF),
+                    backgroundColor: const Color(0xFFD6EAF8),
+                    label: 'Professores',
+                    count: _countAdulto,
+                    child: _buildProfessorTable(),
+                    tipo: 'ADULTO',
+                  ),
+                  const SizedBox(height: 16),
+                  // Espaço entre os cards
                   _buildSummaryCard(
-                      icon: Icons.face_retouching_natural,
-                      iconColor: const Color(0xFFE67E22),
-                      backgroundColor: const Color(0xFFFCF3CF),
-                      label: 'Educ. Infantil',
-                      count: _countInfantil,
-                      child: _buildEducInfantilTable(),
-                      tipo: 'INFANTIL'),
-                  const SizedBox(height: 16), // Espaço antes da tabela de resumo
+                    icon: Icons.face_retouching_natural,
+                    iconColor: const Color(0xFFE67E22),
+                    backgroundColor: const Color(0xFFFCF3CF),
+                    label: 'Educ. Infantil',
+                    count: _countInfantil,
+                    child: _buildEducInfantilTable(),
+                    tipo: 'INFANTIL',
+                  ),
+                  const SizedBox(height: 16),
+                  // Espaço antes da tabela de resumo
                   _buildResumoTable(),
                 ],
               );
@@ -996,5 +1265,3 @@ class _SimulaState extends State<Simula> {
     );
   }
 }
-
-

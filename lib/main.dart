@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'package:GEM/services/GlobalFilterController.dart';
+import 'services/table_name_service.dart';
 import 'lang/translation_service.dart';
 import 'login/login.dart';
 import 'services/utils.dart';
@@ -23,6 +24,7 @@ void main()async {
     ),
   );
   Get.put(GlobalFilterController(), permanent: true);
+  Get.put(TableNameService(), permanent: true);
 
   runApp(const TattooStudioApp());
 }

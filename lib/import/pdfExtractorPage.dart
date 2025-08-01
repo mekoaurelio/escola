@@ -3,6 +3,7 @@ import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:GEM/services/table_name_service.dart';
 
 import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
@@ -63,18 +64,19 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
     try{
 
       ///PEGA ANO E BIMESTRE
-      ano=Utils.getAno();
-      bimestre=Utils.getBimestre();
+     // ano=Utils.getAno();
+      //bimestre=Utils.getBimestre();
 
       ///VERIFICA SE A TABELA EXISTE NO BANCO DE DADOS
-      var result=await ApiMySql.tabelaExiste('${muni}$ano$bimestre');
-      bool tabelaExiste=result.toString().contains('1');
+     // var result=await ApiMySql.tabelaExiste('${muni}$ano$bimestre');
+      bool tabelaExiste=true;
+      //bool tabelaExiste=result.toString().contains('1');
       if(!tabelaExiste){
         ///SE A TABELA NÃO EXISTE CRIA
         try{
-          await ApiMySql.seNaoExistirCriaTabela('${muni}$ano$bimestre');
-          await ApiMySql.criaIndice('${muni}$ano$bimestre');
-          await ApiMySql.addAutoIncremento( '${muni}$ano$bimestre');
+        //  await ApiMySql.seNaoExistirCriaTabela('${muni}$ano$bimestre');
+        //  await ApiMySql.criaIndice('${muni}$ano$bimestre');
+        //  await ApiMySql.addAutoIncremento( '${muni}$ano$bimestre');
         } catch (e) {
           print("Erro ao criar TBFolha: $e");
         }

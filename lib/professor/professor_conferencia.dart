@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:GEM/services/GlobalFilterController.dart';
-
-import '../const/nome_tabelas.dart';
+import 'package:GEM/services/table_name_service.dart';
 import '../data/api_my_sql.dart';
-import '../services/ano_bimestre_controller.dart';
 import '../services/utils.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/line.dart';
@@ -50,44 +48,24 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
   @override
   void initState() {
     super.initState();
-    // Registra os listeners. Eles reagirão a mudanças SE a tela estiver visível.
-    filterController.municipio.listen((_) => _reactToFilterChange());
-    filterController.ano.listen((_) => _reactToFilterChange());
-    filterController.bimestre.listen((_) => _reactToFilterChange());
-
+    filterController.municipio.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.ano.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.bimestre.listen((_) => _loadDataBasedOnCurrentFilters());
     _loadDataBasedOnCurrentFilters();
   }
 
   void _loadDataBasedOnCurrentFilters() {
-    // Pega os valores atuais diretamente do controller
-    String muni = filterController.municipio.value;
-    String ano = filterController.ano.value;
-    String bimestre = filterController.bimestre.value;
-    setState(() {
-      TBFolha=TBFolha='${muni}$ano$bimestre';
-      TBVantagens=TBVantagens='${muni}vantagens$ano$bimestre';
-      TBProfessor = '${muni}professor$ano$bimestre';
-      TBInfantil = '${muni}infantil$ano$bimestre'; // Corrigido: removido espaço
-      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
-      TBExercicio = '${muni}exercicio$ano$bimestre';
-      TBTotais='${muni}totais$ano$bimestre';
-    });
-    atualizaTela(ano,bimestre);
-    carregarFolha();
+    atualizaTela();
   }
 
-  void _reactToFilterChange() {
-    print("Listener do GetX acionado! (Mudança ocorreu com a tela aberta)");
-    _loadDataBasedOnCurrentFilters();
-  }
-
-
-  atualizaTela(var ano,var bimestre){
-    setState(() {
-      listaCompleta=[];
-      lista=[];
-      carregarFolha();
-    });
+  atualizaTela(){
+    if (mounted) {
+      setState(() {
+        listaCompleta = [];
+        lista = [];
+        carregarFolha();
+      });
+    }
   }
 
   Future<void> carregaMatriz(var tb,String tipo) async {
@@ -116,7 +94,6 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
     await carregaMatriz(infantil,'I');
 
     listaCompleta = await ApiMySql.getProfessor(); // Salva a lista completa
-
     lista = listaCompleta; // Inicialmente, lista exibida é igual à completa
     setState(() {
       pageSize=lista.length;
@@ -157,12 +134,17 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
 
   @override
   Widget build(BuildContext context) {
-    final totalPages = (lista.length / pageSize).ceil();
+    var totalPages=0;
+    if(lista.isNotEmpty){
+      totalPages = (lista.length / pageSize).ceil();
+    }
     const double maxTableWidth = 1500;
     return isLoading?const Center(child: CircularProgressIndicator()):
     Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
+      body: lista.isEmpty?Utils.vazio('Nenhum Registro'):
+
+      Center(
         child: Padding(
             padding: const EdgeInsets.all(24.0),
           child: ConstrainedBox(
@@ -340,10 +322,8 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
     final bool confirmar = await Utils.showDlg('Atenção', 'Confirma a exclusão de \n$nome?', context, 'Sim', 'Não',
     );
     if (confirmar) {
-      String _a=Utils.getAno();
-      String _b=Utils.getBimestre();
       await ApiMySql.executaSql("Update $TBFolha  set status='D' WHERE matricula=$matricula");
-      setState(() => atualizaTela(_a,_b));
+      setState(() => atualizaTela());
     }
   }
 
@@ -355,10 +335,8 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
       valorInicial: vrInicial,
       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]'))], // Permite apenas letras e números],
       aoSalvar: (novoValor) async{
-        String _a=Utils.getAno();
-        String _b=Utils.getBimestre();
         await ApiMySql.executaSql("Update $TBFolha  set nivel='$novoValor' WHERE matricula=$matricula");
-        setState(() => atualizaTela(_a,_b));
+        setState(() => atualizaTela());
 
       },
     );

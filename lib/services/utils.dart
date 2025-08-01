@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:intl/intl.dart';
@@ -10,14 +9,12 @@ import 'package:universal_html/html.dart' as html;
 
 import 'package:flutter/material.dart';
 import 'package:get/route_manager.dart';
-import '../const/nome_tabelas.dart';
+import 'package:GEM/services/table_name_service.dart';
 import '../data/api_my_sql.dart';
 import '../widgets/custom_butom.dart';
-import '../widgets/formFieldData.dart';
 import '../widgets/texto.dart';
 
 class Utils {
-
 
   static final formKeyListNotificacaoDetalhe = GlobalKey<FormState>();
   static final maskPerc = MaskTextInputFormatter(mask: '###', filter: { "#": RegExp(r'[0-9]') });
@@ -29,6 +26,7 @@ class Utils {
   static final formatVr = NumberFormat("#,##0.00", "pt_BR");
   static var formatterD =  DateFormat('dd/MM/yyyy');
   static var formatterh =  DateFormat('hh:mm');
+
 
   static Future<Map<String, double>> calculateTotals(List<dynamic> professores) async {
     try {

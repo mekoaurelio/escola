@@ -7,19 +7,6 @@ class EducationImpactPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F8FF), // Azul bem claro
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 2,
-        leading: const Icon(Icons.arrow_back, color: Color(0xFF495057)),
-        title: const Text(
-          'Impacto da Educação',
-          style: TextStyle(
-            color: Color(0xFF212529),
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(

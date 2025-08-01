@@ -3,8 +3,9 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../const/nome_tabelas.dart';
+//import '../const/nome_tabelas.dart';
 import '../services/utils.dart';
+import 'package:GEM/services/table_name_service.dart';
 
 class ApiMySql {
   static String pathDados = 'https://www.xmktech.net/dados/';
@@ -69,20 +70,7 @@ WHERE id_user = $idUser;
   }
 
   ///**********************************************************************
-/*
-  static get(var table, var id, var orderBy) async {
-    var sql = 'select * from $table';
-    if (id != null) {
-      sql += ' AND id=$id';
-    }
-    if(orderBy!=null){
-      sql+=' order by $orderBy';
-    }
-    print(sql);
-    return executaSql(sql);
-  }
 
- */
   static Future<List<dynamic>> get(String table, dynamic id, String? orderBy) async {
     var sql = 'select * from $table';
     if (id != null) {
@@ -91,7 +79,7 @@ WHERE id_user = $idUser;
     if (orderBy != null) {
       sql += ' order by $orderBy';
     }
-  //  print(sql);
+   // print(sql);
     return await executaSql(sql);
   }
 /*
@@ -260,8 +248,6 @@ WHERE id_user = $idUser;
 
 
   static getProfessor() async {
-    print('NOME TB VATAGENS');
-    print(TBVantagens);
     var sql2 = "SELECT  f.id AS folha_id,f.id_municipio,f.matricula,f.nome,f.cpf,f.unidade,f.local_lotacao,f.vencimento,";
     sql2+="f.cargo,f.nivel,DATE_FORMAT(f.admissao, '%d/%m/%Y') AS admissao,f.competencia_mes,f.vantagens_total,";
     sql2+="f.descontos_total,f.liquido_total,f.fgts_total,GROUP_CONCAT(CONCAT(dv.codigo, ':',dv.descricao, ':',";
@@ -270,7 +256,7 @@ WHERE id_user = $idUser;
     sql2+=" SUM(CASE WHEN dv.codigo IN ('21019') THEN dv.valor ELSE 0  END) AS soma_apts,";
     sql2+="(SELECT SUM(vencimento) FROM $TBFolha WHERE status = 'A') AS total_vencimentos_geral";
     sql2+=" FROM $TBFolha f LEFT JOIN $TBVantagens dv ON f.id = dv.folha_id WHERE f.status = 'A'GROUP BY f.id ORDER BY f.id";
-    print(sql2);
+   // print(sql2);
     return await executaSql(sql2);
   }
 

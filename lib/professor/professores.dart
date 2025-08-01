@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:GEM/services/GlobalFilterController.dart';
+import 'package:GEM/services/table_name_service.dart';
 
 import '../const/const.dart';
-import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
-import '../services/anoBimestreListenerMixin.dart';
 import '../services/utils.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/line.dart';
@@ -30,62 +29,30 @@ class _ProfessoresState extends State<Professores> {
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
 
   @override
-  void onAnoBimestreMudou(String ano, String bimestre) {
-    atualizaTela(ano, bimestre);
-  }
-
-  @override
   void initState() {
     super.initState();
-    // Registra os listeners. Eles reagirão a mudanças SE a tela estiver visível.
-    filterController.municipio.listen((_) => _reactToFilterChange());
-    filterController.ano.listen((_) => _reactToFilterChange());
-    filterController.bimestre.listen((_) => _reactToFilterChange());
-
-    _loadDataBasedOnCurrentFilters();
-  }
-
-  void _loadDataBasedOnCurrentFilters() {
-    // Pega os valores atuais diretamente do controller
-    String muni = filterController.municipio.value;
-    String ano = filterController.ano.value;
-    String bimestre = filterController.bimestre.value;
-    setState(() {
-      TBFolha=TBFolha='${muni}$ano$bimestre';
-      TBVantagens=TBVantagens='${muni}vantagens$ano$bimestre';
-      TBProfessor = '${muni}professor$ano$bimestre';
-      TBInfantil = '${muni}infantil$ano$bimestre'; // Corrigido: removido espaço
-      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
-      TBExercicio = '${muni}exercicio$ano$bimestre';
-      TBTotais='${muni}totais$ano$bimestre';
-    });
+    filterController.municipio.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.ano.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.bimestre.listen((_) => _loadDataBasedOnCurrentFilters());
     _loadData();
   }
 
-  void _reactToFilterChange() {
-    print("Listener do GetX acionado! (Mudança ocorreu com a tela aberta)");
-    _loadDataBasedOnCurrentFilters();
-  }
-
-  atualizaTela(var ano, var bimestre) {
-    setState(() {
-      TBFolha = '${muni}$ano$bimestre';
-      TBVantagens = '${muni}vantagens$ano$bimestre';
-      listaCompleta = [];
-      lista = [];
-      _loadData();
-    });
+  void _loadDataBasedOnCurrentFilters() {
+    _loadData();
   }
 
   Future<void> _loadData() async {
     try {
       listaCompleta = await ApiMySql.getProfessor();
       lista = listaCompleta;
-      setState(() {
-        // Define um pageSize inicial, mas permite que o usuário altere se necessário
-        pageSize = lista.isNotEmpty ? 10 : 1;
-        isLoading = false;
-      });
+
+      if (mounted) {
+        setState(() {
+          pageSize = lista.isNotEmpty ? 10 : 1;
+          isLoading = false;
+        });
+      }
+
     } catch (e) {
       // Boa prática: tratar erros de API
       setState(() {
@@ -95,7 +62,6 @@ class _ProfessoresState extends State<Professores> {
     }
   }
 
-  // O método parseLine não era usado e foi removido.
 
   List<dynamic> get currentItems {
     final start = (currentPage - 1) * pageSize;
@@ -145,11 +111,16 @@ class _ProfessoresState extends State<Professores> {
       );
     }
 
-    final totalPages = (lista.length / pageSize).ceil();
+    var totalPages=0;
+    if(lista.isNotEmpty) {
+      totalPages = (lista.length / pageSize).ceil();
+    }
     const double maxTableWidth = 1500;
     return Scaffold(
       backgroundColor: corFundoOadrao,
-      body:Center(
+      body:lista.isEmpty?Utils.vazio('Nenhum Professor'):
+
+      Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: ConstrainedBox(

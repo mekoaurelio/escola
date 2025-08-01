@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 
 import 'auxiliares/usuario_lista.dart';
 import 'const/const.dart';
-import 'const/nome_tabelas.dart';
+import 'package:GEM/services/table_name_service.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'doc/document_screen.dart';
 import 'impacto/impacto_grid2.dart';
@@ -74,8 +74,8 @@ class _StartState extends State<Start> {
   }
 
   void _initializePages(){
-   // Utils.setUserMunicipio('a_');
-    String muni=Utils.getUserMunicipio();
+    String muni = filterController.municipio.value;
+    //String muni=Utils.getUserMunicipio();
     ///pega os direitos de acesso
 
     _allPages = [
@@ -229,44 +229,23 @@ class _StartState extends State<Start> {
   }
 
   void start() {
-    atualizaNomeDasTabelas();
-    setState(() => temAnoBimestre = true);
+   // atualizaNomeDasTabelas();
+    setState(() {
+      temAnoBimestre = true;
+      var cid= filterController.municipio.value;
+      if(cid=='cia_'){
+        _cidadeSelecionada='Cianorte';
+      }
+      if(cid=='a_'){
+        _cidadeSelecionada='Dois Vizinhos';
+      }
+    });
   }
-
-  /*
-  void _changeAno(String? ano) {
-    if (ano != null && ano != '00') {
-      var bimestre=Utils.getBimestre()?? 'Primeiro Bimestre';
-      final controller = Get.find<AnoBimestreController>();
-      controller.atualizaAnoEBimestre(ano,bimestre); // atualiza o controller
-      // Utils.snak('NO START MUDOU ANO', 'ANO $ano BISMESTRE $bimestre', false, Colors.green);
-      atualizaNomeDasTabelas();
-      setState(() {
-        _currentAno = ano;
-      });
-    }
-  }
-
-  void _changeBimestre(String? bimestre) {
-    if (bimestre != null && bimestre != '01') {
-      var ano=Utils.getAno() ?? "25";
-      final controller = Get.find<AnoBimestreController>();
-      controller.atualizaAnoEBimestre(ano,bimestre); // atualiza o controller
-      atualizaNomeDasTabelas();
-
-      setState(() {
-        _currentBimestre = bimestre;
-      });
-    }
-  }
-
-   */
 
   void _changeAno(String? ano) {
     if (ano != null && ano != '00') {
       // Usa o novo controller para atualizar o estado global
       filterController.updateFilters(novoAno: ano);
-      atualizaNomeDasTabelas();
       setState(() {
         _currentAno = ano;
       });
@@ -277,59 +256,9 @@ class _StartState extends State<Start> {
   void _changeBimestre(String? bimestre) {
     if (bimestre != null && bimestre != '00') { // O código do bimestre é '01', '02', etc.
       filterController.updateFilters(novoBimestre: bimestre);
-      atualizaNomeDasTabelas();
       setState(() {
         _currentBimestre = bimestre;
       });
-    }
-  }
-/*
-  atualizaNomeDasTabelas(){
-    try{
-      String muni=Utils.getUserMunicipio();
-      String ano=Utils.getAno();
-      String bimestre=Utils.getBimestre();
-
-      TBFolha='${muni}$ano$bimestre';
-      TBVantagens='${muni}vantagens$ano$bimestre';
-      TBTotalProfessor='${muni}total_professor$ano$bimestre';
-
-      ///USADAS NO SIMMULADOR
-      TBInfantil='${muni}infantil$ano$bimestre';
-      TBExercicio='${muni}exercicio$ano$bimestre';
-      TBProfessor='${muni}professor$ano$bimestre';
-      TBReceitaFundebSimulador='${muni}receita_fundeb_simulador$ano$bimestre';
-    }catch (e) {
-      Utils.snak('Atenção', 'Não tem imposrtação', false, Colors.red);
-    }
-  }
-
- */
-
-  void atualizaNomeDasTabelas() {
-    try {
-      // Lê os valores reativos diretamente do controller
-      String muni = filterController.municipio.value;
-      String ano = filterController.ano.value;
-      String bimestre = filterController.bimestre.value;
-
-      TBFolha = '${muni}$ano$bimestre';
-      TBVantagens = '${muni}vantagens$ano$bimestre';
-      TBTotalProfessor='${muni}total_professor$ano$bimestre';
-
-      ///USADAS NO SIMMULADOR
-       TBInfantil='${muni}infantil$ano$bimestre';
-       TBExercicio='${muni}exercicio$ano$bimestre';
-       TBProfessor='${muni}professor$ano$bimestre';
-       TBReceitaFundebSimulador='${muni}receita_fundeb_simulador$ano$bimestre';
-       TBVaaf='${muni}vaaf$ano$bimestre';
-       TBTotais='${muni}totais$ano$bimestre';
-       TBDecenio='${muni}decenio$ano$bimestre';
-       TBImpostos='${muni}impostos$ano$bimestre';
-
-      print('Tabelas atualizadas para: $TBFolha'); // Bom para depuração
-    } catch (e) {
-      Utils.snak('Atenção', 'Não tem importação', false, Colors.red);
     }
   }
 
@@ -489,9 +418,6 @@ class _StartState extends State<Start> {
 
                       // ATUALIZE APENAS O CONTROLLER. Ele cuidará de persistir o dado com o Utils.
                       filterController.updateFilters(novoMunicipio: novoMunicipioCode);
-
-                      // A chamada _initializePages() aqui pode ser necessária se a lista de páginas
-                      // realmente depende do município (como no seu caso com SimuladorTabelaProfessor).
                       _initializePages();
                     },
 

@@ -1,21 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
-import '../const/nome_tabelas.dart';
+import 'package:GEM/services/GlobalFilterController.dart';
+import 'package:GEM/services/table_name_service.dart';
 import '../data/api_my_sql.dart';
 import '../services/utils.dart';
 
 // Define os tipos de ícones que uma linha pode ter
 enum RowIconType { none, dollar, emptyCircle }
 
-class ReceiptsDemonstrativePage extends StatelessWidget {
-  const ReceiptsDemonstrativePage({Key? key}) : super(key: key);
+class ReceiptsDemonstrativePage extends StatefulWidget {
+  const ReceiptsDemonstrativePage({Key? key}) : super(key: key); // Adicionado Key
+
+  @override
+  State<ReceiptsDemonstrativePage> createState() => _ReceiptsDemonstrativePage();
+}
+class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
+  final GlobalFilterController filterController = Get.find<GlobalFilterController>();
+  var demon;
+  bool _isLOading=true;
+  bool _isMater=false;
+
+
+  @override
+  void initState() {
+    filterController.municipio.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.ano.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.bimestre.listen((_) => _loadDataBasedOnCurrentFilters());
+    _loadData();
+  }
+
+  void _loadDataBasedOnCurrentFilters() {
+    _loadData();
+  }
+
+  void _loadData()async{
+    demon=await ApiMySql.get(TBDemonReceitas,null,null);
+    setState(() {
+      _isLOading=false;
+      _isMater=Utils.getUserType()=='M';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: SingleChildScrollView(
+      body: _isLOading?Center(child: CircularProgressIndicator()):
+      SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -24,107 +58,149 @@ class ReceiptsDemonstrativePage extends StatelessWidget {
               title: 'INFORMAÇÕES DO MUNICÍPIO',
               icon: Icons.description,
               headerColor: const Color(0xFFEDCB06), // Amarelo
-              children: const [
+              children:  [
                 DataRowItem(
                   label: 'POPULAÇÃO ESTIMADA 2022 (IBGE)',
-                  value: '150.024',
+                  value: demon[0]['populacao']??'0.00',
+                  campo:'populacao',
+                  onValueUpdated: _loadData,
+                  ismater: true,
                 ),
                 DataRowItem(
                   label: 'DADOS DO EXERCÍCIO DE 2025',
                   value: '2º BIMESTRE',
+                  campo: '',
+                  tipo: '%',
+                  ismater: true,
                 ),
               ],
             ),
             const SizedBox(height: 24),
-
             // --- CARD 2: RECEITAS MUNICIPAIS ---
             InfoCard(
               title: 'RECEITAS MUNICIPAIS',
               icon: Icons.attach_money,//#3CD856
               headerColor: const Color(0xFF3CD856), // Verde
-              children: const [
+              children:  [
                 DataRowItem(
                   iconType: RowIconType.dollar,
                   label: 'Receita de Impostos',
-                  value: 'R\$ 83.029.413,57',
+                  value: demon[0]['receita_impostos']??'0.00',
+                  campo: 'receita_impostos',
+                  onValueUpdated: _loadData,
+                  ismater: true,
                 ),
                 DataRowItem(
                   iconType: RowIconType.dollar,
                   label: 'Receitas de Transferências',
-                  value: 'R\$ 171.356.979,58',
+                  value: demon[0]['receita_transferencia']??'0.00',
+                  campo: 'receita_transferencia',
+                  onValueUpdated: _loadData,
+                  ismater: true,
                 ),
                 DataRowItem(
                   iconType: RowIconType.dollar,
                   label: 'TOTAL RECEITA',
-                  value: 'R\$ 254.386.393,15',
+                  value: demon[0]['receita_transferencia']??'0.00',
+                  campo: ' ',
                   isHighlighted: true,
+                  ismater: true,
                 ),
                 DataRowItem(
                   iconType: RowIconType.emptyCircle,
                   label: 'Transferências FNDE',
-                  value: 'R\$ 5.585.913,04',
+                  value: demon[0]['transferencia_fnde']??'0.00',
+                  campo: 'transferencia_fnde',
+                  onValueUpdated: _loadData,
+                  ismater: true,
                 ),
               ],
             ),
             const SizedBox(height: 24),
-
             // --- CARD 3: FUNDEB E REMUNERAÇÃO ---
             InfoCard(
               title: 'FUNDEB E REMUNERAÇÃO',
               icon: Icons.account_balance,//#0077FF
               headerColor: const Color(0xFF0077FF), // Azul
-              children: const [
+              children:  [
                 DataRowItem(
                   iconType: RowIconType.dollar,
                   label: 'Receitas Destinadas ao FUNDEB (20% das Transf.)',
-                  value: 'R\$ 83.029.413,57',
+                  value: demon[0]['receita_ao_fundeb']??'0.00',
+                  campo: 'receita_ao_fundeb',
+                  onValueUpdated: _loadData,
+                  ismater: true,
                 ),
                 DataRowItem(
                   iconType: RowIconType.dollar,
                   label: 'Receitas Recebidas do FUNDEB (FUNDEB, impostos, transf. + fundo FUND. Comple. União:VAAT,VAAF,VAAR)',
-                  value: 'R\$ 171.356.979,58',
+                  value:  demon[0]['receita_do_fundeb']??'0.00',
+                  campo: 'receita_do_fundeb',
+                  onValueUpdated: _loadData,
+                  ismater: true,
                 ),
                 DataRowItem(
                   iconType: RowIconType.dollar,
                   label: 'Despesas com recursos do FUNDEB',
-                  value: '',
+                  campo: '',
+                  value: '0',
                 ),
                 DataRowItem(
                   iconType: RowIconType.dollar,
                   label: '1-Profissionais educaçao básica (mínimo 70%)',
-                  value: 'R\$ 39.455.311,34',
+                  value: demon[0]['prof_educ_basica']??'0.00',
+                  campo: 'prof_educ_basica',
+                  onValueUpdated: _loadData,
+                  ismater: true,
                 ),
                 DataRowItem(
                   iconType: RowIconType.dollar,
                   label: '1.2-Minimo 70% FUNDEB na remuneração dos profs. ed. básica',
-                  value: '84,22%',
+                  value: demon[0]['minimo70']??'0.00',
+                  campo: 'minimo70',
+                  onValueUpdated: _loadData,
+                    tipo: '%',
+                  ismater: true,
                 ),
                 DataRowItem(
                   iconType: RowIconType.dollar,
                   label: '2- Outras despesas máximo 30%',
-                  value: 'R\$ 3.945.178,77',
+                  value: demon[0]['outras_depesas']??'0.00',
+                  campo: 'outras_depesas',
+                  onValueUpdated: _loadData,
+                  ismater: true,
                 ),
                 DataRowItem(
                   iconType: RowIconType.emptyCircle,
                   label: 'Resultado líquido das Transf. do FUNDEB',
-                  value: 'R\$ 171.356.979,58',
+                  value: demon[0]['resul_liqui_transf']??'0.00',
+                  campo: 'resul_liqui_transf',
+                  onValueUpdated: _loadData,
+                  ismater: true,
                 ),
               ],
             ),
             const SizedBox(height: 24),
-
             // --- CARD 4: INVESTIMENTO EM EDUCAÇÃO ---
             InfoCard(
               title: 'INVESTIMENTO EM EDUCAÇÃO ',
               icon: Icons.school,//#FF7228
               headerColor: const Color(0xFFFF7228), // Laranja
-              children: const [
-                DataRowItem(iconType: RowIconType.emptyCircle, label: 'Conta 25% (1.104) 25% da receita de impostos', value: 'R\$ 83.029.413,57'),
-                DataRowItem(iconType: RowIconType.emptyCircle, label: 'Conta 5% (1.103) 5% da receita das transferências', value: 'R\$ 171.356.979,58'),
-                DataRowItem(iconType: RowIconType.emptyCircle, label: 'Conta 1000 (Livre)', value: 'R\$ 34.549.863,34'),
-                DataRowItem(iconType: RowIconType.emptyCircle, label: '', value: 'R\$ 171.356.979,58'),
-                DataRowItem(label: 'PERCENTUAL DE APLICAÇÃO MDE', value: '80,54%', isHighlighted: true),
-                DataRowItem(label: 'TOTAL DE INVESTIMENTO EM EDUCAÇÃO', value: 'R\$ 66.318.427,81', isHighlighted: true),
+              children:  [
+                DataRowItem(iconType: RowIconType.emptyCircle, label: 'Conta 25% (1.104) 25% da receita de impostos',
+                    value: demon[0]['conta25']??'0.00',campo: 'conta25',onValueUpdated: _loadData,ismater: true,),
+                DataRowItem(iconType: RowIconType.emptyCircle, label: 'Conta 5% (1.103) 5% da receita das transferências',
+                    value: demon[0]['conta5']??'0.00',campo: 'conta5',onValueUpdated: _loadData,ismater: true,),
+                DataRowItem(iconType: RowIconType.emptyCircle, label: 'Conta 1000 (Livre)',
+                    value: demon[0]['conta1000']??'0.00',campo: 'conta1000',onValueUpdated: _loadData,ismater: true,),
+                DataRowItem(iconType: RowIconType.emptyCircle, label: 'acho que é uma soma',ismater:true,
+                    value: '0',campo: '.'),
+                DataRowItem(label: 'PERCENTUAL DE APLICAÇÃO MDE',
+                    value: demon[0]['perc_apli_mde']??'0.00',campo: 'perc_apli_mde', isHighlighted: true,ismater: true,
+                  onValueUpdated: _loadData,tipo: '%'),
+                DataRowItem(label: 'TOTAL DE INVESTIMENTO EM EDUCAÇÃO',
+                    value: demon[0]['total_invest_edu']??'0.00',campo: 'total_invest_edu', isHighlighted: true,ismater: true,
+                  onValueUpdated: _loadData,),
               ],
             ),
           ],
@@ -140,6 +216,7 @@ class InfoCard extends StatelessWidget {
   final IconData icon;
   final Color headerColor;
   final List<Widget> children;
+  final bool isMater;
 
   const InfoCard({
     Key? key,
@@ -147,6 +224,7 @@ class InfoCard extends StatelessWidget {
     required this.icon,
     required this.headerColor,
     required this.children,
+    this.isMater=false,
   }) : super(key: key);
 
   @override
@@ -193,6 +271,10 @@ class DataRowItem extends StatelessWidget {
   final RowIconType iconType;
   final bool isHighlighted;
   final bool isAlert;
+  final String? campo;
+  final VoidCallback? onValueUpdated;
+  final String? tipo;
+  final bool ismater;
 
   const DataRowItem({
     Key? key,
@@ -202,6 +284,10 @@ class DataRowItem extends StatelessWidget {
     this.iconType = RowIconType.none,
     this.isHighlighted = false,
     this.isAlert = false,
+    required this.campo,
+    this.onValueUpdated,
+    this.tipo='VR',
+    this.ismater=false,
   }) : super(key: key);
 
   Widget _buildIcon() {
@@ -279,14 +365,17 @@ class DataRowItem extends StatelessWidget {
                   children: [
                     Expanded(
                       flex: 3,
-                      child: Text(value!,
+                      child: Text(tipo=='VR'?Utils.toReal(double.parse(value!)):
+                      value!.isAlphabetOnly?
+                      value:'$value%',
                         textAlign: TextAlign.right,
                         style: TextStyle(fontSize: 13, color: valueColor, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    Expanded(
+                    if(ismater)
+                      Expanded(
                         child: IconButton(
-                          onPressed: () => _editarValor(context,'10'),
+                          onPressed: () => _editarValor(context,value,campo!,tipo!,label),
                           icon: Icon(Icons.edit, size:18, color: Colors.grey,),
                         ),
 
@@ -298,20 +387,28 @@ class DataRowItem extends StatelessWidget {
       ),
     );
   }
-  Future<void> _editarValor(BuildContext context,var vrinicial) async {
+
+  Future<void> _editarValor(BuildContext context,var vrinicial,String campo,String tipo,String label) async {
     await Utils.mostrarDialogoEditarValor(
       inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[0-9,]'))
+        tipo=='VR'?
+        CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt'):
+        CurrencyTextInputFormatter.currency(symbol: '%', locale: 'pt')
       ],
       context: context,
-      titulo: 'Editar Valor',
-      labelCampo: 'Valor',
+      titulo: label,
+      labelCampo: tipo=='VR'?'Valor':'Percentual',
       valorInicial: vrinicial,
       aoSalvar: (novoValor) async {
-        double valorNumerico = Utils.vrStringToDouble(novoValor);
-        await ApiMySql.executaSql('Update $TBDemonReceitas set fundeb_10_5=$valorNumerico');
-        //var r = totais[0]['receita'];
-        //double nv = valorNumerico + double.parse(r);
+        var valorNumerico=novoValor;
+        if(tipo=='VR') {
+          valorNumerico = Utils.saldoToSave(novoValor);
+          await ApiMySql.executaSql('Update $TBDemonReceitas set $campo=$valorNumerico');
+        }else{
+          String nvr=novoValor.replaceAll('%', '').trim();
+          await ApiMySql.executaSql('Update $TBDemonReceitas set $campo="$nvr"');
+        }
+        onValueUpdated?.call();
       },
     );
   }

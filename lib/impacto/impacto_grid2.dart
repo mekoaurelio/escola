@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Adicionado para formatação
 import 'package:GEM/services/GlobalFilterController.dart';
+import 'package:GEM/services/table_name_service.dart';
 import 'package:get/get.dart';
 import '../const/const.dart';
-import '../const/nome_tabelas.dart';
+import 'package:GEM/services/table_name_service.dart';
 import '../data/api_my_sql.dart';
 import '../services/utils.dart';
 import '../widgets/texto.dart';
@@ -29,13 +30,6 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> {
   final _currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: '');
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
 
-  _atualizaTela(var ano,var bimestre){
-    setState(() {
-      TBFolha='a$ano$bimestre';
-      TBReceitaFundebSimulador='a_receita_fundeb_simulador$ano$bimestre';
-      _loadData();
-    });
-  }
 
   ///A DESCRICAO DOS DADOS DA FOLHA
   static final List<Texto> _dadosDaFolhaDePagamento = [
@@ -54,34 +48,15 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> {
   @override
   void initState() {
     super.initState();
-    // Registra os listeners. Eles reagirão a mudanças SE a tela estiver visível.
-    filterController.municipio.listen((_) => _reactToFilterChange());
-    filterController.ano.listen((_) => _reactToFilterChange());
-    filterController.bimestre.listen((_) => _reactToFilterChange());
+    filterController.municipio.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.ano.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.bimestre.listen((_) => _loadDataBasedOnCurrentFilters());
 
     _loadDataBasedOnCurrentFilters();
   }
 
   void _loadDataBasedOnCurrentFilters() {
-    // Pega os valores atuais diretamente do controller
-    String muni = filterController.municipio.value;
-    String ano = filterController.ano.value;
-    String bimestre = filterController.bimestre.value;
-    setState(() {
-      TBFolha=TBFolha='${muni}$ano$bimestre';
-      TBVantagens=TBVantagens='${muni}vantagens$ano$bimestre';
-      TBProfessor = '${muni}professor$ano$bimestre';
-      TBInfantil = '${muni}infantil$ano$bimestre'; // Corrigido: removido espaço
-      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
-      TBExercicio = '${muni}exercicio$ano$bimestre';
-      TBTotais='${muni}totais$ano$bimestre';
-    });
     _loadData();
-  }
-
-  void _reactToFilterChange() {
-    print("Listener do GetX acionado! (Mudança ocorreu com a tela aberta)");
-    _loadDataBasedOnCurrentFilters();
   }
 
 

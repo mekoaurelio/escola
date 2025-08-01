@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
-import '../const/nome_tabelas.dart';
+import 'package:GEM/services/table_name_service.dart';
 import '../data/api_my_sql.dart';
 import '../services/generic_form_screen.dart';
 import '../services/utils.dart';

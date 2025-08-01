@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:GEM/services/GlobalFilterController.dart';
 
 import '../const/const.dart';
-import '../const/nome_tabelas.dart';
+import 'package:GEM/services/table_name_service.dart';
 import '../data/api_my_sql.dart';
 import '../services/calc_dispersao_valores.dart';
 import '../services/utils.dart'; // Assumindo que Utils.formatVr existe
@@ -57,20 +57,6 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   double _custoMensal = 0.0;
   double totalFolha=0;
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
-
-
-  _atualizaTela(var ano,var bimestre){
-    setState(() {
-      String muni=Utils.getUserMunicipio();
-      TBFolha='$muni$ano$bimestre';
-      var tb=widget.table;
-      TBVantagens='${muni}vantagens$ano$bimestre';
-      TBProfessor='$tb$ano$bimestre';
-      _calculatedTableValues=[];
-      professores=null;
-      _loadDataAndCalculate();
-    });
-  }
 
   // Adicione este método para lidar com a seleção
   void _handleCellSelection(int row, int column) async {
@@ -154,16 +140,21 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   }
 
   Future<void> _loadDataAndCalculate() async {
+    try{
     professores = await ApiMySql.getProfessores('ADULTO',TBFolha,TBVantagens).timeout(const Duration(seconds: 30));
+    if(professores==null){
+      print('NULO');
+      setState(() => isLoading = false);
+      return;
+    }
+    if(professores.isEmpty){
+      setState(() => isLoading = false);
+      return;
+    }
     ///Pega os totais
     final totais = await ApiMySql.get(TBTotais,null,null);
     perAumentoInfantil=double.parse(totais[0]['perc_aumento_infantil']);
     perAumentoAdulto=double.parse(totais[0]['perc_aumento_adulto']);
-    ///Se atabela estiver vazia, aborta
-    if(professores.length==0){
-      setState(() => isLoading = false);
-      return;
-    }
 
     /// Pré-processa a contagem de professores por nível
     _professoresPorNivel = {};
@@ -176,15 +167,16 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       Utils.calculateTotals(professores),
       Utils.calculateTotals(professores),
     ]);
-
     setState(() {
       _custoMensal = totals[0]['total']!;
       totProf=professores.length;
       isLoading = true;
     });
-
     totalFolha=double.parse(professores[0]['total_vencimentos_geral']);
+  } catch (e) {
+  print('Erro ao carregar dados ou calcular: $e');
 
+  }
     try {
       profs = await ApiMySql.get(TBProfessor, null, 'ordem');
       valorBase = double.parse(profs[0]['valor']);
@@ -229,7 +221,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       // Calcula a tabela e dispersões
     } catch (e) {
       print('Erro ao carregar dados ou calcular: $e');
-      // Tratar erro, talvez mostrar uma mensagem ao usuário
+
     } finally {
       setState(() => isLoading = false);
     }
@@ -239,40 +231,16 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   void initState() {
     super.initState();
     // Registra os listeners. Eles reagirão a mudanças SE a tela estiver visível.
-    filterController.municipio.listen((_) => _reactToFilterChange());
-    filterController.ano.listen((_) => _reactToFilterChange());
-    filterController.bimestre.listen((_) => _reactToFilterChange());
-
+    filterController.municipio.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.ano.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.bimestre.listen((_) => _loadDataBasedOnCurrentFilters());
     _loadDataBasedOnCurrentFilters();
   }
 
   void _loadDataBasedOnCurrentFilters() {
-    // Pega os valores atuais diretamente do controller
-    String muni = filterController.municipio.value;
-    String ano = filterController.ano.value;
-    String bimestre = filterController.bimestre.value;
-    var tb=widget.table;
-
-    // Atualiza as variáveis de estado com os novos nomes de tabela
-    setState(() {
-
-      TBVantagens='${muni}vantagens$ano$bimestre';
-      TBProfessor='$tb$ano$bimestre';
-      TBFolha='$muni$ano$bimestre';
-      TBProfessor = '${muni}professor$ano$bimestre';
-      TBInfantil = '${muni}infantil$ano$bimestre'; // Corrigido: removido espaço
-      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
-      TBExercicio = '${muni}exercicio$ano$bimestre';
-    });
-
     _calculatedTableValues=[];
     professores=null;
     _loadDataAndCalculate();
-  }
-
-  void _reactToFilterChange() {
-    print("Listener do GetX acionado! (Mudança ocorreu com a tela aberta)");
-    _loadDataBasedOnCurrentFilters();
   }
 
   @override
@@ -292,11 +260,14 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
     }
     return Scaffold(
       backgroundColor: Colors.white,
-      body: professores.length==0
-          ? Center(
-        child: Utils.vazio('Nenhum dado Encontrado')
-      )
-          : SingleChildScrollView(
+      body:
+      professores==null?Center(
+          child: Utils.vazio('Nenhum dado Encontrado')
+      ):professores.isEmpty?
+      Center(
+          child: Utils.vazio('Nenhum dado Encontrado')
+      ):
+      SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -355,7 +326,6 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                 niveis: ['NA', 'NB', 'NC', 'ND', 'NE'], // sua lista de níveis
                 calculatedTableValues: _calculatedTableValues, // seus valores calculados
                 quantidadeDeProfessores: (nivel, coluna) {
-                  // Sua implementação para contar professores
                   return quantidadeDeProfessores(nivel, coluna);
                 },
                 professores: professores, // sua lista de professores

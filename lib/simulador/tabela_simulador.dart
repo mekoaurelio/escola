@@ -4,9 +4,8 @@ import 'package:currency_text_input_formatter/currency_text_input_formatter.dart
 import 'package:GEM/services/GlobalFilterController.dart';
 import 'package:get/get.dart';
 
-import '../const/nome_tabelas.dart';
+import 'package:GEM/services/table_name_service.dart';
 import '../data/api_my_sql.dart';
-import '../services/anoBimestreListenerMixin.dart';
 import '../services/utils.dart';
 import '../widgets/texto.dart';
 
@@ -43,33 +42,14 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
   void initState() {
     super.initState();
     // Registra os listeners. Eles reagirão a mudanças SE a tela estiver visível.
-    filterController.municipio.listen((_) => _reactToFilterChange());
-    filterController.ano.listen((_) => _reactToFilterChange());
-    filterController.bimestre.listen((_) => _reactToFilterChange());
-
+    filterController.municipio.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.ano.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.bimestre.listen((_) => _loadDataBasedOnCurrentFilters());
     _loadDataBasedOnCurrentFilters();
   }
 
   void _loadDataBasedOnCurrentFilters() {
-    // Pega os valores atuais diretamente do controller
-    String muni = filterController.municipio.value;
-    String ano = filterController.ano.value;
-    String bimestre = filterController.bimestre.value;
-    setState(() {
-      TBFolha=TBFolha='${muni}$ano$bimestre';
-      TBVantagens=TBVantagens='${muni}vantagens$ano$bimestre';
-      TBProfessor = '${muni}professor$ano$bimestre';
-      TBInfantil = '${muni}infantil$ano$bimestre'; // Corrigido: removido espaço
-      TBReceitaFundebSimulador = '${muni}receita_fundeb_simulador$ano$bimestre';
-      TBExercicio = '${muni}exercicio$ano$bimestre';
-      TBTotais='${muni}totais$ano$bimestre';
-    });
     _carregarDados();
-  }
-
-  void _reactToFilterChange() {
-    print("Listener do GetX acionado! (Mudança ocorreu com a tela aberta)");
-    _loadDataBasedOnCurrentFilters();
   }
 
   List<Map<String, dynamic>> _mapearDados(List<Map<String, dynamic>> dados) {
@@ -82,7 +62,6 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
   }
 
   Future<void> _carregarDados() async {
-    // seu código de carregamento
     try {
       final dadosDecenios = (await ApiMySql.get(TBDecenio, null, null) as List).cast<Map<String, dynamic>>();
       final dadosImpostos = (await ApiMySql.get(TBImpostos, null, null) as List).cast<Map<String, dynamic>>();
