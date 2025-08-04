@@ -1,4 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
+
+
+import 'package:GEM/services/GlobalFilterController.dart';
+import '../data/api_my_sql.dart';
+import '../services/table_name_service.dart';
+import '../services/utils.dart';
 
 class AceleracaoDoCrescimento extends StatelessWidget {
   const AceleracaoDoCrescimento({super.key});
@@ -70,6 +77,31 @@ class AceleracaoDoCrescimento extends StatelessWidget {
     );
   }
 
+  Future<void> _editarValor(BuildContext context,var vrinicial,String campo,String tipo) async {
+    await Utils.mostrarDialogoEditarValor(
+      inputFormatters: [
+        tipo=='VR'?
+        CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt'):
+        CurrencyTextInputFormatter.currency(symbol: '%', locale: 'pt')
+      ],
+      context: context,
+      titulo: 'Atualizando',
+      labelCampo: tipo=='VR'?'Valor':'Percentual',
+      valorInicial: vrinicial,
+      aoSalvar: (novoValor) async {
+        var valorNumerico=novoValor;
+        if(tipo=='VR') {
+          valorNumerico = Utils.saldoToSave(novoValor);
+          await ApiMySql.executaSql('Update $TBPac set $campo=$valorNumerico');
+        }else{
+          String nvr=novoValor.replaceAll('%', '').trim();
+          await ApiMySql.executaSql('Update $TBPac set $campo="$nvr"');
+        }
+       // onValueUpdated?.call();
+      },
+    );
+  }
+
   Widget _buildProgramHeader({
     required IconData icon,
     required String title,
@@ -120,12 +152,15 @@ class AceleracaoDoCrescimento extends StatelessWidget {
     required String value,
     required String description,
     required Color color,
+    String? tipo,
+    String? campo,
     String? amount,
+    BuildContext? context,
   }) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,
-      child: Container(
+        child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -140,6 +175,7 @@ class AceleracaoDoCrescimento extends StatelessWidget {
             children: [
               Row(
                 children: [
+                  ///icone
                   Container(
                     width: 48,
                     height: 48,
@@ -150,6 +186,7 @@ class AceleracaoDoCrescimento extends StatelessWidget {
                     child: Icon(icon, size: 28, color: color),
                   ),
                   const SizedBox(width: 12),
+                  ///titulo
                   Text(
                     title,
                     style: TextStyle(
@@ -161,24 +198,36 @@ class AceleracaoDoCrescimento extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+              ///valor
+
+              InkWell(
+                onTap: () {
+                  print('kkkkkkkk');
+                  _editarValor(context!,value,campo!,tipo!);
+                },
+
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
               ),
-              const SizedBox(height: 4),
-              Text(
+        const SizedBox(height: 4),
+        ///descricao
+        Text(
                 description,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 14,
-                  color: Colors.black87,
+                  color: Colors.green,
                 ),
               ),
-              if (amount != null) ...[
+        ///valor lateral
+
+        if (amount != null) ...[
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

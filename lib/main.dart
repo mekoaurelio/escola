@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'package:GEM/services/GlobalFilterController.dart';
+import 'cianorte/importar_professor.dart';
 import 'services/table_name_service.dart';
 import 'lang/translation_service.dart';
 import 'login/login.dart';
@@ -76,10 +77,9 @@ class _TattooStudioAppState extends State<TattooStudioApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,  ],
 
-      home: _initialScreen!,
-    //  home: ReceitasEducacionais2025()
-        //home: Utils.getIdUser()==null || Utils.getIdUser()=='' ? const Login():const SplashScreen()
-      //IndicatorsDashboard()
+    //  home: _initialScreen!,
+      home: ImportContratosScreen()
+
     );
   }
 }

@@ -17,12 +17,13 @@ class ReceiptsDemonstrativePage extends StatefulWidget {
   @override
   State<ReceiptsDemonstrativePage> createState() => _ReceiptsDemonstrativePage();
 }
+
+
 class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
   var demon;
   bool _isLOading=true;
-  bool _isMater=false;
-
+  bool _isMaster=false;
 
   @override
   void initState() {
@@ -40,7 +41,7 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
     demon=await ApiMySql.get(TBDemonReceitas,null,null);
     setState(() {
       _isLOading=false;
-      _isMater=Utils.getUserType()=='M';
+      _isMaster=Utils.getUserType()=='M';
     });
   }
 
@@ -64,14 +65,14 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
                   value: demon[0]['populacao']??'0.00',
                   campo:'populacao',
                   onValueUpdated: _loadData,
-                  ismater: true,
+                  ismaster: _isMaster,
                 ),
                 DataRowItem(
                   label: 'DADOS DO EXERCÍCIO DE 2025',
                   value: '2º BIMESTRE',
                   campo: '',
                   tipo: '%',
-                  ismater: true,
+                  ismaster: _isMaster,
                 ),
               ],
             ),
@@ -88,7 +89,7 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
                   value: demon[0]['receita_impostos']??'0.00',
                   campo: 'receita_impostos',
                   onValueUpdated: _loadData,
-                  ismater: true,
+                  ismaster: _isMaster,
                 ),
                 DataRowItem(
                   iconType: RowIconType.dollar,
@@ -96,7 +97,7 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
                   value: demon[0]['receita_transferencia']??'0.00',
                   campo: 'receita_transferencia',
                   onValueUpdated: _loadData,
-                  ismater: true,
+                  ismaster: _isMaster,
                 ),
                 DataRowItem(
                   iconType: RowIconType.dollar,
@@ -104,7 +105,7 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
                   value: demon[0]['receita_transferencia']??'0.00',
                   campo: ' ',
                   isHighlighted: true,
-                  ismater: true,
+                  ismaster: _isMaster,
                 ),
                 DataRowItem(
                   iconType: RowIconType.emptyCircle,
@@ -112,7 +113,7 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
                   value: demon[0]['transferencia_fnde']??'0.00',
                   campo: 'transferencia_fnde',
                   onValueUpdated: _loadData,
-                  ismater: true,
+                  ismaster: _isMaster,
                 ),
               ],
             ),
@@ -129,7 +130,7 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
                   value: demon[0]['receita_ao_fundeb']??'0.00',
                   campo: 'receita_ao_fundeb',
                   onValueUpdated: _loadData,
-                  ismater: true,
+                  ismaster: _isMaster,
                 ),
                 DataRowItem(
                   iconType: RowIconType.dollar,
@@ -137,7 +138,7 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
                   value:  demon[0]['receita_do_fundeb']??'0.00',
                   campo: 'receita_do_fundeb',
                   onValueUpdated: _loadData,
-                  ismater: true,
+                  ismaster: _isMaster,
                 ),
                 DataRowItem(
                   iconType: RowIconType.dollar,
@@ -151,7 +152,7 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
                   value: demon[0]['prof_educ_basica']??'0.00',
                   campo: 'prof_educ_basica',
                   onValueUpdated: _loadData,
-                  ismater: true,
+                  ismaster: _isMaster,
                 ),
                 DataRowItem(
                   iconType: RowIconType.dollar,
@@ -159,8 +160,8 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
                   value: demon[0]['minimo70']??'0.00',
                   campo: 'minimo70',
                   onValueUpdated: _loadData,
-                    tipo: '%',
-                  ismater: true,
+                  tipo: '%',
+                  ismaster: _isMaster,
                 ),
                 DataRowItem(
                   iconType: RowIconType.dollar,
@@ -168,7 +169,7 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
                   value: demon[0]['outras_depesas']??'0.00',
                   campo: 'outras_depesas',
                   onValueUpdated: _loadData,
-                  ismater: true,
+                  ismaster: _isMaster,
                 ),
                 DataRowItem(
                   iconType: RowIconType.emptyCircle,
@@ -176,7 +177,7 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
                   value: demon[0]['resul_liqui_transf']??'0.00',
                   campo: 'resul_liqui_transf',
                   onValueUpdated: _loadData,
-                  ismater: true,
+                  ismaster: _isMaster,
                 ),
               ],
             ),
@@ -188,18 +189,18 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
               headerColor: const Color(0xFFFF7228), // Laranja
               children:  [
                 DataRowItem(iconType: RowIconType.emptyCircle, label: 'Conta 25% (1.104) 25% da receita de impostos',
-                    value: demon[0]['conta25']??'0.00',campo: 'conta25',onValueUpdated: _loadData,ismater: true,),
+                    value: demon[0]['conta25']??'0.00',campo: 'conta25',onValueUpdated: _loadData,ismaster: _isMaster,),
                 DataRowItem(iconType: RowIconType.emptyCircle, label: 'Conta 5% (1.103) 5% da receita das transferências',
-                    value: demon[0]['conta5']??'0.00',campo: 'conta5',onValueUpdated: _loadData,ismater: true,),
+                    value: demon[0]['conta5']??'0.00',campo: 'conta5',onValueUpdated: _loadData,ismaster: _isMaster,),
                 DataRowItem(iconType: RowIconType.emptyCircle, label: 'Conta 1000 (Livre)',
-                    value: demon[0]['conta1000']??'0.00',campo: 'conta1000',onValueUpdated: _loadData,ismater: true,),
-                DataRowItem(iconType: RowIconType.emptyCircle, label: 'acho que é uma soma',ismater:true,
+                    value: demon[0]['conta1000']??'0.00',campo: 'conta1000',onValueUpdated: _loadData,ismaster: _isMaster,),
+                DataRowItem(iconType: RowIconType.emptyCircle, label: 'acho que é uma soma',
                     value: '0',campo: '.'),
                 DataRowItem(label: 'PERCENTUAL DE APLICAÇÃO MDE',
-                    value: demon[0]['perc_apli_mde']??'0.00',campo: 'perc_apli_mde', isHighlighted: true,ismater: true,
+                    value: demon[0]['perc_apli_mde']??'0.00',campo: 'perc_apli_mde', isHighlighted: true,ismaster: _isMaster,
                   onValueUpdated: _loadData,tipo: '%'),
                 DataRowItem(label: 'TOTAL DE INVESTIMENTO EM EDUCAÇÃO',
-                    value: demon[0]['total_invest_edu']??'0.00',campo: 'total_invest_edu', isHighlighted: true,ismater: true,
+                    value: demon[0]['total_invest_edu']??'0.00',campo: 'total_invest_edu', isHighlighted: true,ismaster: _isMaster,
                   onValueUpdated: _loadData,),
               ],
             ),
@@ -216,7 +217,7 @@ class InfoCard extends StatelessWidget {
   final IconData icon;
   final Color headerColor;
   final List<Widget> children;
-  final bool isMater;
+  final bool isMaster;
 
   const InfoCard({
     Key? key,
@@ -224,7 +225,7 @@ class InfoCard extends StatelessWidget {
     required this.icon,
     required this.headerColor,
     required this.children,
-    this.isMater=false,
+    this.isMaster=false,
   }) : super(key: key);
 
   @override
@@ -274,7 +275,7 @@ class DataRowItem extends StatelessWidget {
   final String? campo;
   final VoidCallback? onValueUpdated;
   final String? tipo;
-  final bool ismater;
+  final bool ismaster;
 
   const DataRowItem({
     Key? key,
@@ -287,7 +288,7 @@ class DataRowItem extends StatelessWidget {
     required this.campo,
     this.onValueUpdated,
     this.tipo='VR',
-    this.ismater=false,
+    this.ismaster=false,
   }) : super(key: key);
 
   Widget _buildIcon() {
@@ -372,14 +373,20 @@ class DataRowItem extends StatelessWidget {
                         style: TextStyle(fontSize: 13, color: valueColor, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    if(ismater)
+                    if(ismaster)
                       Expanded(
                         child: IconButton(
                           onPressed: () => _editarValor(context,value,campo!,tipo!,label),
                           icon: Icon(Icons.edit, size:18, color: Colors.grey,),
                         ),
-
                     ),
+                    if(!ismaster)
+                      Expanded(
+                        child: IconButton(
+                          onPressed: (){},
+                          icon: Icon(Icons.circle_outlined, size:18, color: Colors.grey,),
+                        ),
+                      ),
                   ],
                 )
             )

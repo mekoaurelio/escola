@@ -27,6 +27,60 @@ class Utils {
   static var formatterD =  DateFormat('dd/MM/yyyy');
   static var formatterh =  DateFormat('hh:mm');
 
+  static Future<void> showEditableValueDialog({
+    required BuildContext context,
+    required String initialValue,
+    required String fieldToUpdate,
+    required String tB,
+    String? dialogTitle,
+    String? fieldLabel,
+    String valueType = 'VR', // 'VR' para moeda, 'PERC' para percentual, etc.
+    VoidCallback? onValueUpdated,
+  }) async {
+
+    // Define o formatador com base no tipo
+    List<TextInputFormatter> formatters = [];
+    if (valueType == 'VR') {
+      formatters.add(CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt'));
+    } else {
+      // Adicione outros formatadores se necessário
+    }
+
+    await Utils.mostrarDialogoEditarValor(
+      inputFormatters: formatters,
+      context: context,
+      titulo: dialogTitle ?? 'Editar Valor', // Usa um título padrão se não for fornecido
+      labelCampo: fieldLabel ?? (valueType == 'VR' ? 'Valor' : 'Percentual'),
+      valorInicial: initialValue,
+      aoSalvar: (newValue) async {
+        String valueToSave;
+
+        if (valueType == 'VR') {
+          valueToSave = Utils.saldoToSave(newValue);
+        } else {
+         // valueToSave = newValue.replaceAll('%', '').trim();
+          valueToSave = newValue;
+        }
+
+        try {
+          // A query SQL agora é construída aqui
+          String sql = 'UPDATE $tB SET $fieldToUpdate = "$valueToSave"';
+          print(sql); // Ótimo para depuração
+          await ApiMySql.executaSql(sql);
+
+          // Chama o callback para atualizar a UI da tela principal
+          onValueUpdated?.call();
+
+        } catch (e) {
+          // Adicione um feedback de erro para o usuário
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao salvar: $e')),
+          );
+        }
+      },
+    );
+  }
+
 
   static Future<Map<String, double>> calculateTotals(List<dynamic> professores) async {
     try {

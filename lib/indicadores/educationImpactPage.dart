@@ -1,13 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:GEM/services/GlobalFilterController.dart';
 
-class EducationImpactPage extends StatelessWidget {
-  const EducationImpactPage({Key? key}) : super(key: key);
+import '../data/api_my_sql.dart';
+import '../services/table_name_service.dart';
+import '../services/utils.dart';
+
+
+class EducationImpactPage extends StatefulWidget {
+  const EducationImpactPage({Key? key}) : super(key: key); // Adicionado Key
+
+  @override
+  State<EducationImpactPage> createState() => _EducationImpactPage();
+}
+
+class _EducationImpactPage extends State<EducationImpactPage> {
+  final GlobalFilterController filterController = Get.find<GlobalFilterController>();
+  var lista;
+  bool _isLoading=true;
+  bool _isMaster=false;
+
+  @override
+  void initState() {
+    filterController.municipio.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.ano.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.bimestre.listen((_) => _loadDataBasedOnCurrentFilters());
+    _loadData();
+  }
+
+  void _loadDataBasedOnCurrentFilters() {
+    _loadData();
+  }
+
+  void _loadData()async{
+    lista=await ApiMySql.get(TBImpactoEducacao,null,null);
+    print(lista);
+    setState(() {
+      _isLoading=false;
+      _isMaster=Utils.getUserType()=='M';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F8FF), // Azul bem claro
-      body: SingleChildScrollView(
+      body: _isLoading? const Center(child: CircularProgressIndicator()):
+      SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
@@ -23,31 +62,45 @@ class EducationImpactPage extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Expanded(flex: 3, child: GoalCard()),
+                         Expanded(flex: 3, child: GoalCard(
+                           lista: lista,
+                           isMaster:_isMaster,
+                           onValueUpdated: _loadData,
+                         )
+                         ),
                         const SizedBox(width: 24),
-                        Expanded(flex: 2, child: _buildBalanceCard()),
+                        Expanded(flex: 2, child: _buildBalanceCard(_isMaster,_loadData,'saldo',lista[0]['saldo'])),
                       ],
                     ),
                   );
                 } else {
                   return Column(
                     children: [
-                      const GoalCard(),
+                       GoalCard(
+                         isMaster: _isMaster,
+                         onValueUpdated: _loadData,
+                       ),
                       const SizedBox(height: 24),
-                      _buildBalanceCard(),
+                      //bool isMaster,VoidCallback? onValueUpdated,String fieldToUpdate,
+                      //       String value
+                      _buildBalanceCard(
+                        _isMaster,_loadData,'saldo',lista[0]['saldo']
+                      ),
                     ],
                   );
                 }
               },
             ),
             const SizedBox(height: 24),
-
             // --- CARD 3: SITUAÇÃO DO MUNICÍPIO ---
-            const MunicipalityStatusCard(),
+             MunicipalityStatusCard(isMaster: _isMaster,onValueUpdated: _loadData,lista: lista,),
             const SizedBox(height: 24),
 
             // --- CARD 4: PARTICIPAÇÃO NO PROGRAMA ---
-            const ProgramParticipationCard(),
+             ProgramParticipationCard(
+               lista: lista,
+               onValueUpdated: _loadData,
+             ),
           ],
         ),
       ),
@@ -55,11 +108,17 @@ class EducationImpactPage extends StatelessWidget {
   }
 
   // Helper para o card de saldo, para evitar duplicação no LayoutBuilder
-  Widget _buildBalanceCard() {
-    return const InfoCard(
+  Widget _buildBalanceCard(bool isMaster,VoidCallback? onValueUpdated,String fieldToUpdate,
+      String value) {
+    return  InfoCard(
       title: 'SALDO EM CONTA',
       headerColor: Color(0xFF007BFF), // Azul
-      body: BalanceCardBody(),
+      body: BalanceCardBody(
+          isMaster: isMaster,
+        onValueUpdated: onValueUpdated,
+        fieldToUpdate: fieldToUpdate,
+        value: value,
+      ),
     );
   }
 }
@@ -77,16 +136,6 @@ class ImpactCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF00695C), // Verde escuro
         borderRadius: BorderRadius.circular(16),
-        /*
-        image: const DecorationImage(
-          // Substitua pela sua imagem
-          image: NetworkImage('https://via.placeholder.com/300x100/FFFFFF/000000?text=Imagem+Alunos'),
-          fit: BoxFit.cover,
-          alignment: Alignment.centerRight,
-          opacity: 0.3,
-        ),
-
-         */
       ),
       child: Row(
         children: [
@@ -137,7 +186,16 @@ class ImpactCard extends StatelessWidget {
 
 // Card da Meta 6
 class GoalCard extends StatelessWidget {
-  const GoalCard({Key? key}) : super(key: key);
+  var lista;
+  final bool isMaster;
+  final VoidCallback? onValueUpdated;
+
+  GoalCard({
+    super.key,
+    this.lista,
+    this.isMaster=false,
+    this.onValueUpdated,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -164,13 +222,17 @@ class GoalCard extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Row(
-              children: const [
+              children:  [
                 Expanded(
                   child: DataChip(
                     icon: Icons.track_changes,
                     iconColor: Color(0xFF007BFF),
                     label: 'Meta',
-                    value: '25%',
+                    //value: '25%',
+                    value: lista[0]['meta']??'0.00',//'25%',
+                    fieldToUpdate: 'meta',
+                    onValueUpdated: onValueUpdated,
+                    isMaster: isMaster,
                   ),
                 ),
                 SizedBox(width: 16),
@@ -179,8 +241,12 @@ class GoalCard extends StatelessWidget {
                     icon: Icons.trending_up,
                     iconColor: Colors.redAccent,
                     label: 'Situação',
-                    value: '20,6%',
+                    //value: '20,6%',
+                    value: lista[0]['sitaouac']??'0.00',//'20,6%',
                     backgroundColor: Color(0xFFFFEBEE), // Fundo rosa claro
+                    fieldToUpdate: 'sitaouac',
+                    onValueUpdated: onValueUpdated,
+                    isMaster: isMaster,
                   ),
                 ),
               ],
@@ -202,7 +268,19 @@ class GoalCard extends StatelessWidget {
 
 // Corpo do Card de Saldo
 class BalanceCardBody extends StatelessWidget {
-  const BalanceCardBody({Key? key}) : super(key: key);
+  final bool isMaster;
+  final String fieldToUpdate;
+  final String value;
+  final VoidCallback? onValueUpdated;
+
+  BalanceCardBody(
+      {
+        Key? key,
+        this.isMaster=false,
+        required this.fieldToUpdate,
+        required this.value,
+        this.onValueUpdated,
+      }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -210,15 +288,29 @@ class BalanceCardBody extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Text(
-            'R\$ 1.915.699,02',
-            style: TextStyle(
-              color: Color(0xFF28a745),
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
+        children:  [
+          InkWell(
+            // Chama a nova função estática
+            onTap: () =>
+            isMaster?
+            Utils.showEditableValueDialog(
+              tB: TBImpactoEducacao,
+              context: context,
+              initialValue: value,
+              fieldToUpdate: fieldToUpdate!,
+              valueType: 'NUM', // Supondo que seja um número simples
+              onValueUpdated: onValueUpdated,
+            ):null,
+            //'R\$ 1.915.699,02',
+            child: Text(value,
+              style: TextStyle(
+                color: Color(0xFF28a745),
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
+
           SizedBox(height: 16),
           Text(
             '*Consulta em Dezembro/2024*\nValores arredondados para melhor visualização',
@@ -233,7 +325,16 @@ class BalanceCardBody extends StatelessWidget {
 
 // Card de Situação do Município
 class MunicipalityStatusCard extends StatelessWidget {
-  const MunicipalityStatusCard({Key? key}) : super(key: key);
+  final bool isMaster;
+  final VoidCallback? onValueUpdated;
+  var lista;
+
+   MunicipalityStatusCard({
+    Key? key,
+    required this.isMaster,
+    this.onValueUpdated,
+    required this.lista,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -244,10 +345,17 @@ class MunicipalityStatusCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           children: [
-            _buildHeaderRow(),
-            _buildDataRow(icon: Icons.child_care_outlined, label: 'Creche', value: '271'),
-            _buildDataRow(icon: Icons.sentiment_satisfied_alt_outlined, label: 'Pré-escola', value: '147'),
-            _buildDataRow(icon: Icons.person_outline, label: 'Anos Iniciais', value: '612'),
+            _buildHeaderRow(), // 271
+            _buildDataRow(icon: Icons.child_care_outlined, label: 'Creche', value: lista[0]['creche'],context: context,
+            isMaster: isMaster,fieldToUpdate: 'creche',onValueUpdated: onValueUpdated),
+
+            //147
+            _buildDataRow(icon: Icons.sentiment_satisfied_alt_outlined, label: 'Pré-escola', value: lista[0]['pre_escola'],
+            context: context,isMaster: isMaster,fieldToUpdate: 'pre_escola',onValueUpdated: onValueUpdated),
+
+            //612
+            _buildDataRow(icon: Icons.person_outline, label: 'Anos Iniciais', value: lista[0]['anos'],context: context,
+                isMaster: isMaster,fieldToUpdate: 'anos',onValueUpdated: onValueUpdated),
             const Padding(
               padding: EdgeInsets.only(top: 16, right: 16, bottom: 8),
               child: Align(
@@ -277,7 +385,10 @@ class MunicipalityStatusCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDataRow({required IconData icon, required String label, required String value}) {
+  Widget _buildDataRow({
+    required IconData icon, required String label, required String value,required BuildContext context,
+    required bool isMaster,required String fieldToUpdate,VoidCallback? onValueUpdated,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       decoration: BoxDecoration(
@@ -289,7 +400,20 @@ class MunicipalityStatusCard extends StatelessWidget {
           const SizedBox(width: 16),
           Text(label, style: TextStyle(color: Colors.grey[800])),
           const Spacer(),
-          Text(value, style: TextStyle(color: Colors.grey[800], fontWeight: FontWeight.w500)),
+          InkWell(
+            // Chama a nova função estática
+            onTap: () =>
+            isMaster?
+            Utils.showEditableValueDialog(
+              tB: TBImpactoEducacao,
+              context: context,
+              initialValue: value,
+              fieldToUpdate: fieldToUpdate,
+              valueType: 'NUM', // Supondo que seja um número simples
+              onValueUpdated: onValueUpdated,
+            ):null,
+            child: Text(value, style: TextStyle(color: Colors.grey[800], fontWeight: FontWeight.w500)),
+          ),
         ],
       ),
     );
@@ -298,7 +422,16 @@ class MunicipalityStatusCard extends StatelessWidget {
 
 // Card de Participação no Programa
 class ProgramParticipationCard extends StatelessWidget {
-  const ProgramParticipationCard({Key? key}) : super(key: key);
+  var lista;
+  final bool isMaster;
+  final VoidCallback? onValueUpdated;
+
+  ProgramParticipationCard({
+    super.key,
+    required this.lista,
+    this.isMaster=false,
+    required this.onValueUpdated,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -315,22 +448,37 @@ class ProgramParticipationCard extends StatelessWidget {
             Wrap( // Para quebrar a linha em telas pequenas
               spacing: 16,
               runSpacing: 16,
-              children: const [
+              children:  [
                 ParticipationChip(
                     color: Color(0xFF4FC3F7),
-                    value: '376',
+                    isMaster:isMaster,
+                    fieldToUpdate: 'matriculas_pactuadas',
+                    //376
+                    value: lista[0]['matriculas_pactuadas'],
                     label: 'Matrículas\nPactuadas',
-                    icon: Icons.person_add_alt_1_outlined),
+                    icon: Icons.person_add_alt_1_outlined,
+                  onValueUpdated:onValueUpdated ,
+                ),
                 ParticipationChip(
                     color: Color(0xFF4CAF50),
-                    value: '376',
+                    isMaster:isMaster,
+                    fieldToUpdate: 'matriculas_declaradas',
+                    value: lista[0]['matriculas_declaradas'],
                     label: 'Matrículas\nDeclaradas',
-                    icon: Icons.check_circle_outline),
+                    icon: Icons.check_circle_outline,
+                  onValueUpdated:onValueUpdated ,
+                ),
+
                 ParticipationChip(
                     color: Color(0xFFFBC02D),
-                    value: 'R\$ 1.942.370,88',
+                    isMaster:isMaster,
+                    fieldToUpdate: 'vr_pago',
+                    //1.942.370,88
+                    value: lista[0]['vr_pago'],
                     label: 'Valor Pago',
-                    isCurrency: true),
+                    isCurrency: true,
+                  onValueUpdated:onValueUpdated ,
+                ),
               ],
             ),
             const SizedBox(height: 24),
@@ -339,15 +487,19 @@ class ProgramParticipationCard extends StatelessWidget {
             Wrap(
               spacing: 16,
               runSpacing: 16,
-              children: const [
+              children:  [
                 ParticipationChip(
                     color: Color(0xFF4FC3F7),
-                    value: '376',
+                    isMaster: isMaster,
+                    fieldToUpdate: 'matriculas_declaradas2',
+                    value: lista[0]['matriculas_declaradas2'],
                     label: 'Matrículas\nPactuadas',
                     icon: Icons.person_add_alt_1_outlined),
                 ParticipationChip(
                     color: Color(0xFFFFA726),
-                    value: 'R\$ 1.942.370,88',
+                    isMaster: isMaster,
+                    fieldToUpdate: 'vr_estimado',
+                    value: lista[0]['vr_estimado'],
                     label: 'Valor estimado',
                     isCurrency: true),
               ],
@@ -369,6 +521,9 @@ class DataChip extends StatelessWidget {
   final String label;
   final String value;
   final Color? backgroundColor;
+  final VoidCallback? onValueUpdated;
+  final String? fieldToUpdate;
+  final bool isMaster;
 
   const DataChip({
     Key? key,
@@ -376,7 +531,10 @@ class DataChip extends StatelessWidget {
     required this.iconColor,
     required this.label,
     required this.value,
+    this.onValueUpdated,
     this.backgroundColor,
+    this.fieldToUpdate,
+    this.isMaster=false,
   }) : super(key: key);
 
   @override
@@ -389,16 +547,30 @@ class DataChip extends StatelessWidget {
       ),
       child: Row(
         children: [
+          ///icone
           Icon(icon, color: iconColor),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              ///texto
               Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
               const SizedBox(height: 4),
-              Text(
-                value,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              InkWell(
+                // Chama a nova função estática
+                onTap: () =>
+                    isMaster?
+                    Utils.showEditableValueDialog(
+                  tB: TBImpactoEducacao,
+                  context: context,
+                  initialValue: value,
+                  fieldToUpdate: fieldToUpdate!,
+                  valueType: 'NUM', // Supondo que seja um número simples
+                  onValueUpdated: onValueUpdated,
+                ):null,
+                child: Text(value,
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           )
@@ -457,6 +629,9 @@ class ParticipationChip extends StatelessWidget {
   final String label;
   final IconData? icon;
   final bool isCurrency;
+  final String fieldToUpdate;
+  final bool isMaster;
+  final VoidCallback? onValueUpdated;
 
   const ParticipationChip({
     Key? key,
@@ -465,6 +640,9 @@ class ParticipationChip extends StatelessWidget {
     required this.label,
     this.icon,
     this.isCurrency = false,
+    required this.fieldToUpdate,
+    required this.isMaster,
+    this.onValueUpdated,
   }) : super(key: key);
 
   @override
@@ -492,14 +670,30 @@ class ParticipationChip extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
               ],
-              Text(
-                value,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              InkWell(
+                // Chama a nova função estática
+                onTap: () =>
+                isMaster?
+                Utils.showEditableValueDialog(
+                  tB: TBImpactoEducacao,
+                  context: context,
+                  initialValue: value,
+                  fieldToUpdate: fieldToUpdate!,
+                  valueType: 'NUM', // Supondo que seja um número simples
+                  onValueUpdated: onValueUpdated,
+                ):null,
+                child: Text(
+                  value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
+
+
+
               if (!isCurrency) ...[
                 const SizedBox(height: 4),
                 Text(

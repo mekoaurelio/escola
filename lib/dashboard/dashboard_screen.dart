@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../indicadores/calculadora.dart';
 import '../indicadores/educationImpactPage.dart';
 import '../indicadores/educationalReceiptsScreen.dart';
 import '../indicadores/pacDashboardPage.dart';
 import '../indicadores/receiptsDemonstrativePage.dart';
+import '../login/login.dart';
 import '../services/utils.dart';
 import '../simulador/simula.dart';
 import '../widgets/texto.dart';
@@ -178,9 +180,14 @@ class DashboardScreen extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                     Text('Bem-vindo, ${userName}!',
-                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                    InkWell(
+                      // Chama a nova função estática
+                      onTap: () =>changeUser(context),
+                      child: Text('Bem-vindo, ${userName}!',
+                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                      ),
                     ),
+
                     const SizedBox(height: 16),
                     Row(
                       children: [
@@ -273,6 +280,23 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void changeUser(BuildContext context)async{
+      final bool confirmar = await Utils.showDlg(
+        'Atenção',
+        'Deseja trocar de usuário?',
+        context,
+        'Sim',
+        'Não',
+      );
+      if (confirmar) {
+        Utils.setIdUser('');
+        Utils.setUserName('');
+        Utils.setUserMunicipio('');
+        Utils.setUserType('');
+        Get.offAll(() => Login(), arguments: {});
+      }
   }
 
   Widget _buildMetricCard({

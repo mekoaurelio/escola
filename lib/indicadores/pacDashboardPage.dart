@@ -1,13 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
+import 'package:get/get.dart';
+import 'package:GEM/services/GlobalFilterController.dart';
 
-class PacDashboardPage extends StatelessWidget {
-  const PacDashboardPage({Key? key}) : super(key: key);
+import '../data/api_my_sql.dart';
+import '../services/table_name_service.dart';
+import '../services/utils.dart';
 
+class PacDashboardPage extends StatefulWidget {
+  const PacDashboardPage({Key? key}) : super(key: key); // Adicionado Key
+
+  @override
+  State<PacDashboardPage> createState() => _PacDashboardPage();
+  }
+
+class _PacDashboardPage extends State<PacDashboardPage> {
+  final GlobalFilterController filterController = Get.find<GlobalFilterController>();
+  var lista;
+  bool _isLoading=true;
+  bool _isMaster=false;
+
+  @override
+  void initState() {
+    filterController.municipio.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.ano.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.bimestre.listen((_) => _loadDataBasedOnCurrentFilters());
+    _loadData();
+  }
+
+  void _loadDataBasedOnCurrentFilters() {
+    _loadData();
+  }
+
+  void _loadData()async{
+    lista=await ApiMySql.get(TBPac,null,null);
+    setState(() {
+      _isLoading=false;
+      _isMaster=Utils.getUserType()=='M';
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: SingleChildScrollView(
+      body: _isLoading? const Center(child: CircularProgressIndicator()):
+
+      SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
@@ -31,7 +69,7 @@ class PacDashboardPage extends StatelessWidget {
                         const SizedBox(width: 24),
                         Expanded(
                           flex: 1,
-                          child: _buildRightColumn(),
+                          child: _buildRightColumn(lista),
                         ),
                       ],
                     ),
@@ -42,7 +80,7 @@ class PacDashboardPage extends StatelessWidget {
                     children: [
                       _buildLeftColumn(),
                       const SizedBox(height: 24),
-                      _buildRightColumn(),
+                      _buildRightColumn(lista),
                     ],
                   );
                 }
@@ -57,41 +95,62 @@ class PacDashboardPage extends StatelessWidget {
   // Coluna da esquerda com os cards de métricas
   Widget _buildLeftColumn() {
     return Column(
-      children: const [
+      children:  [
         MetricCard(
           title: 'CRECHES E PRÉ-ESCOLAS',
           icon: Icons.child_care,
-          //#EDCB06
           color: Color(0xFFEDCB06), // Amarelo
-          mainValue: '1.178',
+          campo: 'creche',
+         mainValue: lista[0]['creche']??'0.00',
+         // mainValue: '1.178',
           description: 'Novas unidades de ensino\npara a Educação Infantil',
-          secondaryValue: 'R\$ 3.593.038,18',
+          campo2: 'creche_vr',
+          secondaryValue: lista[0]['creche_vr']??'0.00',
+          //secondaryValue: 'R\$ 3.593.038,18',
+          ismaster: _isMaster,
+          onValueUpdated: _loadData,
         ),
         SizedBox(height: 24),
         MetricCard(
           title: 'ÔNIBUS ESCOLARES',
           icon: Icons.directions_bus, //FF7228
           color: Color(0xFFFF7228), // Azul claro
-          mainValue: '1.500',
+         // mainValue: '1.500',
+          campo: 'onibus',
+          mainValue: lista[0]['onibus']??'0.00',
           description: 'Novos veículos para o\ntransporte escolar',
-          secondaryValue: 'R\$ 3.593.038,18',
+          secondaryValue:lista[0]['onibus_vr']??'0.00',
+          campo2: 'onibus_vr',
+          onValueUpdated: _loadData,
+          ismaster: _isMaster,
+          //secondaryValue: 'R\$ 3.593.038,18',
         ),
         SizedBox(height: 24),
         MetricCard(
           title: 'ESCOLAS DE TEMPO INTEGRAL',
           icon: Icons.school,
           color: Color(0xFFFFA726), // Laranja
-          mainValue: '685',
+          campo: 'escola_tempo_i',
+         mainValue: lista[0]['escola_tempo_i']??'0.00',
+         // mainValue: '685',
           description: 'Novas unidades com\njornada ampliada',
-          secondaryValue: 'R\$ 3.593.038,18',
+         campo2: 'escola_tempo_i_vr',
+         secondaryValue: lista[0]['escola_tempo_i_vr']??'0.00',
+         // secondaryValue: 'R\$ 3.593.038,18',
+          onValueUpdated: _loadData,
+          ismaster: _isMaster,
         ),
       ],
     );
   }
 
   // Coluna da direita com o card do Pacto Nacional
-  Widget _buildRightColumn() {
-    return const PactoNacionalCard();
+  Widget _buildRightColumn(var lista) {
+    return  PactoNacionalCard(
+      isMaster: _isMaster,
+        lista:lista,
+      onValueUpdated: _loadData,
+    );
   }
 }
 
@@ -159,6 +218,11 @@ class MetricCard extends StatelessWidget {
   final String mainValue;
   final String description;
   final String secondaryValue;
+  final VoidCallback? onValueUpdated;
+  final String? campo;
+  final String? tipo;
+  final String? campo2;
+  final bool ismaster;
 
   const MetricCard({
     Key? key,
@@ -168,6 +232,11 @@ class MetricCard extends StatelessWidget {
     required this.mainValue,
     required this.description,
     required this.secondaryValue,
+    this.onValueUpdated,
+    this.campo,
+    this.tipo='VR',
+    this.campo2,
+    this.ismaster=false,
   }) : super(key: key);
 
   @override
@@ -180,6 +249,7 @@ class MetricCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          ///Ícone do título
           Container(
             color: color,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -208,16 +278,23 @@ class MetricCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    ///Valor principal
+                    if(ismaster)
+                      InkWell(
+                        onTap: () => Utils.showEditableValueDialog(
+                          tB: TBPac,
+                          context: context,
+                          initialValue: secondaryValue,
+                          fieldToUpdate: campo2!,
+                          valueType: 'VR', // Este é um valor monetário
+                          onValueUpdated: onValueUpdated,),
+                        child: Text(
                       mainValue,
-                      style: const TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                        //#333333
-                        color: Color(0xFF333333),
-                      ),
+                      style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Color(0xFF333333)),
                     ),
+                      ),
                     const SizedBox(height: 4),
+                    ///descrição
                     Text(
                       description,
                       style: const TextStyle(
@@ -228,21 +305,31 @@ class MetricCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE9ECEF),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    secondaryValue,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF495057),
+                // --- VALOR SECUNDÁRIO ---
+                if(ismaster)
+                  InkWell(
+                  onTap: () => Utils.showEditableValueDialog(
+                    tB: TBPac,
+                    context: context,
+                    initialValue: secondaryValue,
+                    fieldToUpdate: campo2!,
+                    valueType: 'VR', // Este é um valor monetário
+                    onValueUpdated: onValueUpdated,),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE9ECEF),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                  ),
+                    child: Text(Utils.toReal(double.parse(secondaryValue)),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF495057),
+                      ),
+                    ),
                 ),
+                )
               ],
             ),
           )
@@ -254,7 +341,16 @@ class MetricCard extends StatelessWidget {
 
 /// WIDGET PARA O CARD DO PACTO NACIONAL
 class PactoNacionalCard extends StatelessWidget {
-  const PactoNacionalCard({Key? key}) : super(key: key);
+  var lista;
+  final VoidCallback? onValueUpdated;
+  final isMaster;
+
+  PactoNacionalCard({
+    super.key,
+    this.lista,
+    this.onValueUpdated,
+    this.isMaster=false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -297,14 +393,18 @@ class PactoNacionalCard extends StatelessWidget {
             child: Column(
               children: [
                 Row(
-                  children: const [
+                  children:  [
                     Expanded(
                       child: InfoBubble(
                         icon: Icons.assignment,
-                        //#FF1D86
                         iconColor: Color(0xFFFF1D86), // Rosa
-                        value: '3.700+',
+                        value: lista[0]['manifestacoes']??'0.00',
+                        //value: '3.700+',
                         label: 'Manifestações',
+                        fieldToUpdate:'manifestacoes',
+                        valueType:'String',
+                        onValueUpdated: onValueUpdated,
+                        ismaster: isMaster,
                       ),
                     ),
                     SizedBox(width: 16),
@@ -312,8 +412,13 @@ class PactoNacionalCard extends StatelessWidget {
                       child: InfoBubble(
                         icon: Icons.monetization_on,
                         iconColor: Color(0xFF28A745), // Verde
-                        value: 'R\$4,1 bi',
+                        value: lista[0]['investimentos']??'0.00',
+                        fieldToUpdate:'investimentos',
+                        //value: 'R\$4,1 bi',
                         label: 'Investimento',
+                        valueType:'String',
+                        onValueUpdated: onValueUpdated,
+                        ismaster: isMaster,
                       ),
                     ),
                   ],
@@ -328,21 +433,32 @@ class PactoNacionalCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  decoration: BoxDecoration(
+                InkWell( // Envolvemos tudo em um InkWell
+                  onTap:() => Utils.showEditableValueDialog(
+                    tB: TBPac,
+                    context: context,
+                    initialValue: lista[0]['previsao']??'0.00',
+                    fieldToUpdate: 'previsao',
+                    valueType: 'VR',
+                    onValueUpdated: onValueUpdated,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    decoration: BoxDecoration(
                     color: const Color(0xFFE9ECEF),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    'R\$ 1.267.584,72',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF343A40),
+                    child:  Text(
+                    Utils.toReal(double.parse(lista[0]['previsao']??'0.00')),
+                      // 'R\$ 1.267.584,72',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF343A40),
+                      ),
                     ),
                   ),
-                ),
+                )
               ],
             ),
           )
@@ -358,6 +474,10 @@ class InfoBubble extends StatelessWidget {
   final Color iconColor;
   final String value;
   final String label;
+  final String? fieldToUpdate; // Novo
+  final String? valueType;     // Novo
+  final VoidCallback? onValueUpdated;
+  final bool ismaster;
 
   const InfoBubble({
     Key? key,
@@ -365,48 +485,65 @@ class InfoBubble extends StatelessWidget {
     required this.iconColor,
     required this.value,
     required this.label,
+    this.fieldToUpdate,
+    this.valueType,
+    this.onValueUpdated,
+    this.ismaster=false,
   }) : super(key: key);
 
-  /*
-  Vector
-   */
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.5),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: iconColor, size: 24),
+    return  Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F9FA),
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF343A40),
-            ),
+          child: Column(
+            children: [
+              ///Icone grande
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: iconColor, size: 24),
+              ),
+              const SizedBox(height: 12),
+              ///Valor
+              InkWell( // Envolvemos tudo em um InkWell
+                onTap: (
+                    fieldToUpdate != null) ?
+                    ismaster?
+                        () => Utils.showEditableValueDialog(
+                          tB: TBPac,
+                          context: context,
+                          initialValue: value,
+                          fieldToUpdate: fieldToUpdate!,
+                          valueType: valueType ?? 'VR',
+                          onValueUpdated: onValueUpdated,
+                        ):null
+                    : null, // O bubble não é clicável se não tiver um campo para atualizar
+                child: Text(value,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF343A40),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              ///Texto
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-            ),
-          ),
-        ],
-      ),
-    );
+        );
   }
 }

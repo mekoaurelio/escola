@@ -80,7 +80,7 @@ dev_dependencies:
   js: ^0.6.7
   google_fonts: ^6.2.1
   flutter_svg: ^2.2.0
-
+  csv: ^6.0.0 # Ou a versão mais recente
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
