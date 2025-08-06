@@ -69,10 +69,11 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
                 ),
                 DataRowItem(
                   label: 'DADOS DO EXERCÍCIO DE 2025',
-                  value: '2º BIMESTRE',
-                  campo: '',
-                  tipo: '%',
+                  value: demon[0]['bimestre']??'',
+                  campo: 'bimestre',
+                  onValueUpdated: _loadData,
                   ismaster: _isMaster,
+                  tipo: 'String',
                 ),
               ],
             ),
@@ -368,7 +369,7 @@ class DataRowItem extends StatelessWidget {
                       flex: 3,
                       child: Text(tipo=='VR'?Utils.toReal(double.parse(value!)):
                       value!.isAlphabetOnly?
-                      value:'$value%',
+                      value:tipo=='String'?value:'$value%',
                         textAlign: TextAlign.right,
                         style: TextStyle(fontSize: 13, color: valueColor, fontWeight: FontWeight.bold),
                       ),
@@ -399,8 +400,8 @@ class DataRowItem extends StatelessWidget {
     await Utils.mostrarDialogoEditarValor(
       inputFormatters: [
         tipo=='VR'?
-        CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt'):
-        CurrencyTextInputFormatter.currency(symbol: '%', locale: 'pt')
+        CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt'):tipo=='%'?
+        CurrencyTextInputFormatter.currency(symbol: '%', locale: 'pt'):FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]'))
       ],
       context: context,
       titulo: label,
@@ -412,7 +413,12 @@ class DataRowItem extends StatelessWidget {
           valorNumerico = Utils.saldoToSave(novoValor);
           await ApiMySql.executaSql('Update $TBDemonReceitas set $campo=$valorNumerico');
         }else{
-          String nvr=novoValor.replaceAll('%', '').trim();
+          String nvr='';
+          if(tipo=='String'){
+            nvr=novoValor;
+          }else{
+             nvr=novoValor.replaceAll('%', '').trim();
+          }
           await ApiMySql.executaSql('Update $TBDemonReceitas set $campo="$nvr"');
         }
         onValueUpdated?.call();

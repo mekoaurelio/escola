@@ -207,9 +207,12 @@ class _Section extends StatelessWidget {
           data['ordem'] == '4' ||
           data['ordem'] == '5' ||
           data['ordem'] == '6') {
+       /*
         if (perAumento > 0) {
-          computed = computed + (computed! * perAumento / 100);
+         // computed = computed + (computed! * perAumento / 100);
         }
+
+        */
         updateValor(computed, data['ordem']);
       }
 
@@ -250,12 +253,14 @@ class _Section extends StatelessWidget {
   }
 
   updateValor(var computed, var ordem) async {
+
     await ApiMySql.executaSql(
       'UPDATE $table set valor=$computed where ordem=$ordem',
     );
   }
 
   updatePerc(var computed, var campo) async {
+    print('VALOR DO PERCENTUAL $computed');
     await ApiMySql.executaSql('UPDATE $TBTotais set $campo=$computed');
     // onEdited();
   }

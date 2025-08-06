@@ -28,7 +28,7 @@ class SimuladorTabelaProfessor extends StatefulWidget {
 }
 
 class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
-  int cargaHoraria = 30;
+  int cargaHoraria = 15;
   double _percEntreColunas=0;
   final List<String> niveis = ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'];
 
@@ -141,47 +141,51 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
 
   Future<void> _loadDataAndCalculate() async {
     try{
-    professores = await ApiMySql.getProfessores('ADULTO',TBFolha,TBVantagens).timeout(const Duration(seconds: 30));
-    if(professores==null){
-      print('NULO');
-      setState(() => isLoading = false);
-      return;
-    }
-    if(professores.isEmpty){
-      setState(() => isLoading = false);
-      return;
-    }
-    ///Pega os totais
-    final totais = await ApiMySql.get(TBTotais,null,null);
-    perAumentoInfantil=double.parse(totais[0]['perc_aumento_infantil']);
-    perAumentoAdulto=double.parse(totais[0]['perc_aumento_adulto']);
+      professores = await ApiMySql.getProfessores(widget.tipo,TBFolha,TBVantagens).timeout(const Duration(seconds: 30));
+      if(professores==null){
+        setState(() => isLoading = false);
+        return;
+      }
+      if(professores.isEmpty){
+        setState(() => isLoading = false);
+        return;
+      }
+      ///Pega os totais
+      final totais = await ApiMySql.get(TBTotais,null,null);
+      perAumentoInfantil=double.parse(totais[0]['perc_aumento_infantil']);
+      perAumentoAdulto=double.parse(totais[0]['perc_aumento_adulto']);
 
-    /// Pré-processa a contagem de professores por nível
-    _professoresPorNivel = {};
-    for (var item in professores) {
-      final nivel = item['nivel']?.toString() ?? '';
-      _professoresPorNivel[nivel] = (_professoresPorNivel[nivel] ?? 0) + 1;
-    }
-    ///Pega a quantidade de professores
-    final totals = await Future.wait([
-      Utils.calculateTotals(professores),
-      Utils.calculateTotals(professores),
-    ]);
-    setState(() {
-      _custoMensal = totals[0]['total']!;
-      totProf=professores.length;
-      isLoading = true;
-    });
-    totalFolha=double.parse(professores[0]['total_vencimentos_geral']);
-  } catch (e) {
-  print('Erro ao carregar dados ou calcular: $e');
+      /// Pré-processa a contagem de professores por nível
+      _professoresPorNivel = {};
+      for (var item in professores) {
+        final nivel = item['nivel']?.toString() ?? '';
+        _professoresPorNivel[nivel] = (_professoresPorNivel[nivel] ?? 0) + 1;
+      }
+      ///Pega a quantidade de professores
+      final totals = await Future.wait([
+        Utils.calculateTotals(professores),
+        Utils.calculateTotals(professores),
+      ]);
+      setState(() {
+        _custoMensal = totals[0]['total']!;
+        totProf=professores.length;
+        isLoading = true;
+      });
+      totalFolha=double.parse(professores[0]['total_vencimentos_geral']);
+    } catch (e) {
+      print('Erro ao carregar dados ou calcular: $e');
 
-  }
+    }
     try {
-      profs = await ApiMySql.get(TBProfessor, null, 'ordem');
+      String tB=TBProfessor;
+      if(widget.tipo=='INFANTIL'){
+        tB=TBInfantil;
+      }
+      profs = await ApiMySql.get(tB, null, 'ordem');
+
       valorBase = double.parse(profs[0]['valor']);
 
-      if(perAumentoAdulto>0 && widget.tipo=='NORMAL' ){
+      if(perAumentoAdulto>0 && widget.tipo=='ADULTO' ){
         valorBase=valorBase+(valorBase*perAumentoAdulto/100);
       }
 
@@ -190,7 +194,6 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       }
       ///PISO INFANTIL
       penA = double.parse(profs[2]['valor']);
-
       ///PROGRESSÃO ENTRE NÍVEIS
       penB = double.parse(profs[3]['valor']);
       penC = double.parse(profs[4]['valor']);
@@ -201,7 +204,8 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       ///Percentual de cálculo entre as colunas
 
       final result = calculateTableAndDispersions(
-        niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
+        niveis: ['NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
+        //niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
         valorBase: valorBase,
         penA: penA,
         penB: penB,
@@ -263,9 +267,6 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       body:
       professores==null?Center(
           child: Utils.vazio('Nenhum dado Encontrado')
-      ):professores.isEmpty?
-      Center(
-          child: Utils.vazio('Nenhum dado Encontrado')
       ):
       SingleChildScrollView(
         child: Padding(
@@ -282,7 +283,8 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                 textColor: Colors.black,   // Sua cor de texto
                 borderColor: Colors.grey.shade300,
                 cargaHoraria: cargaHoraria, // Sua carga horária
-                niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Seus níveis
+                niveis: ['NB', 'NC', 'ND', 'NE'], // Seus níveis
+               // niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Seus níveis
                 calculatedTableValues: _calculatedTableValues, // Seus valores calculados
                 quantidadeDeProfessores: (nivel, coluna) {
                   // Sua implementação para contar professores
@@ -333,14 +335,14 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
               SizedBox(height: 24),
 
               SummaryTable(
-                totalProfissionais: totProf,
-                custoMensal: _custoMensal,
-                meses: 12,
-                ferias: 0.033,
-                remuneracaoTotal: 20993884.21,
-                encargosPercentual: 22,
-                totalEncargos: 6968798,
-                totalComEncargos: 0697079709
+                  totalProfissionais: totProf,
+                  custoMensal: _custoMensal,
+                  meses: 12,
+                  ferias: 0.033,
+                  remuneracaoTotal: 20993884.21,
+                  encargosPercentual: 22,
+                  totalEncargos: 6968798,
+                  totalComEncargos: 0697079709
               )
             ],
           ),
@@ -438,11 +440,11 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
-          BoxShadow(
-          color: Colors.black12,
-          blurRadius: 4,
-          offset: Offset(0, 2),
-          ),
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
           ],
         ),
         child: Column(
@@ -469,7 +471,8 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
         setState(() {
           cargaHoraria = int.tryParse(novoValor)!;
           final result = calculateTableAndDispersions(
-            niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
+            niveis: ['NA', 'NB', 'NC', 'ND', 'NE'],
+            //niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'],// Exemplo de níveis
             valorBase: valorBase,
             penA: penA,
             penB: penB,
@@ -500,11 +503,11 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       aoSalvar: (novoValor) {
         novoValor=novoValor.replaceAll('R\$', '');
         novoValor=novoValor.replaceAll(',', '.');
-        print(novoValor);
         setState(() {
           _percEntreColunas = double.tryParse(novoValor)!;
           final result = calculateTableAndDispersions(
-            niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
+            niveis: [ 'NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
+            // niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'],
             valorBase: valorBase,
             penA: penA,
             penB: penB,

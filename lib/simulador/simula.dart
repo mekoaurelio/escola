@@ -69,14 +69,27 @@ class _SimulaState extends State<Simula> {
     try {
       ///PEGA OS PERCENTUAIS DE AUMENTO
       final totais = await ApiMySql.get(TBTotais, null, null);
+      final profs = await ApiMySql.get(TBProfessor, null, 'ordem');
+      final profInfantil = await ApiMySql.get(TBInfantil, null, 'ordem');
+
+      perAumentoInf = '0';
+      percAUmAdulto = '0';
+
+      if(profs.isNotEmpty){
+        percAUmAdulto=profs[1]['percentual'];
+      }
+      if(profInfantil.isNotEmpty){
+        perAumentoInf=profInfantil[1]['percentual'];
+      }
 
       if (totais.isNotEmpty) {
-        perAumentoInf = totais[0]['perc_aumento_infantil'] ?? '0';
-        percAUmAdulto = totais[0]['perc_aumento_adulto'] ?? '0';
+        //perAumentoInf = totais[0]['perc_aumento_infantil'] ?? '0';
+        //percAUmAdulto = totais[0]['perc_aumento_adulto'] ?? '0';
+
       } else {
         // Defina valores padrão ou lance um erro se esses dados são essenciais
-        perAumentoInf = '0';
-        percAUmAdulto = '0';
+       // perAumentoInf = '0';
+       // percAUmAdulto = '0';
       }
 
       ///PEGA OS PROFESSORES EDUCADORES
@@ -87,8 +100,7 @@ class _SimulaState extends State<Simula> {
       ).timeout(const Duration(seconds: 30));
 
       ///PEGA OSPROFESSORES INFANTIL
-      final infantil = await ApiMySql.getProfessores(
-        'INFANTIL',
+      final infantil = await ApiMySql.getProfessores('INFANTIL',
         TBFolha,
         TBVantagens,
       ).timeout(const Duration(seconds: 30));
@@ -97,32 +109,44 @@ class _SimulaState extends State<Simula> {
         Utils.calculateTotals(adulto),
         Utils.calculateTotals(infantil),
       ]);
-      final profs = await ApiMySql.get(TBProfessor, null, 'ordem');
+
 
       ///PROGRESSÃO ENTRE NÍVEIS EDUCADOR
+     /*
       final valorBase = double.parse(profs[0]['valor']);
       final penA = double.parse(profs[2]['valor']);
       final penB = double.parse(profs[3]['valor']);
       final penC = double.parse(profs[4]['valor']);
       final penD = double.parse(profs[5]['valor']);
       final penE = double.parse(profs[6]['valor']);
-      final cargaHoraria = 30;
+      final cargaHoraria = 11;
       final _percEntreColunas = double.parse(profs[1]['percentual']);
       //Progressão entre Classes
 
+      */
+
+      final valorBase = double.parse(profs[0]['valor']);
+      final penA = double.parse(profs[2]['valor']);
+      ///PROGRESSÃO ENTRE NÍVEIS
+      final penB = double.parse(profs[3]['valor']);
+      final penC = double.parse(profs[4]['valor']);
+      final penD = double.parse(profs[5]['valor']);
+      final penE = double.parse(profs[6]['valor']);
+      final _percEntreColunas = double.parse(profs[1]['percentual']);
+
       final result = calculateTableAndDispersions(
-        niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'],
-        // Exemplo de níveis
+        niveis: ['NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
+        //niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
         valorBase: valorBase,
         penA: penA,
         penB: penB,
         penC: penC,
         penD: penD,
         penE: penE,
-        cargaHoraria: cargaHoraria,
+        cargaHoraria: 15,
         percEntreColunas: _percEntreColunas,
       );
-      //_calculatedTableValues = result.calculatedTableValues;
+
 
       setState(() {
         _adulto = adulto;
@@ -215,8 +239,7 @@ class _SimulaState extends State<Simula> {
 
   Widget _buildProfessorTable() {
     final encargos = _totalAdulto * 0.14;
-    final proposta =
-        _totalAdulto + (_totalAdulto * (double.parse(percAUmAdulto) / 100));
+    final proposta = _totalAdulto + (_totalAdulto * (double.parse(percAUmAdulto) / 100));
     final dif = proposta - _totalAdulto;
 
     ///APTS
@@ -1012,11 +1035,9 @@ class _SimulaState extends State<Simula> {
                           ),
                         ],
                         context: context,
-                        titulo:
-                            tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
+                        titulo: tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
                         labelCampo: 'Percentual',
-                        valorInicial:
-                            tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
+                        valorInicial: tipo == 'INFANTIL' ? perAumentoInf : percAUmAdulto,
                         aoSalvar: (novoValor) async {
                           if (tipo == 'INFANTIL') {
                             await ApiMySql.executaSql(
@@ -1055,11 +1076,11 @@ class _SimulaState extends State<Simula> {
                     tooltip: 'Dispersão salarial entre classes \nClick Aqui Para Saber Mais',
                     bgColor:
                         double.parse(_dispersaoHorizontal) > 29.5
-                            ? Colors.red[100]!
+                            ? Colors.red!
                             : Colors.green[100]!,
                     borderColor:
                         double.parse(_dispersaoHorizontal) > 29.5
-                            ? Colors.red[100]!
+                            ? Colors.red!
                             : Colors.green[100]!,
                     textColor: Colors.black54,
                     iconColor: Colors.black54,
@@ -1122,9 +1143,8 @@ class _SimulaState extends State<Simula> {
                   cor: Colors.green[500]!,
                 ),
                 Texto(
-                  tit:
-                      'VERMELHO : Significa que a progressao da sua instituição está  ACIMA do aceitável',
-                  cor: Colors.red[600]!,
+                  tit: 'VERMELHO : Significa que a progressao da sua instituição está  ACIMA do aceitável',
+                  cor: Colors.red,negrito: true,
                 ),
                 SizedBox(height: 10),
                 Texto(

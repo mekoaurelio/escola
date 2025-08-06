@@ -145,7 +145,7 @@ class _StartState extends State<Start> {
         'appBarTitle': 'Professor Educador ',
         'builder': () => SimuladorTabelaProfessor(
           key: const ValueKey('SimuladorTabelaProfessor_normal'),
-          table: '${muni}professor', tipo: 'NORMAL',
+          table: '${muni}professor', tipo: 'ADULTO',
         ),
       },
       {
@@ -465,7 +465,7 @@ class _StartState extends State<Start> {
             padding: const EdgeInsets.all(16),
             width: double.infinity,
             child: const Text(
-              'Copyright © 2025 XmkTech. V.004\nAll rights reserved (41-9-9558-2579)',
+              'Copyright © 2025 XmkTech. V.006\nAll rights reserved (41-9-9558-2579)',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),

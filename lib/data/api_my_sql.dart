@@ -274,7 +274,7 @@ WHERE id_user = $idUser;
     if (tipo == 'INFANTIL') {
       sql2 += " AND f.unidade LIKE '%Educ%Inf%'";
 
-    } else if (tipo == 'NORMAL') {
+    } else if (tipo == 'ADULTO') {
       sql2 += " AND f.unidade NOT LIKE '%Educ%Inf%'";
     }
     sql2 += " GROUP BY f.id ORDER BY f.id";

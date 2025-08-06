@@ -32,12 +32,20 @@ TableCalculationResult calculateTableAndDispersions({
 
     // Define o valor inicial da linha com base no nível
     switch (nivelIndex) {
+      case 0: vrAnteriorDaLinha = penB; break;
+      case 1: vrAnteriorDaLinha = penC; break;
+      case 2: vrAnteriorDaLinha = penD; break;
+      case 3: vrAnteriorDaLinha = penE; break;
+      case 4: vrAnteriorDaLinha = penE; break;
+      //case 5: vrAnteriorDaLinha = penE; break;
+      /*
       case 0: vrAnteriorDaLinha = valorBase; break;
       case 1: vrAnteriorDaLinha = penA; break;
       case 2: vrAnteriorDaLinha = penB; break;
       case 3: vrAnteriorDaLinha = penC; break;
       case 4: vrAnteriorDaLinha = penD; break;
       case 5: vrAnteriorDaLinha = penE; break;
+       */
       default: vrAnteriorDaLinha = 0;
     }
 

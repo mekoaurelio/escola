@@ -101,7 +101,7 @@ class _PacDashboardPage extends State<PacDashboardPage> {
           icon: Icons.child_care,
           color: Color(0xFFEDCB06), // Amarelo
           campo: 'creche',
-         mainValue: lista[0]['creche']??'0.00',
+          mainValue: lista[0]['creche']??'0.00',
          // mainValue: '1.178',
           description: 'Novas unidades de ensino\npara a Educação Infantil',
           campo2: 'creche_vr',
@@ -284,8 +284,8 @@ class MetricCard extends StatelessWidget {
                         onTap: () => Utils.showEditableValueDialog(
                           tB: TBPac,
                           context: context,
-                          initialValue: secondaryValue,
-                          fieldToUpdate: campo2!,
+                          initialValue: mainValue,
+                          fieldToUpdate: campo!,
                           valueType: 'VR', // Este é um valor monetário
                           onValueUpdated: onValueUpdated,),
                         child: Text(

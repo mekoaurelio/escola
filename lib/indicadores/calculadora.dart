@@ -51,8 +51,8 @@ class IcmsDashboardPage extends StatelessWidget {
         IndicatorCard(
           title: 'INDICADOR DE ENSINO (Peso 0.5)',
           children: [
-            const DataRowWithPill(label: 'IDEB 2021', value: '6.2'),
-            const DataRowWithPill(label: 'IDEB 2023', value: '6.8'),
+            const DataRowWithPill(label: 'IDEB 2021', value: '6,8'),
+            const DataRowWithPill(label: 'IDEB 2023', value: '7,5'),
             Padding(
               padding: const EdgeInsets.only(top: 16.0),
               child: Row(
@@ -60,7 +60,7 @@ class IcmsDashboardPage extends StatelessWidget {
                   Expanded(
                     child: SummaryChip(
                     imagePath: 'assets/images/meta.png', // Passe o caminho do seu arquivo
-                      value: '6.6',
+                      value: '6,9',
                       label: 'Meta',
                       backgroundColor: Color(0xFFF0F9FC),
                     ),
@@ -70,7 +70,7 @@ class IcmsDashboardPage extends StatelessWidget {
                   Expanded(
                     child: SummaryChip(
                       imagePath: 'assets/images/meta_ok.png',
-                      value: '1,0',
+                      value: '1,1',
                       label: 'Atingimento da Meta\ndo IDEB',
                       //#F0FFF3
                       backgroundColor: Color(0xFFF0FFF3),
@@ -83,10 +83,10 @@ class IcmsDashboardPage extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         IndicatorCard(
-          title: 'INDICADOR DE ALFABETIZAÇÃO (Peso 0.3)',
+          title: 'INDICADOR DE ALFABETIZAÇÃO (Peso 0,3)',
           children: [
-            const DataRowWithPill(label: 'SAEB 2021', value: '6.2'),
-            const DataRowWithPill(label: 'SAEB 2023', value: '6.8'),
+            const DataRowWithPill(label: 'SAEB 2021', value: '6,9'),
+            const DataRowWithPill(label: 'SAEB 2023', value: '7,5'),
             Padding(
               padding: const EdgeInsets.only(top: 16.0),
               child: Row(
@@ -94,7 +94,7 @@ class IcmsDashboardPage extends StatelessWidget {
                   Expanded(
                     child: SummaryChip(
                       imagePath: 'assets/images/meta.png',
-                      value: '6.7',
+                      value: '7',
                       label: 'Meta',
                       //iconColor: kBlueHeaderColor,
                       backgroundColor: Color(0xFFE3F2FD),
@@ -104,7 +104,7 @@ class IcmsDashboardPage extends StatelessWidget {
                   Expanded(
                     child: SummaryChip(
                       imagePath: 'assets/images/meta_ok.png',
-                      value: '1,02',
+                      value: '1,08',
                       label: 'Atingimento da Meta\ndo SAEB',
                     //  iconColor: kGreenPillColor,
                       backgroundColor: Color(0xFFE8F5E9),
@@ -119,12 +119,12 @@ class IcmsDashboardPage extends StatelessWidget {
         IndicatorCard(
           title: 'INDICADORES DE EDUCAÇÃO INTEGRAL (Peso 0.1)',
           children: [
-            const DataRowWithPill(label: 'INTEGRAL CENSO 2022', value: '730'),
-            const DataRowWithPill(label: 'INTEGRAL CENSO 2023', value: '1.040'),
-            const DataRowWithPill(label: 'TOTAL DE MATRÍCULAS 2022', value: '14.444'),
-            const DataRowWithPill(label: 'TOTAL DE MATRÍCULAS 2023', value: '14.701'),
-            const DataRowWithPill(label: '% PERCENTUAL 2021', value: '5%'),
-            const DataRowWithPill(label: '% PERCENTUAL 2022', value: '7%'),
+            const DataRowWithPill(label: 'INTEGRAL CENSO 2022', value: '1.011'),
+            const DataRowWithPill(label: 'INTEGRAL CENSO 2023', value: '1.259'),
+            const DataRowWithPill(label: 'TOTAL DE MATRÍCULAS 2022', value: '4.647'),
+            const DataRowWithPill(label: 'TOTAL DE MATRÍCULAS 2023', value: '5.119'),
+            const DataRowWithPill(label: '% PERCENTUAL 2021', value: '22%'),
+            const DataRowWithPill(label: '% PERCENTUAL 2022', value: '25%'),
             Padding(
               padding: const EdgeInsets.only(top: 16.0),
               child: Row(
@@ -132,7 +132,7 @@ class IcmsDashboardPage extends StatelessWidget {
                   Expanded(
                     child: SummaryChip(
                       imagePath: 'assets/images/meta.png',
-                      value: '14,1%',
+                      value: '28%',
                       label: 'Meta',
                      // iconColor: kBlueHeaderColor,
                       backgroundColor: Color(0xFFE3F2FD),
@@ -142,7 +142,7 @@ class IcmsDashboardPage extends StatelessWidget {
                   Expanded(
                     child: SummaryChip(
                       imagePath: 'assets/images/meta_nao_ok.png',
-                      value: '0,5',
+                      value: '0,9',
                       label: 'Atingimento da\nEducação Integral',
                       backgroundColor: Colors.red,
                     ),
@@ -164,7 +164,7 @@ class IcmsDashboardPage extends StatelessWidget {
                   Expanded(
                     child: SummaryChip(
                       imagePath: 'assets/images/meta.png',
-                      value: '5.2',
+                      value: '5,2',
                       label: 'Meta',
                      // iconColor: kBlueHeaderColor,
                       backgroundColor: Color(0xFFE3F2FD),
@@ -199,19 +199,19 @@ class IcmsDashboardPage extends StatelessWidget {
             CalculationItem(
               title: 'INDICADORES * MATRÍCULAS',
               subtitle: '(IDEB *0,5 + ALFAB. *0,3 +INTEGRAL *0,1 + FATOR SOCIAL *0,1)',
-              value: 'R\$ 14.201,17',
+              value: ' 5.390,81',
 
               pillColor: kGreenPillColor,
             ),
             CalculationItem(
               title: 'SOMA (INDICADORES * MATRÍCULAS) DE TODOS OS MUNICÍPIO DO ESTADO',
-              value: 'R\$ 1.053.736,28',
+              value: '1.053.736,28',
               pillColor: kGreenPillColor,
             ),
             CalculationItem(
               title: 'RESULTADO',
               subtitle: 'Índice de Qualidade da Educação do Paraná (IQEP) - Deste município',
-              value: 'R\$ 0,01347696406159',
+              value: '0,00511542317863',
               pillColor: kLightBluePillColor,
             ),
           ],
@@ -230,13 +230,13 @@ class IcmsDashboardPage extends StatelessWidget {
             CalculationItem(
               title: 'RESULTADO',
               subtitle: 'PREVISÃO DE VALOR PARA ESTE MUNICÍPIO',
-              value: 'R\$ 17.137.590,52',
+              value: 'R\$ 6.504.879,54',
               pillColor: kLightBluePillColor,
             ),
             CalculationItem(
               title: 'PER CAPITA',
               subtitle: 'VALOR POR ALUNO',
-              value: 'R\$ 1.165,74',
+              value: 'R\$ 1.270,73',
               //#16D03B #16D03B #F0FFF3
               pillColor: Color(0xFFF0FFF3),
               valueColor: Color(0xFF16D03B),

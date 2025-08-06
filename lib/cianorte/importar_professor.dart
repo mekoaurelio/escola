@@ -331,24 +331,26 @@ class _ImportContratosScreenState extends State<ImportContratosScreen> {
 
   // Função para obter o valor de uma célula como String, tratando tipos e nulos.
   String _getCellValue(Data? cell) {
+
     if (cell == null) return '';
+    print(cell!.value.toString());
     // A biblioteca excel pode ler números como double (ex: 19.0) ou int.
+    /*
     if (cell.value is double) {
+      print('É UM DOUBLE '+cell.value );
       // Se for um double sem parte decimal, converte para int.
       if ((cell.value as double) % 1 == 0) {
         return (cell.value as double).toInt().toString();
       }
       return (cell.value as double).toString();
     }
-    // Lida com datas que podem ser lidas como um tipo específico
-  //  if (cell.cellType == CellType.date) {
-      try {
-        // Tenta formatar a data lida pelo pacote
-        return DateFormat('dd/MM/yyyy').format(DateTime.parse(cell.value.toString()));
-      } catch(e) {
-        return cell.value.toString();
-      }
-  //  }
+
+     */
+
+    if(cell.value.toString().toString().contains('R/\$')){
+      print('VALOR');
+      return Utils.saldoToSave(cell.value.toString());
+    }
     return cell.value?.toString().trim() ?? '';
   }
 
@@ -397,29 +399,47 @@ class _ImportContratosScreenState extends State<ImportContratosScreen> {
         continue;
       }
 
+        _getCellValue(row.length > 0 ? row[0] : null);
+        _getCellValue(row.length > 1 ? row[1] : null);
+        _getCellValue(row.length > 2 ? row[2] : null);
+        _getCellValue(row.length > 3 ? row[3] : null);
+        _getCellValue(row.length > 4 ? row[4] : null);
+        _getCellValue(row.length > 5 ? row[5] : null);
+        _getCellValue(row.length > 6 ? row[6] : null);
+        _getCellValue(row.length > 7 ? row[7] : null);
+      _getCellValue(row.length > 8 ? row[8] : null);
+      _getCellValue(row.length > 27 ? row[27] : null);
+      _getCellValue(row.length > 28 ? row[28] : null);
+      _getCellValue(row.length > 29 ? row[29] : null);
+      _getCellValue(row.length > 30 ? row[30] : null);
+
+
       // ==========================================================
       // PARTE 1: Processar os dados principais do funcionário
       // ==========================================================
+      /*
       final matricula = matriculaStr;
       final nome = _getCellValue(row.length > 1 ? row[1] : null).replaceAll("'", "''");
       final dataAdmissao = _formatDateForSql(_getCellValue(row.length > 2 ? row[2] : null));
-      final cargo = _getCellValue(row.length > 3 ? row[3] : null).replaceAll("'", "''");
-      final nivel = _getCellValue(row.length > 4 ? row[4] : null);
-      final horas = _getCellValue(row.length > 5 ? row[5] : null);
-      final nivelFaixa = _getCellValue(row.length > 6 ? row[6] : null);
-      final grupo = _getCellValue(row.length > 7 ? row[7] : null);
-      final provBase = _parseCurrency(_getCellValue(row.length > 23 ? row[23] : null));
-      final totalGeral = _parseCurrency(_getCellValue(row.length > 24 ? row[24] : null));
+      final horas = _getCellValue(row.length > 7 ? row[7] : null);
+      final unidade = _getCellValue(row.length > 4 ? row[4] : null)+'-$horas';
+     // final nivel = _getCellValue(row.length > 4 ? row[4] : null);
 
-      print( "INSERT INTO $TBFolha (matricula, nome, admissao, cargo, nivel, horas, nivel_faixa, grupo, vencimento_base, total_geral) VALUES "
-          "('$matricula', '$nome', $dataAdmissao, '$cargo', '$nivel', '$horas', '$nivelFaixa', '$grupo', $provBase, $totalGeral);");
-      /*
+      final nivelFaixa = _getCellValue(row.length > 8 ? row[8] : null);
+     // final grupo = _getCellValue(row.length > 7 ? row[7] : null);
+      final vencimento = _parseCurrency(_getCellValue(row.length > 10 ? row[10] : null));
+     // final totalGeral = _parseCurrency(_getCellValue(row.length > 24 ? row[24] : null));
+
+      print("INSERT INTO cia_2501 (matricula, nome, admissao, unidade,nivel,vencimento, total_geral) VALUES "
+          "('$matricula', '$nome', $dataAdmissao, '$unidade', '$nivelFaixa', $vencimento);");
+
       insertsFolha.add(
-          "INSERT INTO $TBFolha (matricula, nome, admissao, cargo, nivel, horas, nivel_faixa, grupo, vencimento_base, total_geral) VALUES "
-              "('$matricula', '$nome', $dataAdmissao, '$cargo', '$nivel', '$horas', '$nivelFaixa', '$grupo', $provBase, $totalGeral);"
+          "INSERT INTO cia_2501 (matricula, nome, admissao, unidade,nivel,vencimento) VALUES "
+              "('$matricula', '$nome', $dataAdmissao, '$unidade', '$nivelFaixa', $vencimento);"
       );
 
        */
+
 
       // ==========================================================
       // PARTE 2: Processar as vantagens (colunas J até AB)
@@ -433,16 +453,17 @@ class _ImportContratosScreenState extends State<ImportContratosScreen> {
           // O valor precisa ser maior que zero para ser inserido
           if (valorVantagem > 0) {
             final String descricaoVantagem = _getCellValue(headerRow.length > colIndex ? headerRow[colIndex] : null).replaceAll("'", "''");
-
+/*
             print("INSERT INTO $TBVantagens (matricula, descricao, valor) VALUES "
                 "('$matricula', '$descricaoVantagem', $valorVantagem);");
-            /*
+
             insertsVantagens.add(
                 "INSERT INTO $TBVantagens (matricula, descricao, valor) VALUES "
                     "('$matricula', '$descricaoVantagem', $valorVantagem);"
             );
 
-             */
+ */
+
           }
         }
       }
