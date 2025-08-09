@@ -25,7 +25,7 @@ class EducationalReceiptsPage extends StatelessWidget {
                 title: 'FONTES DE FINANCIAMENTO DA EDUCAÇÃO BÁSICA',
                 imagePath: 'assets/images/dollar_up.png',
                 data: const [
-                  {'label': 'FUNDEB', 'value': 'R\$ 8.967.707,50'},
+                  {'label': 'VINCULAÇÃO - FUNDEB', 'value': 'R\$ 8.967.707,50'},
                   {'label': '103 - 5% de Transferência', 'value': 'R\$ 539.055,08', 'isSubItem': true},
                   {'label': '104 - 25% de Transferência', 'value': 'R\$ 3.933.095,94', 'isSubItem': true},
                   {'label': 'TOTAL', 'value': 'R\$ 83.553.718,93', 'isTotal': true},

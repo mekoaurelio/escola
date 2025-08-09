@@ -4,8 +4,8 @@ import 'package:get/get.dart';
 
 import 'auxiliares/usuario_lista.dart';
 import 'const/const.dart';
-import 'package:GEM/services/table_name_service.dart';
 import 'dashboard/dashboard_screen.dart';
+import 'data/database_structure_builder.dart';
 import 'doc/document_screen.dart';
 import 'impacto/impacto_grid2.dart';
 import 'import/pdfExtractorPage.dart';
@@ -36,31 +36,10 @@ class Start extends StatefulWidget {
 class _StartState extends State<Start> {
   late List<Map<String, dynamic>> _allPages=[];
   String _currentPageId = 'home';
-  String _currentAno = '25'; // Default para evitar '00'
-  String _currentBimestre = '01'; // Default para evitar '00'
-  bool temAnoBimestre=false;
   String _cidadeSelecionada = 'Dois Vizinhos';
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
 
-  final List<Map<String, String>> _anos = [
-    {'code': '00','name': 'Escolha o Ano'},
-    {'code': '20', 'name': '2020'},
-    {'code': '21', 'name': '2021'},
-    {'code': '22', 'name': '2022'},
-    {'code': '23', 'name': '2023'},
-    {'code': '24', 'name': '2024'},
-    {'code': '25', 'name': '2025'},
-  ];
 
-  final List<Map<String, String>> _bimestres = [
-    {'code': '00','name': 'Escolha o Bimestre'},
-    {'code': '01','name': 'Primeiro Bimestre'},
-    {'code': '02','name': 'Segundo Bimestre'},
-    {'code': '03','name': 'Terceiro Bimestre'},
-    {'code': '04','name': 'Quarto Bimestre'},
-    {'code': '05','name': 'Quinto Bimestre'},
-    {'code': '06','name': 'Sexto Bimestre'},
-  ];
 
   @override
   void initState() {
@@ -75,8 +54,6 @@ class _StartState extends State<Start> {
 
   void _initializePages(){
     String muni = filterController.municipio.value;
-    //String muni=Utils.getUserMunicipio();
-    ///pega os direitos de acesso
 
     _allPages = [
       // === GRUPO: MAIN ===
@@ -229,37 +206,17 @@ class _StartState extends State<Start> {
   }
 
   void start() {
-   // atualizaNomeDasTabelas();
     setState(() {
-      temAnoBimestre = true;
       var cid= filterController.municipio.value;
-      if(cid=='cia_'){
-        _cidadeSelecionada='Cianorte';
-      }
-      if(cid=='a_'){
-        _cidadeSelecionada='Dois Vizinhos';
+      switch (cid) {
+        case 'a_':
+          _cidadeSelecionada = 'Dois Vizinhos';
+        case 'cia_':
+          _cidadeSelecionada = 'Cianorte';
+        case 'ind_l':
+          _cidadeSelecionada = 'Indaial';
       }
     });
-  }
-
-  void _changeAno(String? ano) {
-    if (ano != null && ano != '00') {
-      // Usa o novo controller para atualizar o estado global
-      filterController.updateFilters(novoAno: ano);
-      setState(() {
-        _currentAno = ano;
-      });
-    }
-  }
-
-  // 6. CORRIJA a função _changeBimestre()
-  void _changeBimestre(String? bimestre) {
-    if (bimestre != null && bimestre != '00') { // O código do bimestre é '01', '02', etc.
-      filterController.updateFilters(novoBimestre: bimestre);
-      setState(() {
-        _currentBimestre = bimestre;
-      });
-    }
   }
 
   // ===================================================================
@@ -307,7 +264,7 @@ class _StartState extends State<Start> {
       automaticallyImplyLeading: false, // Não mostra o botão de voltar/menu
       title: Texto(tit: _currentPageData['appBarTitle'], cor: Colors.white, tam: 20),
       actions: [
-        _buildFilterControls(), // Filtros ficam na AppBar no desktop
+         // Filtros ficam na AppBar no desktop
         const SizedBox(width: 16),
       ],
     );
@@ -322,7 +279,7 @@ class _StartState extends State<Start> {
       drawer: _buildNavigationDrawer(),
       body: Column(
         children: [
-          _buildFilterControls(), // Filtros ficam no TOPO do conteúdo no mobile
+         // Filtros ficam no TOPO do conteúdo no mobile
           const Divider(height: 1),
           Expanded(child: _getContent()),
         ],
@@ -342,53 +299,8 @@ class _StartState extends State<Start> {
   // --- WIDGETS COMPARTILHADOS ---
 
   /// Controles de filtro (Ano e Bimestre) extraídos para um widget separado.
-  Widget _buildFilterControls() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: appBarColor, // Fundo consistente
-      child: Row(
-        mainAxisSize: MainAxisSize.min, // Para não ocupar a linha toda no mobile
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          _anosDropdown(),
-          const SizedBox(width: 24),
-          _bimestreDropdown(),
-        ],
-      ),
-    );
-  }
 
-  Widget _anosDropdown() {
-    return DropdownButtonHideUnderline(
-      child: DropdownButton<String>(
-        value: _currentAno,
-        dropdownColor: Colors.grey,
-        onChanged: _changeAno,
-        items: _anos.map((ano) {
-          return DropdownMenuItem<String>(
-            value: ano['code'],
-            child: Texto(tit:ano['name']!,cor:Colors.white),
-          );
-        }).toList(),
-      ),
-    );
-  }
 
-  Widget _bimestreDropdown() {
-    return DropdownButtonHideUnderline(
-      child: DropdownButton<String>(
-        value: _currentBimestre,
-        dropdownColor: Colors.grey,
-        onChanged: _changeBimestre,
-        items: _bimestres.map((bim) {
-          return DropdownMenuItem<String>(
-            value: bim['code'],
-            child: Texto(tit:bim['name']!,cor: Colors.white,),
-          );
-        }).toList(),
-      ),
-    );
-  }
   Widget _buildNavigationDrawer() {
     return Container(
       width: 250,
@@ -404,20 +316,33 @@ class _StartState extends State<Start> {
                   padding: const EdgeInsets.all(12.0),
                   child: CidadeSelector(
                     cidadeSelecionada: _cidadeSelecionada,
-                    onChanged: (novaCidade) {
+                    onChanged: (novaCidade) async{
                       // O setState é apenas para a UI da Start (mudar o nome da cidade e a imagem)
                       setState(() {
                         _cidadeSelecionada = novaCidade;
                       });
-
-                      // A lógica de negócio é centralizada
-                      String novoMunicipioCode = 'a_'; // Padrão
-                      if (novaCidade == 'Cianorte') {
-                        novoMunicipioCode = 'cia_';
+                      String novoMunicipioCode = 'a_';
+                      switch (novaCidade) {
+                        case 'Dois Vizinhos':
+                          novoMunicipioCode = 'a_';
+                        case 'Cianorte':
+                          novoMunicipioCode = 'cia_';
+                        case 'Indaial':
+                          novoMunicipioCode = 'ind_';
                       }
-
                       // ATUALIZE APENAS O CONTROLLER. Ele cuidará de persistir o dado com o Utils.
                       filterController.updateFilters(novoMunicipio: novoMunicipioCode);
+                      final _muni = novoMunicipioCode;
+                      // 2. Cria uma instância do Builder
+                      final builder = DatabaseStructureBuilder(
+                          municipio:novoMunicipioCode ,
+                          ano: filterController.ano.value,
+                          bimestre: filterController.bimestre.value
+                      );
+
+                      final BuildResult result = await builder.build();
+
+                      print(result);
                       _initializePages();
                     },
 
@@ -434,15 +359,6 @@ class _StartState extends State<Start> {
                     ),
                   ),
                 ),
-                ///Nome do município
-                /*
-                Texto(
-                  tit: _cidadeSelecionada,
-                  cor: Colors.black87,
-                  tam: 18,
-                ),
-
-                 */
 
                 ..._allPages.where((p) => p['group'] == 'main').map((item) => _buildDrawerItem(item)),
                 const Divider(),

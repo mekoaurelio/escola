@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-//import '../const/nome_tabelas.dart';
 import '../services/utils.dart';
 import 'package:GEM/services/table_name_service.dart';
 
@@ -82,65 +81,6 @@ WHERE id_user = $idUser;
    // print(sql);
     return await executaSql(sql);
   }
-/*
-  static Future<dynamic> executaSql(String sql) async {
-    String cleanSql = sql.replaceAll(r'\"', '"');
-
-    //if(sql.contains('$TBExercicio')){
-      //print(sql);
-    //}
-    List<Map<String, dynamic>> dados = [];
-    var url = 'https://www.xmktech.net/dados/get.php?sql=$cleanSql';
-    try {
-      final response = await http.get(Uri.parse(url));
-     // if(sql.contains('Quantidade'))
-       // print(response.body);
-      if (response.statusCode == 200) {
-        String volta = response.body.trim();
-        if (volta.contains('NENHUM') || volta.contains('affected_rows')) {
-          print('RESULTADO $volta');
-          dados = json.decode(volta);
-          return dados;
-        } else {
-          dados = List<Map<String, dynamic>>.from(json.decode(volta));
-          //  print('NO EXECUTA $dados');
-          return dados;
-        }
-      } else {
-        return dados;
-      }
-    } catch (e) {
-      print('ERRO AO EXECUTAR ==> $e');
-      return dados;
-    }
-  }
-
- */
-
-/*
-  static Future<dynamic> executaSql(String sql) async {
-    String cleanSql = sql.replaceAll(r'\"', '"');
-   // print(cleanSql);
-    cleanSql = Uri.encodeComponent(cleanSql)
-        .replaceAll('%25', '%') // Mantém os % originais do LIKE
-        .replaceAll('+', '%20');
-
-    var url = 'https://www.xmktech.net/dados/get.php?sql=$cleanSql';
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-       // print('RESULTADO OK');
-       // print(json.decode(response.body.trim()));
-        return json.decode(response.body.trim());
-      }
-      return [];
-    } catch (e) {
-      print('ERRO AO EXECUTAR ==> $e');
-      return [];
-    }
-  }
-
- */
 
   static Future<List<dynamic>> executaSql(String sql) async {
     try {
@@ -222,10 +162,137 @@ WHERE id_user = $idUser;
   }
   ///************************************************************************
 
+  static criaTabela(String tb)async{
+    final existsResult = await tabelaExiste(tb);
+    final bool tabelaFolhaExiste = existsResult.toString().contains('1');
+    if (!tabelaFolhaExiste) {
+      await seNaoExistirCriaTabelaGenerica(tb);
+      await criaIndice(tb);
+      await addAutoIncremento(tb);
+      if (tb == TBInfantil) {
+        await ApiMySql.dadosInfantilProfessor(
+            TBInfantil, 'Piso Incial 2025 INFANTIL');
+      }
+      if (tb == TBProfessor) {
+        await ApiMySql.dadosInfantilProfessor(TBProfessor, 'Piso Incial 2025');
+      }
+
+      if (tb == TBExercicio) {
+        await ApiMySql.dadosIniciasExercicio(TBExercicio);
+      }
+      if (tb == TBReceitaFundebSimulador) {
+        await ApiMySql.dadosReceitaFundebSimulador(TBReceitaFundebSimulador);
+      }
+    }
+  }
+
+  ///INSERT O REGISTRO INICIAL ***********************************
+  static dadosIniciasExercicio(var tb){
+    String sql='INSERT INTO $tb';
+    sql+=' (descricao, valor, percentual, ordem) VALUES';
+    sql+='("FOLHA FUNDEB 60% - 2020", 10, 10, 1),';
+    sql+='("FOLHA FUNDEB 60% - 2021", 10, 10, 3),';
+    sql+='("FOLHA FUNDEB 60% - 2022", 10, 10, 4),';
+    sql+='("FOLHA FUNDEB 70% - 2023", 10, 10, 5),';
+    sql+='("FOLHA FUNDEB 70% - 2024", 10, 10, 6),';
+    sql+='("FOLHA FUNDEB 70% - 2025 - ESTIMATIVA", 10, 10, 7),';
+    sql+='("xxxxx", 0.00, 0.00, 0)' ;
+    executaSql(sql);
+  }
+
+  static dadosReceitaFundebSimulador(var tb){
+    String sql='INSERT INTO $tb';
+    sql+=' (descricao, valor, percentual, ordem) VALUES';
+    sql+='("xxxxx", 10, 10, 0),';
+    sql+='("FUNDEB 2020", 10, 10, 1),';
+    sql+='("FUNDEB 2021", 10, 10, 3),';
+    sql+='("FUNDEB 2022", 10, 10, 4),';
+    sql+='("FUNDEB 2023", 10, 10, 5),';
+    sql+='("FUNDEB 2024", 10, 10, 6),';
+    sql+='("FUNDEB 2025 - ESTIMATIVA", 10, 10, 7)';
+    executaSql(sql);
+  }
+
+
+  static dadosInfantilProfessor(var tb,var title){
+    var sql='INSERT INTO $tb';
+    sql+='(descricao, valor, percentual, ordem) VALUES';
+    sql+='("$title", 10.00, 0.00, 0),';
+    sql+='("Progressão entre Classes", 0.00, 2.00, 1),';
+    sql+='("Progressão entre Níveis B - PISO SUP.", 10.00, 0.00, 3),';
+    sql+='("Progressão entre Níveis NB e NC", 10.00, 10.00, 4),';
+    sql+='("Progressão entre Níveis NC e ND", 10.80, 10.00, 5),';
+    sql+='("Progressão entre Níveis ND e NE", 10.28, 10.00, 6),';
+    sql+='("Encargos Sociais - Estatutário", 0.00, 14.00, 7),';
+    sql+='("Progressão entre níveis A-MAG.", 10.00, 80.00, 2)';
+    executaSql(sql);
+  }
+
+  static dadosDecenio(var tb){
+    var sql='INSERT INTO $tb';
+    sql+='(descricao, vr1, vr12) VALUES';
+    sql+='("FMP", 0.00, 1.00),';
+    sql+='("IPI-EXP.", 1.00, 1.00),';
+    sql+='("Lei Complementar nro 87", 1.00, 1.00),';
+    sql+='("ITR", 1.00, 1.00),';
+    sql+='("IPVA", 1.00, 1.00),';
+    sql+='("ICMS", 0.00, 1.00)';
+    executaSql(sql);
+  }
+
+  static dadosDemostrativoReceita(var tb,var bimestre){
+    var sql='INSERT INTO $tb';
+    sql+='(populacao, dados_exercicio, receita_impostos, receita_transferencia, transferencia_fnde, receita_ao_fundeb, receita_do_fundeb, desp_com_rec_fundeb, prof_educ_basica, minimo70, outras_depesas, resul_liqui_transf, conta25, conta5, conta1000, perc_apli_mde, total_invest_edu, bimestre, total_receita) VALUES';
+    sql+='( 0.00, 0.00, 0.80, 0.0, 0.21, 0.47, 0.43, 0.00, 0.06, 0.74, 0.00, 0.00, 0.70, 0.12, 0.00, 0.00, 0.67, "$bimestre", 0.00)';
+    executaSql(sql);
+  }
+
+  static dadosImpactoEducacaoa(var tb){
+    var sql='INSERT INTO $tb';
+    sql+='(meta, sitaouac, saldo, creche, pre_escola, anos, matriculas_pactuadas, matriculas_declaradas, vr_pago, matriculas_declaradas2, vr_estimado) VALUES';
+    sql+='(0, 0, 0, 0, 0, 0, 0, 0, 0.00, 0, 0.00)';
+    executaSql(sql);
+  }
+
+  static dadosImpostos(var tb){
+    var sql='INSERT INTO $tb';
+    sql+='(descricao, vr1, vr12) VALUES';
+    sql+='("IOF", 0.00, 1.00),';
+    sql+='("ISS", 1.00, 1.00),';
+    sql+='("IPTU", 1.00, 1.00),';
+    sql+='("ITBI", 1.00, 1.00),';
+    sql+='("IR", 1.00, 1.00)';
+    print(sql);
+    executaSql(sql);
+  }
+
+  static dadosPac(var tb){
+    var sql='INSERT INTO $tb';
+    sql+='(creche, creche_vr, onibus, onibus_vr, manifestacoes, investimentos, previsao, escola_tempo_i, escola_tempo_i_vr) VALUES';
+    sql+='(1.00, 0.98, 0.00, 0.00, 0, 0, 0.00, 0.00, 0.00)';
+    executaSql(sql);
+  }
+
+  static dadosTotais(var tb){
+    var sql='INSERT INTO $tb';
+    sql+='(decendio_projetado, decendio_5, imposto_projetado, imposto_25, matricula, receita, fundeb_10_5, perc_aumento_adulto, perc_aumento_infantil) VALUES';
+    sql+='(0.00, 0.00, 0.00, 0.00, 0.00, 0.60, 0.00, 0.00, 0.00)';
+    executaSql(sql);
+  }
+
+  static dadosVaaf(var tb){
+    var sql='INSERT INTO $tb';
+    sql+='( vr1, vr2, vr3, vr4, vr5, vr6, vr7, vr8, vr9, vr10, vr11, vr12, vr13, vr14, vr15, vr16, vr17, vr18, vr19, vr20, vr21) VALUES';
+    sql+='( 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00)';
+    executaSql(sql);
+  }
+
+  ///**************************************************************
+
   static seNaoExistirCriaTabela(String tb)async{
     var sql='CREATE TABLE IF NOT EXISTS $tb (';
     sql+='id int(11) NOT NULL,';
-    sql+="id_municipio int(11) NOT NULL DEFAULT '0',";
+    sql+="id_municipio int(11) NOT NULL DEFAULT 0,";
     sql+='matricula varchar(20) NOT NULL,';
     sql+='nome varchar(255) NOT NULL,';
     sql+='cpf varchar(14) DEFAULT NULL,';
@@ -234,18 +301,12 @@ WHERE id_user = $idUser;
     sql+='cargo varchar(255) DEFAULT NULL,';
     sql+='nivel varchar(50) DEFAULT NULL,';
     sql+='admissao date DEFAULT NULL,';
-    sql+='competencia_mes varchar(20) DEFAULT NULL,';
-    sql+='vantagens_total decimal(10,2) DEFAULT NULL,';
-    sql+='descontos_total decimal(10,2) DEFAULT NULL,';
-    sql+='liquido_total decimal(10,2) DEFAULT NULL,';
-    sql+='fgts_total decimal(10,2) DEFAULT NULL,';
     sql+='vencimento decimal(10,2) DEFAULT NULL,';
     sql+="status varchar(1) DEFAULT 'A',";
     sql+='created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP);';
-    print(sql);
+   // print(sql);
     await executaSql(sql);
   }
-
 
   static getProfessor() async {
     var sql2 = "SELECT  f.id AS folha_id,f.id_municipio,f.matricula,f.nome,f.cpf,f.unidade,f.local_lotacao,f.vencimento,";
@@ -299,13 +360,13 @@ WHERE id_user = $idUser;
     sql+='folha_id int(11) NOT NULL,';
     sql+='codigo varchar(10) NOT NULL,';
     sql+='descricao varchar(255) NOT NULL,';
-    sql+='valor decimal(10,2) NOT NULL,';
-    sql+='percentual decimal(4,2) NOT NULL)';
+    sql+='valor decimal(10,2) NOT NULL DEFAULT 0,';
+    sql+='percentual decimal(4,2) NOT NULL DEFAULT 0)';
     //print(sql);
     await executaSql(sql);
   }
 
-  static seNaoExistirCriaProfessorTotal(String tb)async{
+  static Future<void> seNaoExistirCriaProfessorTotal(String tb)async{
     var sql='CREATE TABLE IF NOT EXISTS $tb (';
     sql+='id int(11) NOT NULL,';
     sql+='id_municipio int(11) NOT NULL DEFAULT 0 ,';
@@ -325,34 +386,35 @@ WHERE id_user = $idUser;
   static seNaoExistirCriaTabelaGenerica(String tb)async{
     var sql='CREATE TABLE IF NOT EXISTS $tb (';
     sql+='id int(11) NOT NULL,';
-    sql+='id_municipio int(11) NOT NULL DEFAULT "0",';
-    sql+='descricao varchar(100) NOT NULL,';
-    sql+='valor decimal(10,2) NOT NULL,';
-    sql+='percentual decimal(4,2) NOT NULL,';
+    sql+='id_municipio int(11) NOT NULL DEFAULT 0,';
+    sql+='descricao varchar(100) NOT NULL DEFAULT 0,';
+    sql+='valor decimal(10,2) NOT NULL DEFAULT 0,';
+    sql+='percentual decimal(4,2) NOT NULL DEFAULT 0,';
     sql+='ordem int(11) NOT NULL)';
-  //  await executaSql(sql);
+   // print(sql);
+    await executaSql(sql);
   }
 
-  static seNaoExistirCriaTabelaFundeb(String tb)async{
+  static Future<void> seNaoExistirCriaTabelaFundeb(String tb)async{
     var sql='CREATE TABLE IF NOT EXISTS $tb (';
     sql+='id int(11) NOT NULL,';
     sql+='id_municipio int(11) NOT NULL DEFAULT "0",';
     sql+='ano int(11) NOT NULL,';
     sql+='valor decimal(10,2) NOT NULL DEFAULT "0",';
     sql+='percentual_crescimento decimal(5,2) NOT NULL DEFAULT "0")';
-   // await executaSql(sql);
+    await executaSql(sql);
   }
 
-  static seNaoExistirCriaTabelaDecenio(String tb)async{
+  static Future<void> seNaoExistirCriaTabelaDecenio(String tb)async{
     var sql='CREATE TABLE IF NOT EXISTS $tb (';
     sql+='id int(11) NOT NULL,';
     sql+='descricao varchar(100) NOT NULL,';
-    sql+='vr1 decimal(15,2) NOT NULL DEFAULT "0",';
-    sql+='vr12 decimal(15,2) NOT NULL DEFAULT "0")';
-    print(sql);
-    //await executaSql(sql);
+    sql+='vr1 decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+='vr12 decimal(15,2) NOT NULL DEFAULT 0)';
+    await executaSql(sql);
   }
-  static seNaoExistirCriaTabelaImpostos(String tb)async{
+
+  static Future<void> seNaoExistirCriaTabelaImpostos(String tb)async{
     var sql='CREATE TABLE IF NOT EXISTS $tb (';
     sql+='id int(11) NOT NULL,';
     sql+='descricao varchar(100) NOT NULL,';
@@ -361,7 +423,8 @@ WHERE id_user = $idUser;
     //print(sql);
     await executaSql(sql);
   }
-  static seNaoExistirCriaTabelaTotais(String tb)async{
+
+  static Future<void> seNaoExistirCriaTabelaTotais(String tb)async{
     var sql='CREATE TABLE IF NOT EXISTS $tb (';
     sql+='id int(11) NOT NULL,';
     sql+= 'decendio_projetado decimal(15,2) NOT NULL DEFAULT "0.00",';
@@ -377,7 +440,25 @@ WHERE id_user = $idUser;
     await executaSql(sql);
   }
 
-  static seNaoExistirCriaTabelaVaaf(String tb)async{
+  static Future<void> seNaoExistirCriaTabelaImpacto(String tb)async{
+    var sql='CREATE TABLE IF NOT EXISTS $tb (';
+    sql+='id int(11) NOT NULL,';
+    sql+= 'meta varchar(100) NOT NULL,';
+    sql+= 'sitaouac varchar(100) NOT NULL,';
+    sql+= 'saldo varchar(100) NOT NULL,';
+    sql+= 'creche varchar(100) NOT NULL,';
+    sql+= 'pre_escola varchar(100) NOT NULL,';
+    sql+= 'anos varchar(100) NOT NULL,';
+    sql+= 'matriculas_pactuadas varchar(100) NOT NULL,';
+    sql+= 'matriculas_declaradas varchar(100) NOT NULL,';
+    sql+= 'matriculas_declaradas2 varchar(100) NOT NULL,';
+    sql+= 'vr_pago decimal(15,2) NOT NULL DEFAULT "0.00",';
+    sql+= 'vr_estimado decimal(15,2) NOT NULL DEFAULT "0.00")';
+    //print(sql);
+    await executaSql(sql);
+  }
+
+  static Future<void> seNaoExistirCriaTabelaVaaf(String tb)async{
     var sql='CREATE TABLE IF NOT EXISTS $tb (';
     sql+='id int(11) NOT NULL,';
     sql+= 'vr1 decimal(10,3) NOT NULL DEFAULT "0.00",';
@@ -401,10 +482,49 @@ WHERE id_user = $idUser;
     sql+= 'vr19 decimal(10,3) NOT NULL DEFAULT "0.00",';
     sql+= 'vr20 decimal(10,3) NOT NULL DEFAULT "0.00",';
     sql+= 'vr21 decimal(10,3) NOT NULL DEFAULT "0.00")';
-    print(sql);
+   // print(sql);
     await executaSql(sql);
   }
 
+  static Future<void> seNaoExistirCriaTabelaPac(String tb)async{
+    var sql='CREATE TABLE IF NOT EXISTS $tb (';
+    sql+='id int(11) NOT NULL,';
+    sql+= 'creche varchar(100) NOT NULL,';
+    sql+= 'creche_vr decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'onibus varchar(100) NOT NULL,';
+    sql+= 'onibus_vr decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'manifestacoes decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'investimentos decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'previsao decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'escola_tempo_i decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'escola_tempo_i_vr decimal(15,2) NOT NULL DEFAULT 0)';
+    await executaSql(sql);
+  }
+
+  static Future<void> seNaoExistirCriaTabelaDemonstrativoReceita(String tb)async{
+    var sql='CREATE TABLE IF NOT EXISTS $tb (';
+    sql+='id int(11) NOT NULL,';
+    sql+= 'populacao decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'dados_exercicio decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'receita_impostos decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'receita_transferencia decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'transferencia_fnde decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'receita_ao_fundeb decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'receita_do_fundeb decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'desp_com_rec_fundeb decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'prof_educ_basica decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'minimo70 varchar(100) NOT NULL,';
+    sql+= 'outras_depesas decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'resul_liqui_transf decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'conta25 decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'conta5 decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'conta1000 decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'perc_apli_mde varchar(100) NOT NULL,';
+    sql+= 'total_invest_edu decimal(15,2) NOT NULL DEFAULT 0,';
+    sql+= 'bimestre varchar(100) NOT NULL,';
+    sql+= 'total_receita decimal(15,2) NOT NULL DEFAULT 0)';
+    await executaSql(sql);
+  }
 
   static criaIndiceVantagem(String tb)async{
     await executaSql('ALTER TABLE $tb ADD PRIMARY KEY (id),ADD KEY folha_id (folha_id)');
@@ -419,7 +539,6 @@ WHERE id_user = $idUser;
   static tabelaExiste(String tb)async{
     var sql='SELECT COUNT(*) as table_exists FROM information_schema.tables';
     sql+=" WHERE table_schema = DATABASE() AND table_name = '$tb'";
-    print(sql);
     return await executaSql(sql);
   }
 
@@ -443,7 +562,6 @@ WHERE id_user = $idUser;
     sql += '$vr, ';
     sql += '"A" ';
     sql += ')';
-     print(sql);
     return await insereSql(sql);
   }
 
@@ -541,7 +659,7 @@ WHERE id_user = $idUser;
       ..write('INSERT INTO $tb (')..write(campos.join(', '))..write(
           ') VALUES (')..write(valores.join(', '))..write(')');
 
-     print(sql);
+     //print(sql);
     return await insereSql(sql.toString());
   }
 

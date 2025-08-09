@@ -61,20 +61,22 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
   }
 
   Future<void> criaStruturaDasTabelas()async{
+    /*
     try{
 
       ///PEGA ANO E BIMESTRE
-     // ano=Utils.getAno();
-      //bimestre=Utils.getBimestre();
+      final ano=Utils.getAno();
+      final bimestre=Utils.getBimestre();
+      final _muni = filterController.municipio.value;
 
       ///VERIFICA SE A TABELA EXISTE NO BANCO DE DADOS
-     // var result=await ApiMySql.tabelaExiste('${muni}$ano$bimestre');
-      bool tabelaExiste=true;
-      //bool tabelaExiste=result.toString().contains('1');
+      var result=await ApiMySql.tabelaExiste('${_muni}$ano$bimestre');
+
+      bool tabelaExiste=result.toString().contains('1');
       if(!tabelaExiste){
         ///SE A TABELA NÃO EXISTE CRIA
         try{
-        //  await ApiMySql.seNaoExistirCriaTabela('${muni}$ano$bimestre');
+          await ApiMySql.seNaoExistirCriaTabela('${_muni}$ano$bimestre');
         //  await ApiMySql.criaIndice('${muni}$ano$bimestre');
         //  await ApiMySql.addAutoIncremento( '${muni}$ano$bimestre');
         } catch (e) {
@@ -123,6 +125,11 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
       Utils.snak('Atenção', 'Escolha o Ano e o Bimestre $e', false, Colors.red);
       //return;
     }
+
+     */
+
+
+
   }
 
   Future<void> insereDadosIniciais(String tb)async{

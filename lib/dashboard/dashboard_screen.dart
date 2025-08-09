@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../const/const.dart';
+import '../data/database_structure_builder.dart';
 import '../indicadores/calculadora.dart';
 import '../indicadores/educationImpactPage.dart';
 import '../indicadores/educationalReceiptsScreen.dart';
@@ -9,6 +11,7 @@ import '../login/login.dart';
 import '../services/utils.dart';
 import '../simulador/simula.dart';
 import '../widgets/texto.dart';
+import 'package:GEM/services/GlobalFilterController.dart';
 // ==========================================================
 // 1. O Layout Principal da Aplicação
 // ==========================================================
@@ -157,13 +160,44 @@ class CustomAppBar extends StatelessWidget {
 // ==========================================================
 // 4. O seu DashboardScreen, agora como conteúdo principal
 // ==========================================================
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   final String userName;
 
   const DashboardScreen({
     Key? key,
     required this.userName,
   }) : super(key: key);
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreen();
+
+}
+
+class _DashboardScreen extends State<DashboardScreen> {
+  String _currentAno = '25'; // Default para evitar '00'
+  String _currentBimestre = '01'; // Default para evitar '00'
+  final GlobalFilterController _filterController = Get.find<GlobalFilterController>();
+
+
+  final List<Map<String, String>> _anos = [
+    {'code': '00','name': 'Escolha o Ano'},
+    {'code': '20', 'name': '2020'},
+    {'code': '21', 'name': '2021'},
+    {'code': '22', 'name': '2022'},
+    {'code': '23', 'name': '2023'},
+    {'code': '24', 'name': '2024'},
+    {'code': '25', 'name': '2025'},
+  ];
+
+  final List<Map<String, String>> _bimestres = [
+    {'code': '00','name': 'Escolha o Bimestre'},
+    {'code': '01','name': 'Primeiro Bimestre'},
+    {'code': '02','name': 'Segundo Bimestre'},
+    {'code': '03','name': 'Terceiro Bimestre'},
+    {'code': '04','name': 'Quarto Bimestre'},
+    {'code': '05','name': 'Quinto Bimestre'},
+    {'code': '06','name': 'Sexto Bimestre'},
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -183,11 +217,12 @@ class DashboardScreen extends StatelessWidget {
                     InkWell(
                       // Chama a nova função estática
                       onTap: () =>changeUser(context),
-                      child: Text('Bem-vindo, ${userName}!',
+                      child: Text('Bem-vindo, ${widget.userName}!',
                         style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                       ),
                     ),
-
+                    _buildFilterControls(),
+/*
                     const SizedBox(height: 16),
                     Row(
                       children: [
@@ -196,6 +231,8 @@ class DashboardScreen extends StatelessWidget {
                         _buildFilterChip('Primeiro Bimestre'),
                       ],
                     )
+
+ */
                   ],
                 ),
                 SizedBox(width: 10,),
@@ -262,41 +299,21 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  // --- Widgets de Helper para o DashboardScreen ---
-
-  Widget _buildFilterChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Row(
-        children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-          const SizedBox(width: 8),
-          const Icon(Icons.keyboard_arrow_down, size: 20, color: Colors.grey),
-        ],
-      ),
-    );
-  }
-
   void changeUser(BuildContext context)async{
-      final bool confirmar = await Utils.showDlg(
-        'Atenção',
-        'Deseja trocar de usuário?',
-        context,
-        'Sim',
-        'Não',
-      );
-      if (confirmar) {
-        Utils.setIdUser('');
-        Utils.setUserName('');
-        Utils.setUserMunicipio('');
-        Utils.setUserType('');
-        Get.offAll(() => Login(), arguments: {});
-      }
+    final bool confirmar = await Utils.showDlg(
+      'Atenção',
+      'Deseja trocar de usuário?',
+      context,
+      'Sim',
+      'Não',
+    );
+    if (confirmar) {
+      Utils.setIdUser('');
+      Utils.setUserName('');
+      Utils.setUserMunicipio('');
+      Utils.setUserType('');
+      Get.offAll(() => Login(), arguments: {});
+    }
   }
 
   Widget _buildMetricCard({
@@ -367,7 +384,92 @@ class DashboardScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _changeAno(String? ano) async{
+    if (ano != null && ano != '00') {
+      _criaEsturaDasTabelas();
+      setState(() {
+        _currentAno = ano;
+      });
+    }
+  }
+
+  void _criaEsturaDasTabelas()async {
+    final _muni = _filterController.municipio.value;
+    // 2. Cria uma instância do Builder
+    final builder = DatabaseStructureBuilder(
+      municipio: _muni,
+      ano: _currentAno,
+      bimestre: _currentBimestre,
+    );
+
+    // 3. Executa a construção
+    final BuildResult result = await builder.build();
+
+    // 4. Analisa o resultado
+    print(result); //
+
+  }
+
+  void _changeBimestre(String? bimestre) {
+    if (bimestre != null && bimestre != '00') { // O código do bimestre é '01', '02', etc.
+      _filterController.updateFilters(novoBimestre: bimestre);
+      _criaEsturaDasTabelas();
+      setState(() {
+        _currentBimestre = bimestre;
+      });
+    }
+  }
+
+  Widget _anosDropdown() {
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        value: _currentAno,
+        dropdownColor: Colors.grey,
+        onChanged: _changeAno,
+        items: _anos.map((ano) {
+          return DropdownMenuItem<String>(
+            value: ano['code'],
+            child: Texto(tit:ano['name']!,cor:Colors.black87),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _bimestreDropdown() {
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        value: _currentBimestre,
+        dropdownColor: Colors.white30,
+        onChanged: _changeBimestre,
+        items: _bimestres.map((bim) {
+          return DropdownMenuItem<String>(
+            value: bim['code'],
+            child: Texto(tit:bim['name']!,cor: Colors.black87,),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildFilterControls() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Colors.transparent, // Fundo consistente
+      child: Row(
+        mainAxisSize: MainAxisSize.min, // Para não ocupar a linha toda no mobile
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          _anosDropdown(),
+          const SizedBox(width: 24),
+          _bimestreDropdown(),
+        ],
+      ),
+    );
+  }
 }
+
 
 // ==========================================================
 // 5. Widgets de Helper e a Tela Cheia

@@ -66,6 +66,7 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
                   campo:'populacao',
                   onValueUpdated: _loadData,
                   ismaster: _isMaster,
+                  tipo: 'String',
                 ),
                 DataRowItem(
                   label: 'DADOS DO EXERCÍCIO DE 2025',
@@ -103,9 +104,10 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
                 DataRowItem(
                   iconType: RowIconType.dollar,
                   label: 'TOTAL RECEITA',
-                  value: demon[0]['receita_transferencia']??'0.00',
-                  campo: ' ',
+                  value: demon[0]['total_receita']??'0.00',
+                  campo: 'total_receita',
                   isHighlighted: true,
+                  onValueUpdated: _loadData,
                   ismaster: _isMaster,
                 ),
                 DataRowItem(
@@ -195,8 +197,8 @@ class _ReceiptsDemonstrativePage extends State<ReceiptsDemonstrativePage> {
                     value: demon[0]['conta5']??'0.00',campo: 'conta5',onValueUpdated: _loadData,ismaster: _isMaster,),
                 DataRowItem(iconType: RowIconType.emptyCircle, label: 'Conta 1000 (Livre)',
                     value: demon[0]['conta1000']??'0.00',campo: 'conta1000',onValueUpdated: _loadData,ismaster: _isMaster,),
-                DataRowItem(iconType: RowIconType.emptyCircle, label: 'acho que é uma soma',
-                    value: '0',campo: '.'),
+               // DataRowItem(iconType: RowIconType.emptyCircle, label: 'acho que é uma soma',
+                 //   value: '0',campo: '.'),
                 DataRowItem(label: 'PERCENTUAL DE APLICAÇÃO MDE',
                     value: demon[0]['perc_apli_mde']??'0.00',campo: 'perc_apli_mde', isHighlighted: true,ismaster: _isMaster,
                   onValueUpdated: _loadData,tipo: '%'),
@@ -411,6 +413,7 @@ class DataRowItem extends StatelessWidget {
         var valorNumerico=novoValor;
         if(tipo=='VR') {
           valorNumerico = Utils.saldoToSave(novoValor);
+          print('Update $TBDemonReceitas set $campo=$valorNumerico');
           await ApiMySql.executaSql('Update $TBDemonReceitas set $campo=$valorNumerico');
         }else{
           String nvr='';
@@ -419,6 +422,7 @@ class DataRowItem extends StatelessWidget {
           }else{
              nvr=novoValor.replaceAll('%', '').trim();
           }
+          print('Update $TBDemonReceitas set $campo="$nvr"');
           await ApiMySql.executaSql('Update $TBDemonReceitas set $campo="$nvr"');
         }
         onValueUpdated?.call();

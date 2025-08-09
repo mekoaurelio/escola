@@ -78,7 +78,7 @@ class _TattooStudioAppState extends State<TattooStudioApp> {
         GlobalCupertinoLocalizations.delegate,  ],
 
       home: _initialScreen!,
-    //  home: ImportContratosScreen()
+     // home: ImportContratosScreen()
 
     );
   }

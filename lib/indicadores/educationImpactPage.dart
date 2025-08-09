@@ -100,6 +100,7 @@ class _EducationImpactPage extends State<EducationImpactPage> {
              ProgramParticipationCard(
                lista: lista,
                onValueUpdated: _loadData,
+               isMaster: _isMaster,
              ),
           ],
         ),
@@ -450,13 +451,12 @@ class ProgramParticipationCard extends StatelessWidget {
               runSpacing: 16,
               children:  [
                 ParticipationChip(
-                    color: Color(0xFF4FC3F7),
-                    isMaster:isMaster,
-                    fieldToUpdate: 'matriculas_pactuadas',
-                    //376
-                    value: lista[0]['matriculas_pactuadas'],
-                    label: 'Matrículas\nPactuadas',
-                    icon: Icons.person_add_alt_1_outlined,
+                  color: Color(0xFF4FC3F7),
+                  isMaster:isMaster,
+                  fieldToUpdate: 'matriculas_pactuadas',
+                  value: lista[0]['matriculas_pactuadas'],
+                  label: 'Matrículas\nPactuadas',
+                  icon: Icons.person_add_alt_1_outlined,
                   onValueUpdated:onValueUpdated ,
                 ),
                 ParticipationChip(
@@ -473,7 +473,6 @@ class ProgramParticipationCard extends StatelessWidget {
                     color: Color(0xFFFBC02D),
                     isMaster:isMaster,
                     fieldToUpdate: 'vr_pago',
-                    //1.942.370,88
                     value: lista[0]['vr_pago'],
                     label: 'Valor Pago',
                     isCurrency: true,
@@ -494,14 +493,20 @@ class ProgramParticipationCard extends StatelessWidget {
                     fieldToUpdate: 'matriculas_declaradas2',
                     value: lista[0]['matriculas_declaradas2'],
                     label: 'Matrículas\nPactuadas',
-                    icon: Icons.person_add_alt_1_outlined),
+                    icon: Icons.person_add_alt_1_outlined,
+                  onValueUpdated:onValueUpdated ,
+                ),
+
                 ParticipationChip(
                     color: Color(0xFFFFA726),
                     isMaster: isMaster,
                     fieldToUpdate: 'vr_estimado',
                     value: lista[0]['vr_estimado'],
                     label: 'Valor estimado',
-                    isCurrency: true),
+                    isCurrency: true,
+                  onValueUpdated:onValueUpdated ,
+                ),
+
               ],
             )
           ],

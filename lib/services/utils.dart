@@ -150,18 +150,40 @@ class Utils {
 
 
   static limpaBanco()async{
-   // String van=await ApiMySql.executaSql('delete from  $TBVantagens');
-    //if(van.contains('ERRO AO EXECUTAR')){
-      //snak('Atenção', 'Não foi possível deletar a tabela de vantagens', false, Colors.red);
-      //return;
-   // }
-  //  await ApiMySql.executaSql('delete from  $TBVantagens');
-    await ApiMySql.executaSql('delete from  $TBFolha');
-    await ApiMySql.executaSql('delete from $TBTotalProfessor');
-    await ApiMySql.executaSql('delete from $TBInfantil');
-    await ApiMySql.executaSql('delete from $TBExercicio');
-    await ApiMySql.executaSql('delete from $TBProfessor');
-    await ApiMySql.executaSql('delete from $TBReceitaFundebSimulador');
+
+    await ApiMySql.executaSql('drop table $TBFolha');
+    await ApiMySql.executaSql('drop table $TBVantagens');
+    await ApiMySql.executaSql('drop table $TBProfessor');
+    await ApiMySql.executaSql('drop table $TBInfantil');
+    await ApiMySql.executaSql('drop table $TBReceitaFundebSimulador');
+    await ApiMySql.executaSql('drop table $TBExercicio');
+    await ApiMySql.executaSql('drop table $TBTotais');
+    await ApiMySql.executaSql('drop table $TBTotalProfessor');
+    await ApiMySql.executaSql('drop table $TBDecenio');
+    await ApiMySql.executaSql('drop table $TBImpostos');
+    await ApiMySql.executaSql('drop table $TBVaaf');
+    await ApiMySql.executaSql('drop table $TBDemonReceitas');
+    await ApiMySql.executaSql('drop table $TBPac');
+    await ApiMySql.executaSql('drop table $TBImpactoEducacao');
+
+   // await ApiMySql.executaSql('drop table $TBFolha '$vantagens$ano$bimestre';');
+    /*
+    DROP table ind_2502;
+    DROP table ind_vantagens2502;
+    DROP table ind_professor2502;
+    DROP table ind_infantil2502;
+    DROP table ind_receita_fundeb_simulador2502;
+    DROP table ind_exercicio2502;
+    DROP table ind_totais2502;
+    DROP table ind_decenio2502;
+    DROP table ind_impostos2502;
+    DROP table ind_vaaf2502;
+    DROP table ind_demonstrativo_receita2502;
+    DROP table ind_pac2502;
+    DROP table ind_impacto_educacao2502;
+    DROP table ind_total_professor2502;
+
+     */
 
   }
 
