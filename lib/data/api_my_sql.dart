@@ -85,7 +85,6 @@ WHERE id_user = $idUser;
   static Future<List<dynamic>> executaSql(String sql) async {
     try {
       final response = await http.get(Uri.parse('https://www.xmktech.net/dados/get.php?sql=${Uri.encodeComponent(sql)}'));
-
       if (response.statusCode == 200) {
         final result = json.decode(response.body.trim());
         return result is List ? result : [result].whereType<dynamic>().toList();
@@ -187,104 +186,156 @@ WHERE id_user = $idUser;
   }
 
   ///INSERT O REGISTRO INICIAL ***********************************
-  static dadosIniciasExercicio(var tb){
-    String sql='INSERT INTO $tb';
-    sql+=' (descricao, valor, percentual, ordem) VALUES';
-    sql+='("FOLHA FUNDEB 60% - 2020", 10, 10, 1),';
-    sql+='("FOLHA FUNDEB 60% - 2021", 10, 10, 3),';
-    sql+='("FOLHA FUNDEB 60% - 2022", 10, 10, 4),';
-    sql+='("FOLHA FUNDEB 70% - 2023", 10, 10, 5),';
-    sql+='("FOLHA FUNDEB 70% - 2024", 10, 10, 6),';
-    sql+='("FOLHA FUNDEB 70% - 2025 - ESTIMATIVA", 10, 10, 7),';
-    sql+='("xxxxx", 0.00, 0.00, 0)' ;
-    executaSql(sql);
+  static dadosIniciasExercicio(var tb)async{
+    bool temDados=await _temdados(tb);
+    if(!temDados) {
+      String sql = 'INSERT INTO $tb';
+      sql += ' (descricao, valor, percentual, ordem) VALUES';
+      sql += '("FOLHA FUNDEB 60% - 2020", 10, 10, 1),';
+      sql += '("FOLHA FUNDEB 60% - 2021", 10, 10, 3),';
+      sql += '("FOLHA FUNDEB 60% - 2022", 10, 10, 4),';
+      sql += '("FOLHA FUNDEB 70% - 2023", 10, 10, 5),';
+      sql += '("FOLHA FUNDEB 70% - 2024", 10, 10, 6),';
+      sql += '("FOLHA FUNDEB 70% - 2025 - ESTIMATIVA", 10, 10, 7),';
+      sql += '("xxxxx", 0.00, 0.00, 0)';
+      executaSql(sql);
+    }
   }
 
-  static dadosReceitaFundebSimulador(var tb){
-    String sql='INSERT INTO $tb';
-    sql+=' (descricao, valor, percentual, ordem) VALUES';
-    sql+='("xxxxx", 10, 10, 0),';
-    sql+='("FUNDEB 2020", 10, 10, 1),';
-    sql+='("FUNDEB 2021", 10, 10, 3),';
-    sql+='("FUNDEB 2022", 10, 10, 4),';
-    sql+='("FUNDEB 2023", 10, 10, 5),';
-    sql+='("FUNDEB 2024", 10, 10, 6),';
-    sql+='("FUNDEB 2025 - ESTIMATIVA", 10, 10, 7)';
-    executaSql(sql);
+  static dadosReceitaFundebSimulador(var tb)async{
+    bool temDados=await _temdados(tb);
+    if(!temDados) {
+      String sql = 'INSERT INTO $tb';
+      sql += ' (descricao, valor, percentual, ordem) VALUES';
+      sql += '("xxxxx", 10, 10, 0),';
+      sql += '("FUNDEB 2020", 10, 10, 1),';
+      sql += '("FUNDEB 2021", 10, 10, 3),';
+      sql += '("FUNDEB 2022", 10, 10, 4),';
+      sql += '("FUNDEB 2023", 10, 10, 5),';
+      sql += '("FUNDEB 2024", 10, 10, 6),';
+      sql += '("FUNDEB 2025 - ESTIMATIVA", 10, 10, 7)';
+      executaSql(sql);
+    }
   }
 
 
-  static dadosInfantilProfessor(var tb,var title){
-    var sql='INSERT INTO $tb';
-    sql+='(descricao, valor, percentual, ordem) VALUES';
-    sql+='("$title", 10.00, 0.00, 0),';
-    sql+='("Progressão entre Classes", 0.00, 2.00, 1),';
-    sql+='("Progressão entre Níveis B - PISO SUP.", 10.00, 0.00, 3),';
-    sql+='("Progressão entre Níveis NB e NC", 10.00, 10.00, 4),';
-    sql+='("Progressão entre Níveis NC e ND", 10.80, 10.00, 5),';
-    sql+='("Progressão entre Níveis ND e NE", 10.28, 10.00, 6),';
-    sql+='("Encargos Sociais - Estatutário", 0.00, 14.00, 7),';
-    sql+='("Progressão entre níveis A-MAG.", 10.00, 80.00, 2)';
-    executaSql(sql);
+  static dadosInfantilProfessor(var tb,var title)async{
+    bool temDados=await _temdados(tb);
+    if(!temDados) {
+      var sql = 'INSERT INTO $tb';
+      sql += '(descricao, valor, percentual, ordem) VALUES';
+      sql += '("$title", 10.00, 0.00, 0),';
+      sql += '("Progressão entre Classes", 0.00, 2.00, 1),';
+      sql += '("Progressão entre Níveis B - PISO SUP.", 10.00, 0.00, 3),';
+      sql += '("Progressão entre Níveis NB e NC", 10.00, 10.00, 4),';
+      sql += '("Progressão entre Níveis NC e ND", 10.80, 10.00, 5),';
+      sql += '("Progressão entre Níveis ND e NE", 10.28, 10.00, 6),';
+      sql += '("Encargos Sociais - Estatutário", 0.00, 14.00, 7),';
+      sql += '("Progressão entre níveis A-MAG.", 10.00, 80.00, 2)';
+      executaSql(sql);
+    }
   }
 
-  static dadosDecenio(var tb){
-    var sql='INSERT INTO $tb';
-    sql+='(descricao, vr1, vr12) VALUES';
-    sql+='("FMP", 0.00, 1.00),';
-    sql+='("IPI-EXP.", 1.00, 1.00),';
-    sql+='("Lei Complementar nro 87", 1.00, 1.00),';
-    sql+='("ITR", 1.00, 1.00),';
-    sql+='("IPVA", 1.00, 1.00),';
-    sql+='("ICMS", 0.00, 1.00)';
-    executaSql(sql);
+  static dadosDecenio(var tb)async{
+    bool temDados=await _temdados(tb);
+    if(!temDados) {
+      var sql = 'INSERT INTO $tb';
+      sql += '(descricao, vr1, vr12) VALUES';
+      sql += '("FMP", 0.00, 1.00),';
+      sql += '("IPI-EXP.", 1.00, 1.00),';
+      sql += '("Lei Complementar nro 87", 1.00, 1.00),';
+      sql += '("ITR", 1.00, 1.00),';
+      sql += '("IPVA", 1.00, 1.00),';
+      sql += '("ICMS", 0.00, 1.00)';
+      executaSql(sql);
+    }
   }
 
-  static dadosDemostrativoReceita(var tb,var bimestre){
-    var sql='INSERT INTO $tb';
-    sql+='(populacao, dados_exercicio, receita_impostos, receita_transferencia, transferencia_fnde, receita_ao_fundeb, receita_do_fundeb, desp_com_rec_fundeb, prof_educ_basica, minimo70, outras_depesas, resul_liqui_transf, conta25, conta5, conta1000, perc_apli_mde, total_invest_edu, bimestre, total_receita) VALUES';
-    sql+='( 0.00, 0.00, 0.80, 0.0, 0.21, 0.47, 0.43, 0.00, 0.06, 0.74, 0.00, 0.00, 0.70, 0.12, 0.00, 0.00, 0.67, "$bimestre", 0.00)';
-    executaSql(sql);
+  static dadosDemostrativoReceita(var tb,var bimestre)async{
+    bool temDados=await _temdados(tb);
+    if(!temDados) {
+      var sql = 'INSERT INTO $tb';
+      sql +=
+      '(populacao, dados_exercicio, receita_impostos, receita_transferencia, transferencia_fnde, receita_ao_fundeb, receita_do_fundeb, desp_com_rec_fundeb, prof_educ_basica, minimo70, outras_depesas, resul_liqui_transf, conta25, conta5, conta1000, perc_apli_mde, total_invest_edu, bimestre, total_receita) VALUES';
+      sql +=
+      '( 0.00, 0.00, 0.80, 0.0, 0.21, 0.47, 0.43, 0.00, 0.06, 0.74, 0.00, 0.00, 0.70, 0.12, 0.00, 0.00, 0.67, "$bimestre", 0.00)';
+      executaSql(sql);
+    }
   }
 
-  static dadosImpactoEducacaoa(var tb){
-    var sql='INSERT INTO $tb';
-    sql+='(meta, sitaouac, saldo, creche, pre_escola, anos, matriculas_pactuadas, matriculas_declaradas, vr_pago, matriculas_declaradas2, vr_estimado) VALUES';
-    sql+='(0, 0, 0, 0, 0, 0, 0, 0, 0.00, 0, 0.00)';
-    executaSql(sql);
+  static dadosReceitasEducacionais(var tb,var bimestre)async{
+    bool temDados=await _temdados(tb);
+    if(!temDados) {
+      var sql = 'INSERT INTO $tb';
+      sql +=
+      '(total_receita, cp_money_01, cp_money_02, cp_money_03, cp_money_04, cp_money_05, cp_money_06, cp_money_07, cp_money_08, cp_money_09, cp_money_10, cp_money_11,';
+      sql += 'cp_money_12, cp_money_13, cp_money_14, cp_money_15, cp_money_16,';
+      sql += 'cp_string_01, cp_string_02, cp_string_03, cp_string_04, cp_string_05, cp_string_06, cp_string_07, cp_string_08, cp_string_09, cp_string_10, cp_string_11,';
+      sql += 'cp_string_12,cp_string_13) VALUES';
+      sql += '( 0.0,0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,';
+      sql += '"0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0")';
+     // print(sql);
+      executaSql(sql);
+    }
   }
 
-  static dadosImpostos(var tb){
-    var sql='INSERT INTO $tb';
-    sql+='(descricao, vr1, vr12) VALUES';
-    sql+='("IOF", 0.00, 1.00),';
-    sql+='("ISS", 1.00, 1.00),';
-    sql+='("IPTU", 1.00, 1.00),';
-    sql+='("ITBI", 1.00, 1.00),';
-    sql+='("IR", 1.00, 1.00)';
-    print(sql);
-    executaSql(sql);
+  static dadosImpactoEducacaoa(var tb)async{
+    bool temDados=await _temdados(tb);
+    if(!temDados) {
+      var sql = 'INSERT INTO $tb';
+      sql +=
+      '(meta, sitaouac, saldo, creche, pre_escola, anos, matriculas_pactuadas, matriculas_declaradas, vr_pago, matriculas_declaradas2, vr_estimado) VALUES';
+      sql += '(0, 0, 0, 0, 0, 0, 0, 0, 0.00, 0, 0.00)';
+      executaSql(sql);
+    }
   }
 
-  static dadosPac(var tb){
-    var sql='INSERT INTO $tb';
-    sql+='(creche, creche_vr, onibus, onibus_vr, manifestacoes, investimentos, previsao, escola_tempo_i, escola_tempo_i_vr) VALUES';
-    sql+='(1.00, 0.98, 0.00, 0.00, 0, 0, 0.00, 0.00, 0.00)';
-    executaSql(sql);
+  static dadosImpostos(var tb)async{
+    bool temDados=await _temdados(tb);
+    if(!temDados) {
+      var sql = 'INSERT INTO $tb';
+      sql += '(descricao, vr1, vr12) VALUES';
+      sql += '("IOF", 0.00, 1.00),';
+      sql += '("ISS", 1.00, 1.00),';
+      sql += '("IPTU", 1.00, 1.00),';
+      sql += '("ITBI", 1.00, 1.00),';
+      sql += '("IR", 1.00, 1.00)';
+      executaSql(sql);
+    }
   }
 
-  static dadosTotais(var tb){
-    var sql='INSERT INTO $tb';
-    sql+='(decendio_projetado, decendio_5, imposto_projetado, imposto_25, matricula, receita, fundeb_10_5, perc_aumento_adulto, perc_aumento_infantil) VALUES';
-    sql+='(0.00, 0.00, 0.00, 0.00, 0.00, 0.60, 0.00, 0.00, 0.00)';
-    executaSql(sql);
+  static dadosPac(var tb)async{
+    bool temDados=await _temdados(tb);
+    if(!temDados) {
+      var sql = 'INSERT INTO $tb';
+      sql +=
+      '(creche, creche_vr, onibus, onibus_vr, manifestacoes, investimentos, previsao, escola_tempo_i, escola_tempo_i_vr) VALUES';
+      sql += '(1.00, 0.98, 0.00, 0.00, 0, 0, 0.00, 0.00, 0.00)';
+      executaSql(sql);
+    }
   }
 
-  static dadosVaaf(var tb){
-    var sql='INSERT INTO $tb';
-    sql+='( vr1, vr2, vr3, vr4, vr5, vr6, vr7, vr8, vr9, vr10, vr11, vr12, vr13, vr14, vr15, vr16, vr17, vr18, vr19, vr20, vr21) VALUES';
-    sql+='( 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00)';
-    executaSql(sql);
+  static dadosTotais(var tb)async{
+    bool temDados=await _temdados(tb);
+    if(!temDados) {
+      var sql = 'INSERT INTO $tb';
+      sql +=
+      '(decendio_projetado, decendio_5, imposto_projetado, imposto_25, matricula, receita, fundeb_10_5, perc_aumento_adulto, perc_aumento_infantil) VALUES';
+      sql += '(0.00, 0.00, 0.00, 0.00, 0.00, 0.60, 0.00, 0.00, 0.00)';
+      executaSql(sql);
+    }
+  }
+
+  static dadosVaaf(var tb)async{
+    bool temDados=await _temdados(tb);
+    if(!temDados) {
+      var sql = 'INSERT INTO $tb';
+      sql +=
+      '( vr1, vr2, vr3, vr4, vr5, vr6, vr7, vr8, vr9, vr10, vr11, vr12, vr13, vr14, vr15, vr16, vr17, vr18, vr19, vr20, vr21) VALUES';
+      sql +=
+      '( 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00)';
+      executaSql(sql);
+    }
   }
 
   ///**************************************************************
@@ -483,6 +534,45 @@ WHERE id_user = $idUser;
     sql+= 'vr20 decimal(10,3) NOT NULL DEFAULT "0.00",';
     sql+= 'vr21 decimal(10,3) NOT NULL DEFAULT "0.00")';
    // print(sql);
+    await executaSql(sql);
+  }
+
+  static Future<void> seNaoExistirCriaTabelareceitasEducacionais(String tb)async{
+    var sql='CREATE TABLE IF NOT EXISTS $tb (';
+    sql+='id int(11) NOT NULL,';
+    sql+= 'total_receita decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_01 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_02 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_03 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_04 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_05 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_06 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_07 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_08 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_09 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_10 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_11 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_12 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_13 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_14 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_15 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'cp_money_16 decimal(10,3) NOT NULL DEFAULT "0.00",';
+
+    sql+= 'cp_string_01 varchar(100) NOT NULL DEFAULT "",';
+    sql+= 'cp_string_02 varchar(100) NOT NULL DEFAULT "",';
+    sql+= 'cp_string_03 varchar(100) NOT NULL DEFAULT "",';
+    sql+= 'cp_string_04 varchar(100) NOT NULL DEFAULT "",';
+    sql+= 'cp_string_05 varchar(100) NOT NULL DEFAULT "",';
+    sql+= 'cp_string_06 varchar(100) NOT NULL DEFAULT "",';
+    sql+= 'cp_string_07 varchar(100) NOT NULL DEFAULT "",';
+    sql+= 'cp_string_08 varchar(100) NOT NULL DEFAULT "",';
+    sql+= 'cp_string_09 varchar(100) NOT NULL DEFAULT "",';
+    sql+= 'cp_string_10 varchar(100) NOT NULL DEFAULT "",';
+    sql+= 'cp_string_11 varchar(100) NOT NULL DEFAULT "",';
+    sql+= 'cp_string_12 varchar(100) NOT NULL DEFAULT "",';
+    sql+= 'cp_string_13 varchar(100) NOT NULL DEFAULT "")';
+    //print(sql);
+
     await executaSql(sql);
   }
 
@@ -695,5 +785,11 @@ WHERE id_user = $idUser;
           ' WHERE $idField = \'${idValue.replaceAll("'", "''")}\'');
   //  print(sql.toString());
     return await executaSql(sql.toString());
+  }
+
+  static Future<bool> _temdados(var tb) async {
+    var lista;
+    lista=await ApiMySql.get(tb,null,null);
+    return lista.length>0;
   }
 }

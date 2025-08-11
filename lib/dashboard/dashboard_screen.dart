@@ -441,7 +441,7 @@ class _DashboardScreen extends State<DashboardScreen> {
     return DropdownButtonHideUnderline(
       child: DropdownButton<String>(
         value: _currentBimestre,
-        dropdownColor: Colors.white30,
+        dropdownColor: Colors.grey,
         onChanged: _changeBimestre,
         items: _bimestres.map((bim) {
           return DropdownMenuItem<String>(

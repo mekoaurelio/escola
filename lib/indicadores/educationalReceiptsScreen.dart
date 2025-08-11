@@ -1,22 +1,79 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:GEM/services/GlobalFilterController.dart';
 
-class EducationalReceiptsPage extends StatelessWidget {
-  const EducationalReceiptsPage({Key? key}) : super(key: key);
+import '../data/api_my_sql.dart';
+import '../services/table_name_service.dart';
+import '../services/utils.dart';
+
+class EducationalReceiptsPage extends StatefulWidget {
+  const EducationalReceiptsPage({Key? key}) : super(key: key); // Adicionado Key
+
+  @override
+  State<EducationalReceiptsPage> createState() => _EducationImpactPage();
+}
+
+
+class _EducationImpactPage extends State<EducationalReceiptsPage> {
+  final GlobalFilterController filterController = Get.find<GlobalFilterController>();
+  bool _isMaster=false;
+  bool _isLoading=true;
+  var lista;
+
+  @override
+  void initState() {
+    super.initState();
+    filterController.municipio.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.ano.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.bimestre.listen((_) => _loadDataBasedOnCurrentFilters());
+    _loadData();
+  }
+
+  void _loadDataBasedOnCurrentFilters() {
+    _loadData();
+  }
+
+  void _loadData() async {
+    // MODIFICAÇÃO 2: Garante que o estado de loading seja setado antes do await.
+   // if (mounted) {
+     // setState(() {
+       // _isLoading = true;
+      //});
+   // }
+
+    // Use 'await' e forneça um valor padrão (lista vazia) se a API retornar null.
+    var result = await ApiMySql.get(TBReceitasEducacionais, null, null);
+    print(result);
+    lista = result ?? []; // Se result for null, lista se torna [].
+
+    if (mounted) { // Sempre verifique se o widget está montado após um await.
+      setState(() {
+        _isLoading = false;
+        _isMaster = Utils.getUserType() == 'M';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       // Fundo cinza claro para a página inteira
       backgroundColor: const Color(0xFFF0F2F5),
-      body: SingleChildScrollView(
+      body: _isLoading? const Center(child: CircularProgressIndicator()):
+      lista.isEmpty // Verificação crucial aqui!
+          ? Utils.vazio('Nenhum Dado Encontado'):
+      SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
               // --- CARD 1: TOTAL DE RECEITAS ---
-              const TotalReceiptsCard(
+               TotalReceiptsCard(
                 year: 2025,
-                totalAmount: 'R\$ 83.553.718,93',
+                isMaster:_isMaster,
+                 fieldToUpdate:'total_receita',
+                totalAmount: lista[0]['total_receita'],
+                 onValueUpdated: _loadData,
               ),
               const SizedBox(height: 24),
 
@@ -24,12 +81,14 @@ class EducationalReceiptsPage extends StatelessWidget {
               TitledTableCard(
                 title: 'FONTES DE FINANCIAMENTO DA EDUCAÇÃO BÁSICA',
                 imagePath: 'assets/images/dollar_up.png',
-                data: const [
-                  {'label': 'VINCULAÇÃO - FUNDEB', 'value': 'R\$ 8.967.707,50'},
-                  {'label': '103 - 5% de Transferência', 'value': 'R\$ 539.055,08', 'isSubItem': true},
-                  {'label': '104 - 25% de Transferência', 'value': 'R\$ 3.933.095,94', 'isSubItem': true},
-                  {'label': 'TOTAL', 'value': 'R\$ 83.553.718,93', 'isTotal': true},
+                data: [
+                  {'label': 'VINCULAÇÃO - FUNDEB', 'value': lista[0]['cp_money_01'],'cp':'cp_money_01'},
+                   {'label': '103 - 5% de Transferência', 'value': lista[0]['cp_money_02'], 'isSubItem': true,'cp':'cp_money_02'},
+                  {'label': '104 - 25% de Transferência', 'value': lista[0]['cp_money_03'], 'isSubItem': true,'cp':'cp_money_03'},
+                   {'label': 'TOTAL', 'value': lista[0]['cp_money_04'], 'isTotal': true,'cp':'cp_money_04'},
                 ],
+                isMaster: _isMaster,
+                onValueUpdated: _loadData,
               ),
               const SizedBox(height: 24),
 
@@ -37,19 +96,21 @@ class EducationalReceiptsPage extends StatelessWidget {
               TitledTableCard(
                 title: 'FONTES ADICIONAIS PARA FINANCIAMENTO DA EDUCAÇÃO',
                 imagePath: 'assets/images/dollar_up.png',
-                data: const [
-                  {'label': 'SALÁRIO-EDUCAÇÃO', 'value': 'R\$ 23.090.209,66'},
-                  {'label': 'PNAE', 'value': 'R\$ 8.967.707,50'},
-                  {'label': 'PNATE', 'value': 'R\$ 539.055,08'},
-                  {'label': 'PETE', 'value': 'R\$ 3.933.095,94'},
-                  {'label': 'PDDE', 'value': 'R\$ 1.900.000,00'},
-                  {'label': 'PROGRAMA ESCOLA EM TEMPO INTEGRAL (1.385 alunos pactuados)', 'value': 'R\$ 3.928.317,05'},
-                  {'label': 'NOVO PAC', 'value': 'R\$ 5.945.400,98'},
-                  {'label': 'PACTO NACIONAL DE RETOMADA', 'value': 'R\$ 13.373.932,72'},
-                  {'label': 'TRANSFERÊNCIA DE CONVÊNIOS', 'value': 'R\$ 7.123.000,00'},
-                  {'label': 'OUTRAS RECEITAS', 'value': 'R\$ 14.753.000,00'},
-                  {'label': 'TOTAL', 'value': 'R\$ 83.553.718,93', 'isTotal': true},
+                data:  [
+                  {'label': 'SALÁRIO-EDUCAÇÃO', 'value': lista[0]['cp_money_05'],'cp':'cp_money_05'},
+                  {'label': 'PNAE', 'value': lista[0]['cp_money_06'],'cp':'cp_money_06'},
+                  {'label': 'PNATE', 'value': lista[0]['cp_money_07'],'cp':'cp_money_07'},
+                  {'label': 'PETE', 'value': lista[0]['cp_money_08'],'cp':'cp_money_08'},
+                  {'label': 'PDDE', 'value': lista[0]['cp_money_09'],'cp':'cp_money_09'},
+                  {'label': 'PROGRAMA ESCOLA EM TEMPO INTEGRAL (1.385 alunos pactuados)', 'value': lista[0]['cp_money_10'],'cp':'cp_money_10'},
+                  {'label': 'NOVO PAC', 'value': lista[0]['cp_money_11'],'cp':'cp_money_11'},
+                  {'label': 'PACTO NACIONAL DE RETOMADA', 'value': lista[0]['cp_money_12'],'cp':'cp_money_12'},
+                  {'label': 'TRANSFERÊNCIA DE CONVÊNIOS', 'value': lista[0]['cp_money_13'],'cp':'cp_money_13'},
+                  {'label': 'OUTRAS RECEITAS', 'value': lista[0]['cp_money_14'],'cp':'cp_money_14'},
+                  {'label': 'TOTAL', 'value': lista[0]['cp_money_15'], 'isTotal': true,'cp':'cp_money_15'},
                 ],
+                isMaster: _isMaster,
+                onValueUpdated: _loadData,
               ),
               const SizedBox(height: 24),
 
@@ -57,21 +118,23 @@ class EducationalReceiptsPage extends StatelessWidget {
               TitledTableCard(
                 title: 'ATENDIMENTO DA REDE PÚBLICA MUNICIPAL',
                 imagePath: 'assets/images/dollar_up.png',
-                data: const [
-                  {'label': 'CRECHE PÚBLICA INTEGRAL', 'value': '2.350'},
-                  {'label': 'CRECHE PÚBLICA PARCIAL', 'value': '0'},
-                  {'label': 'CRECHE CONVENIADA INTEGRAL', 'value': '5.653'},
-                  {'label': 'PRÉ-ESCOLA PÚBLICA INTEGRAL', 'value': '714'},
-                  {'label': 'PRÉ-ESCOLA PÚBLICA PARCIAL', 'value': '7.811'},
-                  {'label': 'PRÉ-ESCOLA CONVENIADA INTEGRAL', 'value': '422'},
-                  {'label': 'PRÉ-ESCOLA CONVENIADA PARCIAL', 'value': '494'},
-                  {'label': 'ENSINO FUNDAMENTAL PÚBLICO INICIAL', 'value': '25.397'},
-                  {'label': 'ENSINO FUNDAMENTAL PÚBLICO INTEGRAL', 'value': '1.260'},
-                  {'label': 'EJA PRESENCIAL', 'value': '486'},
-                  {'label': 'EDUCAÇÃO ESPECIAL', 'value': '2.673'},
-                  {'label': 'EDUCAÇÃO ESPECIAL - AEE', 'value': '1.136'},
-                  {'label': 'TOTAL', 'value': '48.396', 'isTotal': true},
+                data:  [
+                  {'label': 'CRECHE PÚBLICA INTEGRAL', 'value': lista[0]['cp_string_01'],'cp':'cp_string_01'},
+                  {'label': 'CRECHE PÚBLICA PARCIAL', 'value': lista[0]['cp_string_02'],'cp':'cp_string_02'},
+                  {'label': 'CRECHE CONVENIADA INTEGRAL', 'value': lista[0]['cp_string_03'],'cp':'cp_string_03'},
+                  {'label': 'PRÉ-ESCOLA PÚBLICA INTEGRAL', 'value': lista[0]['cp_string_04'],'cp':'cp_string_04'},
+                  {'label': 'PRÉ-ESCOLA PÚBLICA PARCIAL', 'value': lista[0]['cp_string_05'],'cp':'cp_string_05'},
+                  {'label': 'PRÉ-ESCOLA CONVENIADA INTEGRAL', 'value': lista[0]['cp_string_06'],'cp':'cp_string_06'},
+                  {'label': 'PRÉ-ESCOLA CONVENIADA PARCIAL', 'value': lista[0]['cp_string_07'],'cp':'cp_string_07'},
+                  {'label': 'ENSINO FUNDAMENTAL PÚBLICO INICIAL', 'value': lista[0]['cp_string_08'],'cp':'cp_string_08'},
+                  {'label': 'ENSINO FUNDAMENTAL PÚBLICO INTEGRAL', 'value': lista[0]['cp_string_09'],'cp':'cp_string_09'},
+                  {'label': 'EJA PRESENCIAL', 'value': lista[0]['cp_string_10'],'cp':'cp_string_10'},
+                  {'label': 'EDUCAÇÃO ESPECIAL', 'value': lista[0]['cp_string_11'],'cp':'cp_string_11'},
+                  {'label': 'EDUCAÇÃO ESPECIAL - AEE', 'value': lista[0]['cp_string_12'],'cp':'cp_string_12'},
+                  {'label': 'TOTAL', 'value': lista[0]['cp_string_13'], 'isTotal': true,'cp':'cp_string_13'},
                 ],
+                isMaster: _isMaster,
+                onValueUpdated: _loadData,
               ),
             ],
           ),
@@ -86,12 +149,18 @@ class TitledTableCard extends StatelessWidget {
   final String title;
   final String imagePath;
   final List<Map<String, dynamic>> data;
+  final bool isMaster;
+  final String? fieldToUpdate;
+  final VoidCallback? onValueUpdated;
 
   const TitledTableCard({
     Key? key,
     required this.title,
     required this.imagePath,
     required this.data,
+    this.isMaster=false,
+    this.fieldToUpdate,
+    this.onValueUpdated,
   }) : super(key: key);
 
   @override
@@ -139,6 +208,9 @@ class TitledTableCard extends StatelessWidget {
                 value: item['value']!,
                 isTotal: item['isTotal'] ?? false,
                 isSubItem: item['isSubItem'] ?? false,
+                isMaster: isMaster,
+                fieldToUpdate: item['cp']!,
+                onValueUpdated: onValueUpdated,
               );
             }).toList(),
           ),
@@ -154,6 +226,9 @@ class TableDataRow extends StatelessWidget {
   final String value;
   final bool isTotal;
   final bool isSubItem;
+  final bool isMaster;
+  final String? fieldToUpdate;
+  final VoidCallback? onValueUpdated;
 
   const TableDataRow({
     Key? key,
@@ -161,6 +236,9 @@ class TableDataRow extends StatelessWidget {
     required this.value,
     this.isTotal = false,
     this.isSubItem = false,
+    this.isMaster=false,
+    this.fieldToUpdate,
+    this.onValueUpdated,
   }) : super(key: key);
 
   @override
@@ -205,9 +283,20 @@ class TableDataRow extends StatelessWidget {
             flex: 3, // Dá mais espaço para o rótulo
             child: Text(label, style: labelStyle),
           ),
-          Expanded(
-            flex: 2, // Dá espaço para o valor
-            child: Text(value, style: valueStyle, textAlign: TextAlign.right),
+
+          InkWell(
+            onTap: () =>
+            isMaster?
+            Utils.showEditableValueDialog(
+              tB: TBReceitasEducacionais,
+              context: context,
+              initialValue: value,
+              fieldToUpdate: fieldToUpdate!,
+              valueType: fieldToUpdate!.contains('money')?'VR':'String', // Supondo que seja um número simples
+              onValueUpdated: onValueUpdated,
+            ):null,
+            child:  Text( fieldToUpdate!.contains('money')?Utils.toReal(double.parse(value!)):value,
+                style: valueStyle, textAlign: TextAlign.right),
           ),
         ],
       ),
@@ -219,11 +308,17 @@ class TableDataRow extends StatelessWidget {
 class TotalReceiptsCard extends StatelessWidget {
   final int year;
   final String totalAmount;
+  final bool isMaster;
+  final String? fieldToUpdate;
+  final VoidCallback? onValueUpdated;
 
   const TotalReceiptsCard({
     Key? key,
     required this.year,
     required this.totalAmount,
+    this.isMaster=false,
+    this.fieldToUpdate,
+    this.onValueUpdated,
   }) : super(key: key);
 
   @override
@@ -274,14 +369,27 @@ class TotalReceiptsCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  totalAmount,
-                  style: const TextStyle(
-                    color: Color(0xFF28a745), // Cor verde
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
+
+                InkWell(
+                  onTap: () =>
+                  isMaster?
+                  Utils.showEditableValueDialog(
+                    tB: TBReceitasEducacionais,
+                    context: context,
+                    initialValue: totalAmount,
+                    fieldToUpdate: fieldToUpdate!,
+                    valueType: 'VR',
+                    onValueUpdated: onValueUpdated,
+                  ):null,
+                  child:  Text(Utils.toReal(double.parse(totalAmount!)),
+                    style: const TextStyle(
+                      color: Color(0xFF28a745), // Cor verde
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
+
               ],
             ),
           )

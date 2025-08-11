@@ -16,6 +16,7 @@ String TBVaaf='';
 String TBDemonReceitas='';
 String TBPac='';
 String TBImpactoEducacao='';
+String TBReceitasEducacionais='';
 
 class TableNameService extends GetxService {
   // Pega a instância do controller global
@@ -56,6 +57,7 @@ class TableNameService extends GetxService {
     TBDemonReceitas='${muni}demonstrativo_receita$ano$bimestre';
     TBPac='${muni}pac$ano$bimestre';
     TBImpactoEducacao='${muni}impacto_educacao$ano$bimestre';
+    TBReceitasEducacionais='${muni}receitas_educacionais$ano$bimestre';
 
     print('TABELA ATUAL');
     print(TBFolha);

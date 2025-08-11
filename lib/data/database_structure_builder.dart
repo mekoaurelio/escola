@@ -80,6 +80,7 @@ class DatabaseStructureBuilder {
       await _buildImpacto();
       await _buildPac();
       await _buildDemonReceita();
+      await _buildDemonReceitasEducacionais();
 
       _logs.add('Construção da estrutura concluída com sucesso!');
       return BuildResult(success: true, logs: _logs);
@@ -117,15 +118,15 @@ class DatabaseStructureBuilder {
   }
 
 
+  Future<void> _buildImpostosTable() async {
+    await _createTableWithStandardFeatures(TBImpostos, ApiMySql.seNaoExistirCriaTabelaImpostos);
+    await ApiMySql.dadosImpostos(TBImpostos);
+
+  }
 
   Future<void> _buildDecenioTable() async {
     await _createTableWithStandardFeatures(TBDecenio, ApiMySql.seNaoExistirCriaTabelaDecenio);
     await ApiMySql.dadosDecenio(TBDecenio);
-  }
-
-  Future<void> _buildImpostosTable() async {
-    await _createTableWithStandardFeatures(TBImpostos, ApiMySql.seNaoExistirCriaTabelaImpostos);
-    await ApiMySql.dadosImpostos(TBImpostos);
   }
 
   Future<void> _buildTotaisTable() async {
@@ -153,4 +154,8 @@ class DatabaseStructureBuilder {
     await ApiMySql.dadosDemostrativoReceita(TBDemonReceitas,bimestre);
   }
 
+  Future<void> _buildDemonReceitasEducacionais() async {
+    await _createTableWithStandardFeatures(TBReceitasEducacionais, ApiMySql.seNaoExistirCriaTabelareceitasEducacionais);
+    await ApiMySql.dadosReceitasEducacionais(TBReceitasEducacionais,bimestre);
+  }
 }

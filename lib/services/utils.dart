@@ -38,8 +38,9 @@ class Utils {
     VoidCallback? onValueUpdated,
   }) async {
 
-    // Define o formatador com base no tipo
+
     List<TextInputFormatter> formatters = [];
+
     if (valueType == 'VR') {
       formatters.add(CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt'));
     } else {
