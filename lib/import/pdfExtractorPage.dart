@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:GEM/services/table_name_service.dart';
 
-import '../const/nome_tabelas.dart';
 import '../data/api_my_sql.dart';
 import '../services/screenSize.dart';
 import '../services/utils.dart';
@@ -30,105 +29,9 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
 
   /// === UPLOAD + EXTRAÇÃO ===
   Future<void> selecionarEEnviarArquivo() async {
-   // Utils.limpaBanco();///NÃO DELETE AS TABELAS APENAS OS DADOS
     ///CRIA A ESTRUTURA DAS TABELAS
     setState(() =>  status = 'Criando a estrutura das tabelas');
-    await criaStruturaDasTabelas();
     setState(() =>  status = 'Fazendo upLoad do arquivo');
-
-    /*
-    final html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
-    uploadInput.accept = '.pdf';
-    uploadInput.click();
-
-    uploadInput.onChange.listen((e) async {
-      final files = uploadInput.files;
-      if (files == null || files.isEmpty) return;
-
-      final file = files.first;
-      final reader = html.FileReader();
-      reader.readAsArrayBuffer(file);
-
-      reader.onLoadEnd.listen((e) async {
-        final data = reader.result as Uint8List;
-        ///FAZ O UPLOAD DO ARQUIVO E INICIA A EXTRAÇÃO
-        await uploadFile(file.name, data);
-      });
-    });
-
-     */
-
-  }
-
-  Future<void> criaStruturaDasTabelas()async{
-    /*
-    try{
-
-      ///PEGA ANO E BIMESTRE
-      final ano=Utils.getAno();
-      final bimestre=Utils.getBimestre();
-      final _muni = filterController.municipio.value;
-
-      ///VERIFICA SE A TABELA EXISTE NO BANCO DE DADOS
-      var result=await ApiMySql.tabelaExiste('${_muni}$ano$bimestre');
-
-      bool tabelaExiste=result.toString().contains('1');
-      if(!tabelaExiste){
-        ///SE A TABELA NÃO EXISTE CRIA
-        try{
-          await ApiMySql.seNaoExistirCriaTabela('${_muni}$ano$bimestre');
-        //  await ApiMySql.criaIndice('${muni}$ano$bimestre');
-        //  await ApiMySql.addAutoIncremento( '${muni}$ano$bimestre');
-        } catch (e) {
-          print("Erro ao criar TBFolha: $e");
-        }
-
-        ///CRIA A TABELA DE VANTAGENS
-        await ApiMySql.seNaoExistirCriaTabelaVantagens(TBVantagens);
-        await ApiMySql.criaIndice(TBVantagens);
-        await ApiMySql.addAutoIncremento(TBVantagens);
-        await ApiMySql.addChaveEStrangeira(TBVantagens,TBFolha);
-
-        ///CRIA TABELA DOS TOTAIS DOS PROFESSORES
-        await ApiMySql.seNaoExistirCriaProfessorTotal(TBTotalProfessor);
-        await ApiMySql.criaIndice(TBTotalProfessor);
-        await ApiMySql.addAutoIncremento(TBTotalProfessor);
-
-        ///CRIA AS TABELAS AUXILIARES
-        await criaTabela(TBInfantil);
-        await criaTabela(TBProfessor);
-        await criaTabela(TBExercicio);
-
-        await criaTabela(TBReceitaFundebSimulador);
-        ///CRIA TABELA DECENIO
-        await ApiMySql.seNaoExistirCriaTabelaDecenio(TBDecenio);
-        await ApiMySql.criaIndice(TBDecenio);
-        await ApiMySql.addAutoIncremento(TBDecenio);
-
-        ///CRIA TABELA IMPOSTOS
-        await ApiMySql.seNaoExistirCriaTabelaImpostos(TBImpostos);
-        await ApiMySql.criaIndice(TBImpostos);
-        await ApiMySql.addAutoIncremento(TBImpostos);
-
-        ///CRIA TABELA TOTAIS
-        await ApiMySql.seNaoExistirCriaTabelaTotais(TBTotais);
-        await ApiMySql.criaIndice(TBTotais);
-        await ApiMySql.addAutoIncremento(TBTotais);
-
-        ///CRIA TABELA VAAF
-        await ApiMySql.seNaoExistirCriaTabelaVaaf(TBVaaf);
-        await ApiMySql.criaIndice(TBVaaf);
-        await ApiMySql.addAutoIncremento(TBVaaf);
-
-      }
-    } catch (e) {
-      Utils.snak('Atenção', 'Escolha o Ano e o Bimestre $e', false, Colors.red);
-      //return;
-    }
-
-     */
-
-
 
   }
 
@@ -170,12 +73,6 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
     ApiMySql.insereSql("insert INTO $tb (ano,valor,percentual_crescimento) values(2023',10,0)");
     ApiMySql.insereSql("insert INTO $tb (ano,valor,percentual_crescimento) values(2024,10,0)");
     ApiMySql.insereSql("insert INTO $tb (ano,valor,percentual_crescimento) values(2025,10,0)");
-  }
-
-  criaTabela(String tb)async{
-    await ApiMySql.seNaoExistirCriaTabelaGenerica(tb);
-    await ApiMySql.criaIndice(tb);
-    await ApiMySql.addAutoIncremento(tb);
   }
 
   Future<void> uploadFile(String fileName, Uint8List fileBytes) async {
@@ -515,7 +412,10 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
             ElevatedButton.icon(
               icon: const Icon(Icons.upload_file),
               label: const Text('Selecionar PDF e Carregar folha'),
-              onPressed: selecionarEEnviarArquivo, //iniciaExtracao
+              onPressed: () {
+                Utils.snak('Atenção','Mometaneamente desativada',false,Colors.red);
+              },
+             // onPressed: selecionarEEnviarArquivo, //iniciaExtracao
             ),
             const SizedBox(height: 20),
             ValueListenableBuilder<double>(

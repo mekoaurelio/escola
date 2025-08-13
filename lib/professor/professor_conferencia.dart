@@ -183,19 +183,11 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
                                   ///Acha o valor do salário base ********************
                                   String vantagensDetalhadas=currentItems[index]['vantagens_detalhadas'];
                                   final vantagens = vantagensDetalhadas.split(' | ');
-                                  String vencimento=vantagens[0];
-                                  int pos=vencimento.indexOf('\$');
-                                  String descriVantagem=vencimento.substring(0,pos);
-                                  int posV=descriVantagem.indexOf(':');
-                                  descriVantagem=descriVantagem.substring(posV+1,descriVantagem.length);
-                                  vencimento=vencimento.substring(pos+1,vencimento.length);
-
+                                  String vencimento=currentItems[index]['vencimento'];
                                   bool isInfante=currentItems[index]['unidade'].toString().contains('Prof.Educ.Inf');//Prof.Educ.Inf.Lic.Plena
 
                                   ///acha os salario PROPOSTO *******
                                   String n=Utils.getNivel(item['nivel']);
-                                  String mk=n;
-                                  n='N$n';
                                   var vrP= Utils.getValueFromMatrix(
                                     baseValues:isInfante? matrizInfantil:matrizProfessor,
                                     //baseValues: matrizProfessor,
@@ -203,29 +195,34 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
                                     code: n,
                                     numberOfColumns: 99, ///quantidade de colunas
                                   );
-                                  ///Veririca quem tem a proposta Menor do que o vencimento
-                                  String vecto=vencimento.replaceAll(',', '');
 
-                                  bool propostaMenorVecto=double.parse(vecto)<double.parse(vrP.toString());
+                                  ///Veririca quem tem a proposta Menor do que o vencimento
+                                  bool propostaMenorVecto=double.parse(vencimento)<double.parse(vrP.toString());
 
                                   String proposta=Utils.formatVr.format(vrP).toString();
-                                  String atps=item['soma_apts'].toString().replaceAll('-', '');
-                                  double sumVantagem=double.parse(item['soma_vantagens']);
-                                  double total=double.parse(atps)+sumVantagem+double.parse(vecto);
 
+                                  //String atps=item['soma_apts'].toString().replaceAll('-', '');
+
+                                  double sumVantagem=double.parse(item['soma_vantagens']);
+                                  print(sumVantagem);
+                                  print('soma das vantagens');
+
+                                  double total=sumVantagem+double.parse(vencimento);
+                                  //double total=double.parse(atps)+sumVantagem+double.parse(vencimento);
+                                  print('ddddddd');
                                   Color cor=Colors.black;
                                   bool negrito=false;
                                   String tootip='';
-
+                                  print('eeeeeee');
                                   if(!propostaMenorVecto){
                                     cor=Colors.red;
                                     negrito=true;
                                   }
-                                  if(proposta=='0,00' || !descriVantagem.contains('Vencimento')) {
+                                  if(proposta=='0,00') {
                                     if(proposta=='0,00'){
-                                      tootip='Nivel inválido $mk';
+                                      tootip='Nivel inválido $n';
                                     }else {
-                                      tootip = descriVantagem;
+                                     // tootip = descriVantagem;
                                     }
                                     cor = Colors.blue;
                                     negrito=true;
@@ -266,7 +263,7 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
                                               Line(tex: item['nivel'], tam: 70, alin: Alignment.center,cor: cor,negrito: negrito,),
                                               Line(tex: vencimento, tam: 100, alin: Alignment.centerRight,cor: cor,negrito: !propostaMenorVecto,),
                                               ///adicional por tempo de serviço
-                                              Line(tex: Utils.formatVr.format(double.parse(atps)), tam: 100, alin: Alignment.centerRight,cor:cor,negrito: negrito,),
+                                              Line(tex: 'ATPS', tam: 100, alin: Alignment.centerRight,cor:cor,negrito: negrito,),
                                               ///vantagens
                                               Line(tex: Utils.formatVr.format(double.parse(item['soma_vantagens'])), tam: 100, alin: Alignment.centerRight,
                                                 cor: cor,negrito: negrito,),

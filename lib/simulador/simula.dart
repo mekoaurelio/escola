@@ -857,48 +857,6 @@ class _SimulaState extends State<Simula> {
     required String tipo,
     Widget? child,
   }) {
-    /*
-    Widget _buildInfoChip({
-      required String text,
-      required IconData trailingIcon,
-      required VoidCallback onTap,
-      required Color bgColor,
-      required Color borderColor,
-      required Color textColor,
-      required Color iconColor,
-      String? tooltip,
-    }) {
-      return Container(
-        width: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.yellow,//bgColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: borderColor),
-        ),
-        child: Row(
-           mainAxisSize: MainAxisSize.min, // Para o container não se esticar
-          children: [
-            ///TEXTO
-            Texto(tit: text,tam: 11,fontWeight:FontWeight.w600 ,cor: textColor,
-              tooltip: 'Clique para editar' ,),
-            const SizedBox(width: 8),
-
-            Tooltip(
-              message: tooltip ?? 'Clique para editar',
-              child: GestureDetector(
-                onTap: onTap,
-                child: Icon(trailingIcon, size: 18, color: iconColor),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-     */
-
-    // dentro do _buildSummaryCard
 
     Widget _buildInfoChip({
       required String text,

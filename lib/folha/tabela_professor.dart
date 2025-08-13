@@ -15,12 +15,12 @@ import 'tabela_salarial.dart';
 
 class SimuladorTabelaProfessor extends StatefulWidget {
   final String table;
-  final String tipo;
+  final String horas;
 
   const SimuladorTabelaProfessor({
     Key? key,
     required this.table,
-    required this.tipo,
+    required this.horas,
   }) : super(key: key);
 
   @override
@@ -141,7 +141,10 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
 
   Future<void> _loadDataAndCalculate() async {
     try{
-      professores = await ApiMySql.getProfessores(widget.tipo,TBFolha,TBVantagens).timeout(const Duration(seconds: 30));
+      //getProfessorPorHora
+     // professores = await ApiMySql.getProfessorPorHora(widget.tipo,TBFolha,TBVantagens).timeout(const Duration(seconds: 30));
+      professores = await ApiMySql.getProfessorPorHora(widget.horas);
+
       if(professores==null){
         setState(() => isLoading = false);
         return;
@@ -178,20 +181,21 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
     }
     try {
       String tB=TBProfessor;
-      if(widget.tipo=='INFANTIL'){
-        tB=TBInfantil;
-      }
+
+      //if(widget.tipo=='INFANTIL'){
+        //tB=TBInfantil;
+     // }
       profs = await ApiMySql.get(tB, null, 'ordem');
 
       valorBase = double.parse(profs[0]['valor']);
 
-      if(perAumentoAdulto>0 && widget.tipo=='ADULTO' ){
-        valorBase=valorBase+(valorBase*perAumentoAdulto/100);
-      }
+      //if(perAumentoAdulto>0 && widget.tipo=='ADULTO' ){
+        //valorBase=valorBase+(valorBase*perAumentoAdulto/100);
+     // }
 
-      if(perAumentoInfantil>0 && widget.tipo=='INFANTIL'){
-        valorBase=valorBase+(valorBase*perAumentoInfantil/100);
-      }
+      //if(perAumentoInfantil>0 && widget.tipo=='INFANTIL'){
+        //valorBase=valorBase+(valorBase*perAumentoInfantil/100);
+     // }
       ///PISO INFANTIL
       penA = double.parse(profs[2]['valor']);
       ///PROGRESSÃO ENTRE NÍVEIS
@@ -323,7 +327,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
               SalaryTotalsTable(
                 primaryColor: Colors.blue, // ou sua cor primária
                 textColor: Colors.black,   // ou sua cor de texto
-                tipo: widget.tipo,
+                tipo: widget.horas,
                 cargaHoraria: cargaHoraria, // ou seu valor
                 niveis: ['NA', 'NB', 'NC', 'ND', 'NE'], // sua lista de níveis
                 calculatedTableValues: _calculatedTableValues, // seus valores calculados

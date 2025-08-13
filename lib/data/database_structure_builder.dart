@@ -26,6 +26,23 @@ class DatabaseStructureBuilder {
   late final String _folhaTableName;
   final List<String> _logs = [];
 
+  //pra não alterar o contúdo das tabelas do sistema
+  String _TBFolha = '';
+  String _TBVantagens = '';
+  String _TBProfessor = '';
+  String _TBInfantil = '';
+  String _TBReceitaFundebSimulador = '';
+  String _TBExercicio = '';
+  String _TBTotais = '';
+  String _TBTotalProfessor='';
+  String _TBDecenio='';
+  String _TBImpostos='';
+  String _TBVaaf='';
+  String _TBDemonReceitas='';
+  String _TBPac='';
+  String _TBImpactoEducacao='';
+  String _TBReceitasEducacionais='';
+
   DatabaseStructureBuilder({
     required this.municipio,
     required this.ano,
@@ -33,42 +50,36 @@ class DatabaseStructureBuilder {
   }) {
     // O nome da tabela principal é construído uma vez no construtor
     _folhaTableName = '$municipio$ano$bimestre';
+    _TBFolha = '${municipio}$ano$bimestre'; // Corrigi o nome da tabela aqui
+    _TBVantagens = '${municipio}vantagens$ano$bimestre';
+    _TBProfessor = '${municipio}professor$ano$bimestre';
+    _TBInfantil = '${municipio}infantil$ano$bimestre';
+    _TBReceitaFundebSimulador = '${municipio}receita_fundeb_simulador$ano$bimestre';
+    _TBExercicio = '${municipio}exercicio$ano$bimestre';
+    _TBTotais = '${municipio}totais$ano$bimestre';
+    _TBTotalProfessor='${municipio}total_professor$ano$bimestre';
+    _TBDecenio='${municipio}decenio$ano$bimestre';
+    _TBImpostos='${municipio}impostos$ano$bimestre';
+    _TBVaaf='${municipio}vaaf$ano$bimestre';
+    _TBDemonReceitas='${municipio}demonstrativo_receita$ano$bimestre';
+    _TBPac='${municipio}pac$ano$bimestre';
+    _TBImpactoEducacao='${municipio}impacto_educacao$ano$bimestre';
+    _TBReceitasEducacionais='${municipio}receitas_educacionais$ano$bimestre';
   }
 
   // Método auxiliar privado para criar uma tabela com índice e auto-incremento
   // Encapsula a lógica repetitiva
   Future<void> _createTableWithStandardFeatures(String tableName, Future<void> Function(String) createTableFunc) async {
     try {
-      _logs.add('Verificando/Criando tabela: $tableName...');
       await createTableFunc(tableName);
-      await ApiMySql.criaIndice(tableName);
-      await ApiMySql.addAutoIncremento(tableName);
-      _logs.add('Tabela $tableName configurada com sucesso.');
     } catch (e) {
-      _logs.add('ERRO ao criar tabela $tableName: $e');
-      // Re-lança a exceção para ser capturada pelo método build()
       throw Exception('Falha ao criar tabela padrão: $tableName. Causa: $e');
     }
   }
 
   // Método principal que orquestra a construção
   Future<BuildResult> build() async {
-    _logs.clear();
-    _logs.add('Iniciando construção da estrutura do banco de dados para $_folhaTableName...');
-
     try {
-      // 1. Verifica se a estrutura principal já existe
-      final existsResult = await ApiMySql.tabelaExiste(_folhaTableName);
-      final bool tabelaFolhaExiste = existsResult.toString().contains('1');
-
-     // if (tabelaFolhaExiste) {
-       // _logs.add('A estrutura principal "$_folhaTableName" já existe. Nenhuma ação necessária.');
-       // return BuildResult(success: true, logs: _logs);
-     // }
-
-      _logs.add('Estrutura principal "$_folhaTableName" não encontrada. Iniciando criação...');
-
-      // 2. Cria a estrutura passo a passo
       await _buildFolhaTable();
       await _buildVantagensTable();
       await _buildProfessorTotalTable();
@@ -82,10 +93,8 @@ class DatabaseStructureBuilder {
       await _buildDemonReceita();
       await _buildDemonReceitasEducacionais();
 
-      _logs.add('Construção da estrutura concluída com sucesso!');
       return BuildResult(success: true, logs: _logs);
     } catch (e) {
-      _logs.add('ERRO CRÍTICO DURANTE A CONSTRUÇÃO: $e');
       Utils.snak('Erro na Estrutura', 'Falha ao criar a estrutura do banco: $e', false, Colors.red);
       return BuildResult(success: false, logs: _logs, errorMessage: e.toString());
     }
@@ -93,69 +102,64 @@ class DatabaseStructureBuilder {
 
   // Métodos privados para cada passo da construção
   Future<void> _buildFolhaTable() async {
-    _logs.add('Criando tabela de folha: $_folhaTableName...');
-    await ApiMySql.seNaoExistirCriaTabela(_folhaTableName);
-    _logs.add('Tabela de folha criada.');
+    await ApiMySql.CriaTabelaProfessor(_folhaTableName);
   }
 
   Future<void> _buildVantagensTable() async {
-    await _createTableWithStandardFeatures(TBVantagens, ApiMySql.seNaoExistirCriaTabelaVantagens);
-    await ApiMySql.addChaveEStrangeira(TBVantagens, _folhaTableName);
-    _logs.add('Chave estrangeira adicionada a $TBVantagens.');
+    await _createTableWithStandardFeatures(_TBVantagens, ApiMySql.CriaTabelaVantagens);
+    await ApiMySql.addChaveEStrangeiraVantagem(_TBVantagens, _folhaTableName);
   }
 
   Future<void> _buildProfessorTotalTable() async {
-    await _createTableWithStandardFeatures(TBTotalProfessor, ApiMySql.seNaoExistirCriaProfessorTotal);
+    await _createTableWithStandardFeatures(_TBTotalProfessor, ApiMySql.CriaProfessorTotal);
   }
 
   Future<void> _buildAuxiliaresTables() async {
-    _logs.add('Criando tabelas auxiliares...');
-    await ApiMySql.criaTabela(TBInfantil);
-    await ApiMySql.criaTabela(TBProfessor);
-    await ApiMySql.criaTabela(TBExercicio);
-    await ApiMySql.criaTabela(TBReceitaFundebSimulador);
-    _logs.add('Tabelas auxiliares criadas.');
+    await ApiMySql.criaTabelaComuns(_TBInfantil);
+    await ApiMySql.criaTabelaComuns(_TBProfessor);
+    await ApiMySql.criaTabelaComuns(_TBExercicio);
+    await ApiMySql.criaTabelaComuns(_TBReceitaFundebSimulador);
   }
 
 
   Future<void> _buildImpostosTable() async {
-    await _createTableWithStandardFeatures(TBImpostos, ApiMySql.seNaoExistirCriaTabelaImpostos);
-    await ApiMySql.dadosImpostos(TBImpostos);
+    await _createTableWithStandardFeatures(_TBImpostos, ApiMySql.CriaTabelaImpostos);
+    await ApiMySql.dadosImpostos(_TBImpostos);
 
   }
 
   Future<void> _buildDecenioTable() async {
-    await _createTableWithStandardFeatures(TBDecenio, ApiMySql.seNaoExistirCriaTabelaDecenio);
-    await ApiMySql.dadosDecenio(TBDecenio);
+    await _createTableWithStandardFeatures(_TBDecenio, ApiMySql.CriaTabelaDecenio);
+    await ApiMySql.dadosDecenio(_TBDecenio);
   }
 
   Future<void> _buildTotaisTable() async {
-    await _createTableWithStandardFeatures(TBTotais, ApiMySql.seNaoExistirCriaTabelaTotais);
-    await ApiMySql.dadosTotais(TBTotais);
+    await _createTableWithStandardFeatures(_TBTotais, ApiMySql.CriaTabelaTotais);
+    await ApiMySql.dadosTotais(_TBTotais);
   }
 
   Future<void> _buildVaafTable() async {
-    await _createTableWithStandardFeatures(TBVaaf, ApiMySql.seNaoExistirCriaTabelaVaaf);
-    await ApiMySql.dadosVaaf(TBVaaf);
+    await _createTableWithStandardFeatures(_TBVaaf, ApiMySql.CriaTabelaVaaf);
+    await ApiMySql.dadosVaaf(_TBVaaf);
   }
 
   Future<void> _buildImpacto() async {
-    await _createTableWithStandardFeatures(TBImpactoEducacao, ApiMySql.seNaoExistirCriaTabelaImpacto);
-    await ApiMySql.dadosImpactoEducacaoa(TBImpactoEducacao);
+    await _createTableWithStandardFeatures(TBImpactoEducacao, ApiMySql.CriaTabelaImpacto);
+    await ApiMySql.dadosImpactoEducacaoa(_TBImpactoEducacao);
   }
 
   Future<void> _buildPac() async {
-    await _createTableWithStandardFeatures(TBPac, ApiMySql.seNaoExistirCriaTabelaPac);
-    await ApiMySql.dadosPac(TBPac);
+    await _createTableWithStandardFeatures(_TBPac, ApiMySql.CriaTabelaPac);
+    await ApiMySql.dadosPac(_TBPac);
   }
 
   Future<void> _buildDemonReceita() async {
-    await _createTableWithStandardFeatures(TBDemonReceitas, ApiMySql.seNaoExistirCriaTabelaDemonstrativoReceita);
-    await ApiMySql.dadosDemostrativoReceita(TBDemonReceitas,bimestre);
+    await _createTableWithStandardFeatures(_TBDemonReceitas, ApiMySql.CriaTabelaDemonstrativoReceita);
+    await ApiMySql.dadosDemostrativoReceita(_TBDemonReceitas,bimestre);
   }
 
   Future<void> _buildDemonReceitasEducacionais() async {
-    await _createTableWithStandardFeatures(TBReceitasEducacionais, ApiMySql.seNaoExistirCriaTabelareceitasEducacionais);
-    await ApiMySql.dadosReceitasEducacionais(TBReceitasEducacionais,bimestre);
+    await _createTableWithStandardFeatures(_TBReceitasEducacionais, ApiMySql.CriaTabelareceitasEducacionais);
+    await ApiMySql.dadosReceitasEducacionais(_TBReceitasEducacionais,bimestre);
   }
 }

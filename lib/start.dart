@@ -1,4 +1,5 @@
 
+import 'package:GEM/data/api_my_sql.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -8,6 +9,7 @@ import 'dashboard/dashboard_screen.dart';
 import 'data/database_structure_builder.dart';
 import 'doc/document_screen.dart';
 import 'impacto/impacto_grid2.dart';
+import 'import/importar_dados.dart';
 import 'import/pdfExtractorPage.dart';
 import 'professor/professor_conferencia.dart';
 import 'professor/professores.dart';
@@ -38,13 +40,11 @@ class _StartState extends State<Start> {
   String _currentPageId = 'home';
   String _cidadeSelecionada = 'Dois Vizinhos';
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
-
-
+  var horas;
 
   @override
   void initState() {
     super.initState();
-    _initializePages();
     start();
     String? lastPageId = Utils.getPagina();
     if (lastPageId != null && _allPages.any((p) => p['id'] == lastPageId)) {
@@ -72,7 +72,7 @@ class _StartState extends State<Start> {
         'drawerLabel': 'Extração de Dados',
         'appBarTitle': 'Extração de Dados',
         'icon': Icons.archive_outlined,
-        'builder': () => PdfExtractorPage(),
+        'builder': () => ExcelReaderPage(),
       },
 
       // === GRUPO: SIMULADOR ===
@@ -115,16 +115,23 @@ class _StartState extends State<Start> {
         'appBarTitle': 'Lista de Professores',
         'builder': () => Professores(),
       },
-      {
-        'id': 'prof_educador',
+
+      /// ==========================================================
+      /// Entradas dinâmicas para cada hora                        =
+      /// ==========================================================
+      ...horas.map((hora) => {
+        'id': 'prof_educador_${horas.indexOf(hora)}',
         'group': 'professores',
-        'drawerLabel': 'Professor Educador',
-        'appBarTitle': 'Professor Educador ',
+        'drawerLabel': 'Professor $hora',
+        'appBarTitle': 'Professor $hora',
         'builder': () => SimuladorTabelaProfessor(
-          key: const ValueKey('SimuladorTabelaProfessor_normal'),
-          table: '${muni}professor', tipo: 'ADULTO',
+          key: ValueKey('SimuladorTabelaProfessor_${horas.indexOf(hora)}'),
+          table: '${muni}professor',
+          horas: hora,
         ),
-      },
+      }).toList(),
+
+/*
       {
         'id': 'prof_infantil',
         'group': 'professores',
@@ -135,6 +142,9 @@ class _StartState extends State<Start> {
           table: '${muni}infantil', tipo: 'INFANTIL',
         ),
       },
+
+ */
+
       {
         'id': 'prof_conferencia',
         'group': 'professores',
@@ -205,18 +215,28 @@ class _StartState extends State<Start> {
     return _allPages.firstWhere((p) => p['id'] == _currentPageId, orElse: () => _allPages.firstWhere((p) => p['id'] == 'home'));
   }
 
-  void start() {
+  void start() async{
+    ///Pega as horas
+    var getHoras=await ApiMySql.getHoras();
+    String hs='';
+    print(getHoras[0]['error']);
+    if(getHoras[0]['error']==null) {
+      hs = getHoras[0]['horas_distintas'];
+    }
+
     setState(() {
+       horas = hs.toString().split(',').where((h) => h.trim().isNotEmpty).toList();
       var cid= filterController.municipio.value;
       switch (cid) {
         case 'a_':
           _cidadeSelecionada = 'Dois Vizinhos';
         case 'cia_':
           _cidadeSelecionada = 'Cianorte';
-        case 'ind_l':
+        case 'ind_':
           _cidadeSelecionada = 'Indaial';
       }
     });
+    _initializePages();
   }
 
   // ===================================================================
@@ -296,11 +316,6 @@ class _StartState extends State<Start> {
     );
   }
 
-  // --- WIDGETS COMPARTILHADOS ---
-
-  /// Controles de filtro (Ano e Bimestre) extraídos para um widget separado.
-
-
   Widget _buildNavigationDrawer() {
     return Container(
       width: 250,
@@ -332,17 +347,6 @@ class _StartState extends State<Start> {
                       }
                       // ATUALIZE APENAS O CONTROLLER. Ele cuidará de persistir o dado com o Utils.
                       filterController.updateFilters(novoMunicipio: novoMunicipioCode);
-                      final _muni = novoMunicipioCode;
-                      // 2. Cria uma instância do Builder
-                      final builder = DatabaseStructureBuilder(
-                          municipio:novoMunicipioCode ,
-                          ano: filterController.ano.value,
-                          bimestre: filterController.bimestre.value
-                      );
-
-                      final BuildResult result = await builder.build();
-
-                      print(result);
                       _initializePages();
                     },
 
@@ -381,7 +385,7 @@ class _StartState extends State<Start> {
             padding: const EdgeInsets.all(16),
             width: double.infinity,
             child: const Text(
-              'Copyright © 2025 XmkTech. V.007\nAll rights reserved (41-9-9558-2579)',
+              'Copyright © 2025 XmkTech. V.008\nAll rights reserved (41-9-9558-2579)',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),

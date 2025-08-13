@@ -79,11 +79,9 @@ class _ProfessoresState extends State<Professores> {
         lista =
             listaCompleta.where((professor) {
               final nome = professor['nome']?.toString().toLowerCase() ?? '';
-              final matr =
-                  professor['matricula']?.toString().toLowerCase() ?? '';
+              final matr = professor['matricula']?.toString().toLowerCase() ?? '';
               final nivel = professor['nivel']?.toString().toLowerCase() ?? '';
-              final unidade =
-                  professor['unidade']?.toString().toLowerCase() ?? '';
+              final unidade = professor['unidade']?.toString().toLowerCase() ?? '';
 
               final query = text.toLowerCase();
               return nome.contains(query) ||
@@ -278,9 +276,12 @@ class __ProfessorListItemState extends State<_ProfessorListItem> {
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
-    final DateTime parsedDate = Utils.parseDate(item['admissao']);
-    final int yearsDifference = Utils.calculateYearsDifference(parsedDate);
-   // final double somaVantagens = double.tryParse(item['soma_vantagens'] ?? '0.0') ?? 0.0;
+    int  yearsDifference=0;
+    if(item['admissao']!=null) {
+      final DateTime parsedDate = Utils.parseDate(item['admissao']);
+       yearsDifference = Utils.calculateYearsDifference(parsedDate);
+    }
+    final double somaVantagens = double.tryParse(item['soma_vantagens'] ?? '0.0') ?? 0.0;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -300,14 +301,14 @@ class __ProfessorListItemState extends State<_ProfessorListItem> {
               children: [
                 Line(
                   tex: item['matricula'] ?? '',
-                  tam: 70,
+                  tam: 75,
                   alin: Alignment.centerLeft,
                   negrito: true,
                   fontSize: 18,
                 ),
                 const SizedBox(width: 5),
                 Line(
-                  tex: item['cpf'] ?? '',
+                  tex: item['cpf'] ?? '           ',
                   tam: 85,
                   alin: Alignment.centerLeft,
                   fontSize: 9,
@@ -347,6 +348,7 @@ class __ProfessorListItemState extends State<_ProfessorListItem> {
                 ),
               ],
             ),
+
             const SizedBox(height: 5),
             VantagensList(
               vantagensDetalhadas: item['vantagens_detalhadas'] ?? '',
@@ -372,6 +374,9 @@ class __ProfessorListItemState extends State<_ProfessorListItem> {
                 ),
               ],
             ),
+
+
+
           ],
         ),
       ),

@@ -86,6 +86,7 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
                                   ),
                                 ),
                               ),
+                             // if(widget.calculatedTableValues[nivelIndex].length>0)
                               for (int coluna = 0; coluna < widget.calculatedTableValues[nivelIndex].length; coluna++)
                                 GestureDetector(
                                   onTap: () {

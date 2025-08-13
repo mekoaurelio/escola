@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../const/const.dart';
-import '../data/database_structure_builder.dart';
 import '../indicadores/calculadora.dart';
 import '../indicadores/educationImpactPage.dart';
 import '../indicadores/educationalReceiptsScreen.dart';
@@ -85,11 +83,13 @@ class Sidebar extends StatelessWidget {
             title: 'Simulador',
             children: ['Magistério', 'Outro Simulador'],
           ),
+
           _SidebarExpansionItem(
             icon: Icons.group,
             title: 'Professores',
             children: ['Lista', 'Cadastro'],
           ),
+
           _SidebarExpansionItem(
             icon: Icons.insights,
             title: 'Impacto',
@@ -198,6 +198,20 @@ class _DashboardScreen extends State<DashboardScreen> {
     {'code': '05','name': 'Quinto Bimestre'},
     {'code': '06','name': 'Sexto Bimestre'},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    start();
+  }
+
+  void start(){
+    setState(() {
+      _currentAno=_filterController.ano.value;
+      _currentBimestre=_filterController.bimestre.value;
+    });
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -387,34 +401,15 @@ class _DashboardScreen extends State<DashboardScreen> {
 
   void _changeAno(String? ano) async{
     if (ano != null && ano != '00') {
-      _criaEsturaDasTabelas();
       setState(() {
         _currentAno = ano;
       });
     }
   }
 
-  void _criaEsturaDasTabelas()async {
-    final _muni = _filterController.municipio.value;
-    // 2. Cria uma instância do Builder
-    final builder = DatabaseStructureBuilder(
-      municipio: _muni,
-      ano: _currentAno,
-      bimestre: _currentBimestre,
-    );
-
-    // 3. Executa a construção
-    final BuildResult result = await builder.build();
-
-    // 4. Analisa o resultado
-    print(result); //
-
-  }
-
   void _changeBimestre(String? bimestre) {
     if (bimestre != null && bimestre != '00') { // O código do bimestre é '01', '02', etc.
       _filterController.updateFilters(novoBimestre: bimestre);
-      _criaEsturaDasTabelas();
       setState(() {
         _currentBimestre = bimestre;
       });
@@ -469,7 +464,6 @@ class _DashboardScreen extends State<DashboardScreen> {
     );
   }
 }
-
 
 // ==========================================================
 // 5. Widgets de Helper e a Tela Cheia
