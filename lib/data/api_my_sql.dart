@@ -3,11 +3,13 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../const/const.dart';
 import '../services/utils.dart';
 import 'package:GEM/services/table_name_service.dart';
 
+import '../simulador/formulario/formulario.dart';
+
 class ApiMySql {
-  static String pathDados = 'https://www.xmktech.net/dados/';
 
   static Future<List<dynamic>> getHoras() async{
     var sql = "SELECT GROUP_CONCAT(DISTINCT horas ORDER BY horas SEPARATOR ',') AS horas_distintas";
@@ -74,6 +76,7 @@ WHERE id_user = $idUser;
   }
 
   static Future<String> fetchPdfText() async {
+    var path='$pathDados{extra.php}';
     final resp = await http.get(Uri.parse('https://www.xmktech.net/dados/extra.php'));
     if (resp.statusCode != 200) {
       throw Exception('Falha ao chamar API: ${resp.statusCode}');
@@ -96,6 +99,17 @@ WHERE id_user = $idUser;
       sql += ' order by $orderBy';
     }
    // print(sql);
+    return await executaSql(sql);
+  }
+
+  static Future<List<dynamic>> getItensFromForm(String table, dynamic id, String? orderBy) async {
+    var sql = 'select * from $table';
+    sql += ' WHERE id_form=$id'; // Corrigido de AND para WHERE
+
+    if (orderBy != null) {
+      sql += ' order by $orderBy';
+    }
+    // print(sql);
     return await executaSql(sql);
   }
 
@@ -149,8 +163,6 @@ WHERE id_user = $idUser;
     }
   }
 
-//*****
-
   static Future<dynamic> insereSql(String sql) async {
     String cleanSql = sql.replaceAll(r'\"', '"');
     if(sql.contains('$TBExercicio')) {
@@ -186,23 +198,6 @@ WHERE id_user = $idUser;
   ///**************************************************************
   
   static getProfessor() async {
-    //usada na versão pra dois irmões
-    /*
-    var sql2 = "SELECT  f.id AS folha_id,f.id_municipio,f.matricula,f.nome,f.cpf,f.unidade,f.local_lotacao,f.vencimento,";
-    sql2+="f.cargo,f.nivel,DATE_FORMAT(f.admissao, '%d/%m/%Y') AS admissao,";
-    sql2+="GROUP_CONCAT(CONCAT(dv.codigo, ':',dv.descricao, ':',";
-    sql2+="dv.percentual, ':',' R/\$ ', FORMAT(dv.valor, 2)) SEPARATOR ' | ') AS vantagens_detalhadas,";
-    sql2+=" SUM(CASE WHEN dv.codigo NOT IN ('21003', '21019') THEN dv.valor ELSE 0  END) AS soma_vantagens,";
-    sql2+=" SUM(CASE WHEN dv.codigo IN ('21019') THEN dv.valor ELSE 0  END) AS soma_apts,";
-    sql2+="(SELECT SUM(vencimento) FROM $TBFolha WHERE status = 'A') AS total_vencimentos_geral";
-    sql2+=" FROM $TBFolha f LEFT JOIN $TBVantagens dv ON f.id = dv.folha_id WHERE f.status = 'A'GROUP BY f.id ORDER BY f.id";
-    //print(sql2);
-
-     */
-
-    //Sera usada daqui pra frente
-
-
     var sql1="SELECT  f.id AS folha_id,f.id_municipio,f.matricula,f.nome,f.cpf,f.unidade,f.local_lotacao,";
     sql1+="f.vencimento,f.cargo,f.nivel,DATE_FORMAT(f.admissao, '%d/%m/%Y') AS admissao,";
     sql1+="GROUP_CONCAT(CONCAT(dv.codigo, ':', dv.descricao, ':', dv.percentual, ':', ' R/\$ ', FORMAT(dv.valor, 2)) SEPARATOR ' | ') AS vantagens_detalhadas, SUM(dv.valor) AS soma_vantagens,";
@@ -211,7 +206,7 @@ WHERE id_user = $idUser;
     sql1+=" LEFT JOIN $TBVantagens dv ON f.matricula = dv.folha_id";
     sql1+=" WHERE f.status = 'A'";
     sql1+=" GROUP BY f.matricula ORDER BY f.matricula";
-    //print(sql1);
+    print(sql1);
 
     return await executaSql(sql1);
   }
@@ -246,8 +241,7 @@ WHERE id_user = $idUser;
   }
 
   static criaTabelaComuns(String tb)async{
-    final existsResult = await tabelaExiste(tb);
-    final bool tabelaFolhaExiste = existsResult.toString().contains('1');
+    final tabelaFolhaExiste = await tabelaExiste(tb);
     if (!tabelaFolhaExiste) {
       print('Não tem a tabela $tb');
       await seNaoExistirCriaTabelaGenerica(tb);
@@ -267,6 +261,29 @@ WHERE id_user = $idUser;
         await ApiMySql.dadosReceitaFundebSimulador(TBReceitaFundebSimulador);
       }
     }
+  }
+
+  static  Future<void> CriaTabelaSimulaForm(String tb)async{
+    var sql='CREATE TABLE IF NOT EXISTS $tb (';
+    sql+='id int(11) NOT NULL,';
+    sql+='id_form int(11) NOT NULL,';
+    sql+='label varchar(200) NOT NULL,';
+    sql+='tipo varchar(50) NOT NULL,';
+    sql+='valor decimal(15,2) DEFAULT NULL,';
+    sql+='perc decimal(10,2) DEFAULT NULL,';
+    sql+='created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP);';
+    await executaSql(sql);
+    await criaIndiceEAutoIncremento(tb);
+  }
+
+  static  Future<List<dynamic>> CriaTabelaSimulaCab(String tb)async{
+    var sql='CREATE TABLE IF NOT EXISTS $tb (';
+    sql+='id int(11) NOT NULL,';
+    sql+='descricao varchar(200) NOT NULL,';
+    sql+='created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP);';
+    var result= executaSql(sql);
+    await criaIndiceEAutoIncremento(tb);
+    return result;
   }
   
   static CriaTabelaProfessor(String tb)async{
@@ -669,7 +686,9 @@ WHERE id_user = $idUser;
   static tabelaExiste(String tb)async{
     var sql='SELECT COUNT(*) as table_exists FROM information_schema.tables';
     sql+=" WHERE table_schema = DATABASE() AND table_name = '$tb'";
-    return await executaSql(sql);
+    var existsResult= await executaSql(sql);
+    final bool tabelaFolhaExiste = existsResult.toString().contains('1');
+    return tabelaFolhaExiste;
   }
 
   static insertProf(var matricula,var nome, var cpf,var cargo,var local_lotacao,var unidade,var nivel,var admissao,
@@ -680,7 +699,7 @@ WHERE id_user = $idUser;
     if(admissao!=null){
       dt=Utils.dtToMysql(admissao);
     }
-    String sql = 'INSERT INTO $TBFolha (matricula,nome, cpf,unidade,local_lotacao,cargo,nivel,admissao,vencimento,status) VALUES (';
+    String sql = 'INSERT INTO a_2502 (matricula,nome, cpf,unidade,local_lotacao,cargo,nivel,admissao,vencimento,status) VALUES (';
     sql += '"$matricula", ';
     sql += '"$nome", ';
     sql += '"$cpf", ';
@@ -696,7 +715,7 @@ WHERE id_user = $idUser;
   }
 
   static insertVantagens(var matricula,var codigo, var descricao,var valor,String percentual ) async {
-    //  var idCompany=Utils.getIdEntidade();
+    TBVantagens = 'a_vantagens2502';
     var vr=Utils.saldoToSave(valor);
     var perc=percentual.replaceAll('%', '');
     perc=perc.replaceAll(',', '.');
@@ -707,6 +726,7 @@ WHERE id_user = $idUser;
     sql += '$vr, ';
     sql += '$perc ';
     sql += ')';
+    print(sql);
     return await executaSql(sql);
   }
 

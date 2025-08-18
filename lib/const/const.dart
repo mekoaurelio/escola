@@ -11,9 +11,8 @@ const Color textColor = Color(0xFF212121);
 const Color borderColor = Color(0xFFE0E0E0);
 Color azulEscuro = Color(0xFF2459A9);
 
-//Diretorios
-const pathDados= 'https://www.xmktech.net/tattoo/dados';
 const pathImage= 'https://www.xmktech.net/tattoo/imagens';
+const pathDados = 'https://www.xmktech.net/dados';
 
 //Arquivos PHP
 String arqPhpGetImage = '$pathImage/get_image.php?filename=';

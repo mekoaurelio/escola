@@ -27,6 +27,17 @@ class Utils {
   static var formatterD =  DateFormat('dd/MM/yyyy');
   static var formatterh =  DateFormat('hh:mm');
 
+  static getNomeMunicipio(var cid){
+    switch (cid) {
+      case 'a_':
+        return 'GEM';
+        case 'cia_':
+        return  'Cianorte';
+        case 'ind_':
+          return  'Indaial';
+    }
+  }
+
   static Future<void> showEditableValueDialog({
     required BuildContext context,
     required String initialValue,

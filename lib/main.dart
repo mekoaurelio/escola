@@ -4,10 +4,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'package:GEM/services/GlobalFilterController.dart';
 import 'import/importar_dados.dart';
+import 'import/pdfExtractorPage.dart';
 import 'services/table_name_service.dart';
 import 'lang/translation_service.dart';
 import 'login/login.dart';
 import 'services/utils.dart';
+import 'simulador/formulario/formularioScreen.dart';
+import 'simulador/formulario/listaFormulariosScreen.dart';
 import 'splash_screen.dart';
 
 void main()async {
@@ -78,7 +81,9 @@ class _TattooStudioAppState extends State<TattooStudioApp> {
         GlobalCupertinoLocalizations.delegate,  ],
 
       home: _initialScreen!,
+    //home:ListaFormulariosScreen(),
     //  home: ExcelReaderPage()
+
 
     );
   }

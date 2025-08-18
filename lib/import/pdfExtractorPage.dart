@@ -30,8 +30,30 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
   /// === UPLOAD + EXTRAÇÃO ===
   Future<void> selecionarEEnviarArquivo() async {
     ///CRIA A ESTRUTURA DAS TABELAS
+    //await criaStruturaDasTabelas();
     setState(() =>  status = 'Criando a estrutura das tabelas');
     setState(() =>  status = 'Fazendo upLoad do arquivo');
+
+    final html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+    uploadInput.accept = '.pdf';
+    uploadInput.click();
+
+    uploadInput.onChange.listen((e) async {
+      final files = uploadInput.files;
+      if (files == null || files.isEmpty) return;
+
+      final file = files.first;
+      final reader = html.FileReader();
+      reader.readAsArrayBuffer(file);
+
+      reader.onLoadEnd.listen((e) async {
+        final data = reader.result as Uint8List;
+        ///FAZ O UPLOAD DO ARQUIVO E INICIA A EXTRAÇÃO
+        await uploadFile(file.name, data);
+      });
+    });
+
+
 
   }
 
@@ -233,7 +255,7 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
             ///insere as vantagens
             for (var v in vantagens) {
               // supondo que você tenha idProf já definido
-              await ApiMySql.insertVantagens(idProf, v['codigo'], v['descricao'], v['valor'],v['percentual']!);
+              await ApiMySql.insertVantagens(matricula, v['codigo'], v['descricao'], v['valor'],v['percentual']!);
             }
 
           }
@@ -331,7 +353,7 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
       }
       index++;
     }
-
+/*
     setState(() => status = 'Inserindo Exercícios');
     await insereExercicio(TBExercicio);
 
@@ -347,6 +369,8 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
     await carregarFolha();
     setState(() => status = 'Dados carregados!');
     Utils.snak('Parabéns', 'Dados extraidos com sucesso', false, Colors.green);
+
+ */
 
   }
 
@@ -412,10 +436,10 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
             ElevatedButton.icon(
               icon: const Icon(Icons.upload_file),
               label: const Text('Selecionar PDF e Carregar folha'),
-              onPressed: () {
-                Utils.snak('Atenção','Mometaneamente desativada',false,Colors.red);
-              },
-             // onPressed: selecionarEEnviarArquivo, //iniciaExtracao
+              //onPressed: () {
+                //Utils.snak('Atenção','Mometaneamente desativada',false,Colors.red);
+              //},
+              onPressed: selecionarEEnviarArquivo, //iniciaExtracao
             ),
             const SizedBox(height: 20),
             ValueListenableBuilder<double>(

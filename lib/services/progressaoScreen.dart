@@ -39,6 +39,11 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> {
 
   void _loadDataBasedOnCurrentFilters() {
     _loadAll();
+    //_load();
+  }
+
+  Future<void> _load() async {
+
   }
 
   Future<void> _loadAll() async {
@@ -68,6 +73,7 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> {
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -576,7 +582,6 @@ class _SectionFundebExercio extends StatelessWidget {
               ),
             ),
           //  Column(children: cards),
-
       );
 
   }

@@ -20,7 +20,7 @@ class CidadeSelector extends StatelessWidget {
           onChanged(novaCidade);
         }
       },
-      items: ['Dois Vizinhos', 'Cianorte','Indaial']
+      items: ['GEM', 'Cianorte','Indaial']
           .map((cidade) => DropdownMenuItem(
         value: cidade,
         child: Text(cidade),

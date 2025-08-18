@@ -180,7 +180,6 @@ class _DashboardScreen extends State<DashboardScreen> {
 
 
   final List<Map<String, String>> _anos = [
-    {'code': '00','name': 'Escolha o Ano'},
     {'code': '20', 'name': '2020'},
     {'code': '21', 'name': '2021'},
     {'code': '22', 'name': '2022'},
@@ -190,7 +189,6 @@ class _DashboardScreen extends State<DashboardScreen> {
   ];
 
   final List<Map<String, String>> _bimestres = [
-    {'code': '00','name': 'Escolha o Bimestre'},
     {'code': '01','name': 'Primeiro Bimestre'},
     {'code': '02','name': 'Segundo Bimestre'},
     {'code': '03','name': 'Terceiro Bimestre'},
@@ -401,8 +399,10 @@ class _DashboardScreen extends State<DashboardScreen> {
 
   void _changeAno(String? ano) async{
     if (ano != null && ano != '00') {
+      _filterController.updateFilters(novoAno: ano);
       setState(() {
         _currentAno = ano;
+        print(_currentAno);
       });
     }
   }
@@ -457,8 +457,9 @@ class _DashboardScreen extends State<DashboardScreen> {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           _anosDropdown(),
-          const SizedBox(width: 24),
+          const SizedBox(width: 14),
           _bimestreDropdown(),
+          const SizedBox(width: 30,)
         ],
       ),
     );

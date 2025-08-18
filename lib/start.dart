@@ -1,5 +1,6 @@
 
 import 'package:GEM/data/api_my_sql.dart';
+import 'package:GEM/services/table_name_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -17,6 +18,7 @@ import 'folha/tabela_professor.dart';
 import 'services/escolher_municipio.dart';
 import 'services/progressaoScreen.dart';
 import 'services/utils.dart';
+import 'simulador/formulario/listaFormulariosScreen.dart';
 import 'simulador/simula.dart';
 import 'simulador/tabela_simulador.dart';
 import 'simulador/projecao_recursos_fundeb.dart';
@@ -38,19 +40,28 @@ class Start extends StatefulWidget {
 class _StartState extends State<Start> {
   late List<Map<String, dynamic>> _allPages=[];
   String _currentPageId = 'home';
-  String _cidadeSelecionada = 'Dois Vizinhos';
+  String _cidadeSelecionada = 'GEM';
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
   var horas;
+  var _simuladores;
 
   @override
   void initState() {
     super.initState();
+    filterController.municipio.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.ano.listen((_) => _loadDataBasedOnCurrentFilters());
+    filterController.bimestre.listen((_) => _loadDataBasedOnCurrentFilters());
     start();
     String? lastPageId = Utils.getPagina();
     if (lastPageId != null && _allPages.any((p) => p['id'] == lastPageId)) {
       _navigateTo(lastPageId);
     }
   }
+
+  void _loadDataBasedOnCurrentFilters() {
+    start();
+  }
+
 
   void _initializePages(){
     String muni = filterController.municipio.value;
@@ -76,13 +87,20 @@ class _StartState extends State<Start> {
       },
 
       // === GRUPO: SIMULADOR ===
+
       {
         'id': 'simulador_progressao',
         'group': 'simulador',
         'drawerLabel': 'Simulador',
         'appBarTitle': 'Simulador de Progressão',
-        'builder': () => ProgressaoScreen(),
+        'builder': () => ListaFormulariosScreen(),
+       // 'builder': () => ProgressaoScreen(),
       },
+
+
+
+
+
       {
         'id': 'simulador_vaaf',
         'group': 'simulador',
@@ -90,6 +108,7 @@ class _StartState extends State<Start> {
         'appBarTitle': 'Projeção dos Recursos do FUNDEB',
         'builder': () => ProjecaoRecursosFundeb(),
       },
+
       {
         'id': 'simulador_projecao',
         'group': 'simulador',
@@ -131,19 +150,6 @@ class _StartState extends State<Start> {
         ),
       }).toList(),
 
-/*
-      {
-        'id': 'prof_infantil',
-        'group': 'professores',
-        'drawerLabel': 'Educador Infantil',
-        'appBarTitle': 'Educadores Infantis',
-        'builder': () => SimuladorTabelaProfessor(
-          key: const ValueKey('SimuladorTabelaProfessor_infantil'),
-          table: '${muni}infantil', tipo: 'INFANTIL',
-        ),
-      },
-
- */
 
       {
         'id': 'prof_conferencia',
@@ -218,23 +224,18 @@ class _StartState extends State<Start> {
   void start() async{
     ///Pega as horas
     var getHoras=await ApiMySql.getHoras();
+    var getSimuladores=await ApiMySql.get(TBSimulaCab,null,null);
     String hs='';
-    print(getHoras[0]['error']);
     if(getHoras[0]['error']==null) {
       hs = getHoras[0]['horas_distintas'];
     }
 
     setState(() {
        horas = hs.toString().split(',').where((h) => h.trim().isNotEmpty).toList();
+       _simuladores=getSimuladores;
       var cid= filterController.municipio.value;
-      switch (cid) {
-        case 'a_':
-          _cidadeSelecionada = 'Dois Vizinhos';
-        case 'cia_':
-          _cidadeSelecionada = 'Cianorte';
-        case 'ind_':
-          _cidadeSelecionada = 'Indaial';
-      }
+       _cidadeSelecionada =Utils.getNomeMunicipio(cid);
+
     });
     _initializePages();
   }
@@ -338,7 +339,7 @@ class _StartState extends State<Start> {
                       });
                       String novoMunicipioCode = 'a_';
                       switch (novaCidade) {
-                        case 'Dois Vizinhos':
+                        case 'GEM':
                           novoMunicipioCode = 'a_';
                         case 'Cianorte':
                           novoMunicipioCode = 'cia_';
@@ -385,7 +386,7 @@ class _StartState extends State<Start> {
             padding: const EdgeInsets.all(16),
             width: double.infinity,
             child: const Text(
-              'Copyright © 2025 XmkTech. V.008\nAll rights reserved (41-9-9558-2579)',
+              'Copyright © 2025 XmkTech. V.010\nAll rights reserved (41-9-9558-2579)',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
