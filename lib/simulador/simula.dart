@@ -38,7 +38,9 @@ class _SimulaState extends State<Simula> {
   String _dispersaoHorizontal = '0.00%'; // Valor inicial como string formatada
   String _dispersaoTotal = '0.00%';
   final GlobalFilterController filterController =
-      Get.find<GlobalFilterController>();
+  Get.find<GlobalFilterController>();
+  List<String> novosNiveis=[];
+  List<String> valorNivel=[];
 
   @override
   void initState() {
@@ -67,6 +69,12 @@ class _SimulaState extends State<Simula> {
     });
 
     try {
+
+      ///tem que arrumar essa rotinaz
+      var getNiveis=await ApiMySql.getItensFromForm(TBSimulaForm,'1',null);
+      novosNiveis = getNiveis.map((item) => item['label'].toString()).toList();
+      valorNivel = getNiveis.map((item) => item['valor'].toString()).toList();
+
       ///PEGA OS PERCENTUAIS DE AUMENTO
       final totais = await ApiMySql.get(TBTotais, null, null);
       final profs = await ApiMySql.get(TBProfessor, null, 'ordem');
@@ -88,8 +96,8 @@ class _SimulaState extends State<Simula> {
 
       } else {
         // Defina valores padrão ou lance um erro se esses dados são essenciais
-       // perAumentoInf = '0';
-       // percAUmAdulto = '0';
+        // perAumentoInf = '0';
+        // percAUmAdulto = '0';
       }
 
       ///PEGA OS PROFESSORES EDUCADORES
@@ -112,7 +120,7 @@ class _SimulaState extends State<Simula> {
 
 
       ///PROGRESSÃO ENTRE NÍVEIS EDUCADOR
-     /*
+      /*
       final valorBase = double.parse(profs[0]['valor']);
       final penA = double.parse(profs[2]['valor']);
       final penB = double.parse(profs[3]['valor']);
@@ -135,14 +143,15 @@ class _SimulaState extends State<Simula> {
       final _percEntreColunas = double.parse(profs[1]['percentual']);
 
       final result = calculateTableAndDispersions(
-        niveis: ['NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
-        //niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
-        valorBase: valorBase,
-        penA: penA,
-        penB: penB,
-        penC: penC,
-        penD: penD,
-        penE: penE,
+       // niveis: ['NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
+       niveis: novosNiveis,
+        valoresIniciaisNiveis: valorNivel,
+        //valorBase: valorBase,
+        //penA: penA,
+        //penB: penB,
+        //penC: penC,
+        //penD: penD,
+        //penE: penE,
         cargaHoraria: 15,
         percEntreColunas: _percEntreColunas,
       );
@@ -159,8 +168,10 @@ class _SimulaState extends State<Simula> {
         _countInfantil = infantil.length;
         _isLoading = false;
         _hasError = false;
-        _dispersaoHorizontal = result.dispersaoHorizontal;
-        _dispersaoTotal = result.dispersaoTotal;
+        var dh=result.dispersaoHorizontal.replaceAll(',', '.');
+        _dispersaoHorizontal = dh;
+        var dt=result.dispersaoTotal.replaceAll(',', '.');
+        _dispersaoTotal = dt;
       });
     } on TimeoutException {
       _handleError('Tempo excedido ao carregar dados. Verifique sua conexão.');
@@ -223,11 +234,11 @@ class _SimulaState extends State<Simula> {
   }
 
   Widget lin(
-    var text,
-    bool negrito,
-    Alignment alin, {
-    Color cor = Colors.black54,
-  }) {
+      var text,
+      bool negrito,
+      Alignment alin, {
+        Color cor = Colors.black54,
+      }) {
     return Padding(
       padding: EdgeInsets.all(8),
       child: Align(
@@ -251,7 +262,7 @@ class _SimulaState extends State<Simula> {
     final vatagensPecuniarias = _totalAdulto * 0.1;
     final proVatagensPecuniarias =
         vatagensPecuniarias +
-        (vatagensPecuniarias * (double.parse(percAUmAdulto) / 100));
+            (vatagensPecuniarias * (double.parse(percAUmAdulto) / 100));
     final difVatagensPecuniarias = proVatagensPecuniarias - vatagensPecuniarias;
 
     ///ENCARGOS
@@ -262,9 +273,9 @@ class _SimulaState extends State<Simula> {
     ///TOTAL REMUNERAÇÃO
     final _proTot =
         proposta +
-        proAPTS +
-        proEncargos +
-        proVatagensPecuniarias; // Corrigido o cálculo
+            proAPTS +
+            proEncargos +
+            proVatagensPecuniarias; // Corrigido o cálculo
     final difTot = dif + difAPTS + difEncargos + difVatagensPecuniarias;
     totalGeralProfessor =
         _totalAdulto + _atsAdulto + encargos + (_totalAdulto * 0.1);
@@ -426,13 +437,13 @@ class _SimulaState extends State<Simula> {
         _atsInfantil + (_atsInfantil * (double.parse(perAumentoInf) / 100));
     final difAPTS =
         proAPTS -
-        _atsInfantil; // Corrigido: usando _atsInfantil em vez de _atsAdulto
+            _atsInfantil; // Corrigido: usando _atsInfantil em vez de _atsAdulto
 
     ///VATAGENS PECUNIÁRIAS
     final vatagensPecuniarias = _atsInfantil * 0.1;
     final proVatagensPecuniarias =
         vatagensPecuniarias +
-        (vatagensPecuniarias * (double.parse(perAumentoInf) / 100));
+            (vatagensPecuniarias * (double.parse(perAumentoInf) / 100));
     final difVatagensPecuniarias = proVatagensPecuniarias - vatagensPecuniarias;
 
     ///ENCARGOS
@@ -445,9 +456,9 @@ class _SimulaState extends State<Simula> {
         _totalInfantil + _atsInfantil + encargos + vatagensPecuniarias;
     final _proTot =
         proposta +
-        proAPTS +
-        proEncargos +
-        proVatagensPecuniarias; // Corrigido o cálculo
+            proAPTS +
+            proEncargos +
+            proVatagensPecuniarias; // Corrigido o cálculo
     final difTot = dif + difAPTS + difEncargos + difVatagensPecuniarias;
     totalGeralInfantil = totalAtual;
     totalPropostaInfantil = _proTot;
@@ -764,13 +775,13 @@ class _SimulaState extends State<Simula> {
                     ///PROPOSTA
                     _buildVariationCell(
                       variationValue:
-                          totalPropostaProfessor - totalGeralProfessor,
+                      totalPropostaProfessor - totalGeralProfessor,
                       percentage:
-                          (totalGeralProfessor > 0)
-                              ? totalGeralProfessor /
-                                  totalPropostaProfessor *
-                                  100
-                              : 0.0,
+                      (totalGeralProfessor > 0)
+                          ? totalGeralProfessor /
+                          totalPropostaProfessor *
+                          100
+                          : 0.0,
                       textStyle: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -794,12 +805,12 @@ class _SimulaState extends State<Simula> {
                     ///PROPOSTA
                     _buildVariationCell(
                       variationValue:
-                          totalPropostaInfantil - totalGeralInfantil,
+                      totalPropostaInfantil - totalGeralInfantil,
                       percentage:
-                          (totalGeralInfantil > 0)
-                              ? (totalGeralInfantil / totalPropostaInfantil) *
-                                  100
-                              : 0.0,
+                      (totalGeralInfantil > 0)
+                          ? (totalGeralInfantil / totalPropostaInfantil) *
+                          100
+                          : 0.0,
                       textStyle: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -1033,13 +1044,13 @@ class _SimulaState extends State<Simula> {
                     trailingIcon: Icons.info_outline,
                     tooltip: 'Dispersão salarial entre classes \nClick Aqui Para Saber Mais',
                     bgColor:
-                        double.parse(_dispersaoHorizontal) > 29.5
-                            ? Colors.red!
-                            : Colors.green[100]!,
+                    double.parse(_dispersaoHorizontal) > 29.5
+                        ? Colors.red!
+                        : Colors.green[100]!,
                     borderColor:
-                        double.parse(_dispersaoHorizontal) > 29.5
-                            ? Colors.red!
-                            : Colors.green[100]!,
+                    double.parse(_dispersaoHorizontal) > 29.5
+                        ? Colors.red!
+                        : Colors.green[100]!,
                     textColor: Colors.black54,
                     iconColor: Colors.black54,
                     onTap: dicas,
@@ -1053,15 +1064,15 @@ class _SimulaState extends State<Simula> {
                     text: 'Disp. Total ${_dispersaoTotal}%',
                     trailingIcon: Icons.info_outline,
                     tooltip:
-                        'Dispersão salarial entre níveis\nClick Aqui Para Saber Mais',
+                    'Dispersão salarial entre níveis\nClick Aqui Para Saber Mais',
                     bgColor:
-                        double.parse(_dispersaoTotal) > 95
-                            ? Colors.red[100]!
-                            : Colors.green[100]!,
+                    double.parse(_dispersaoTotal) > 95
+                        ? Colors.red[100]!
+                        : Colors.green[100]!,
                     borderColor:
-                        double.parse(_dispersaoTotal) > 95
-                            ? Colors.red[100]!
-                            : Colors.green[100]!,
+                    double.parse(_dispersaoTotal) > 95
+                        ? Colors.red[100]!
+                        : Colors.green[100]!,
                     textColor: Colors.black54,
                     iconColor: Colors.black54,
                     onTap: dicas,
@@ -1097,7 +1108,7 @@ class _SimulaState extends State<Simula> {
               children: [
                 Texto(
                   tit:
-                      'VERDE : Significa que a progressao da sua instituição está  aceitável',
+                  'VERDE : Significa que a progressao da sua instituição está  aceitável',
                   cor: Colors.green[500]!,
                 ),
                 Texto(

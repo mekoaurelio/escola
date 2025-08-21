@@ -7,7 +7,6 @@ import 'package:get/get.dart';
 import 'auxiliares/usuario_lista.dart';
 import 'const/const.dart';
 import 'dashboard/dashboard_screen.dart';
-import 'data/database_structure_builder.dart';
 import 'doc/document_screen.dart';
 import 'impacto/impacto_grid2.dart';
 import 'import/importar_dados.dart';
@@ -16,7 +15,6 @@ import 'professor/professor_conferencia.dart';
 import 'professor/professores.dart';
 import 'folha/tabela_professor.dart';
 import 'services/escolher_municipio.dart';
-import 'services/progressaoScreen.dart';
 import 'services/utils.dart';
 import 'simulador/formulario/listaFormulariosScreen.dart';
 import 'simulador/simula.dart';
@@ -42,8 +40,8 @@ class _StartState extends State<Start> {
   String _currentPageId = 'home';
   String _cidadeSelecionada = 'GEM';
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
-  var horas;
-  var _simuladores;
+  //var horas;
+  List<Map<String, String>> formItens = [];
 
   @override
   void initState() {
@@ -61,7 +59,6 @@ class _StartState extends State<Start> {
   void _loadDataBasedOnCurrentFilters() {
     start();
   }
-
 
   void _initializePages(){
     String muni = filterController.municipio.value;
@@ -97,10 +94,6 @@ class _StartState extends State<Start> {
        // 'builder': () => ProgressaoScreen(),
       },
 
-
-
-
-
       {
         'id': 'simulador_vaaf',
         'group': 'simulador',
@@ -125,7 +118,6 @@ class _StartState extends State<Start> {
         'builder': () => const Simula(), // A tela que você está trabalhando
       },
 
-
       // === GRUPO: PROFESSORES ===
       {
         'id': 'prof_lista_normal',
@@ -138,7 +130,23 @@ class _StartState extends State<Start> {
       /// ==========================================================
       /// Entradas dinâmicas para cada hora                        =
       /// ==========================================================
-      ...horas.map((hora) => {
+      ...formItens.map((itens) => {
+        'id': 'prof_educador_${itens['id']}',
+        'group': 'professores',
+        'drawerLabel': 'Professor ${itens['descricao']}',
+        'appBarTitle': 'Professor ${itens['descricao']}',
+        'builder': () => SimuladorTabelaProfessor(
+          key: ValueKey('SimuladorTabelaProfessor_${itens['id']}'),
+          table: '${muni}professor',
+          hora: itens['horas']!,
+          idItens: itens['id']!,
+         // descricao: itens['descricao']!,
+          //hora: itens['horas']!,
+        ),
+      }).toList(),
+
+    /*
+    ...horas.map((hora) => {
         'id': 'prof_educador_${horas.indexOf(hora)}',
         'group': 'professores',
         'drawerLabel': 'Professor $hora',
@@ -149,7 +157,7 @@ class _StartState extends State<Start> {
           horas: hora,
         ),
       }).toList(),
-
+     */
 
       {
         'id': 'prof_conferencia',
@@ -223,16 +231,16 @@ class _StartState extends State<Start> {
 
   void start() async{
     ///Pega as horas
-    var getHoras=await ApiMySql.getHoras();
-    var getSimuladores=await ApiMySql.get(TBSimulaCab,null,null);
-    String hs='';
-    if(getHoras[0]['error']==null) {
-      hs = getHoras[0]['horas_distintas'];
+    var getHoras=await ApiMySql.get(TBSimulaCab, null, null);;
+    for(int i = 0 ; i<getHoras.length ; i++) {
+      formItens.add({
+        'id': getHoras[i]['id']?.toString() ?? 'Nome não disponível',
+        'descricao': getHoras[i]['descricao'].toString(),
+        'horas': getHoras[i]['horas'].toString(),
+      });
     }
 
     setState(() {
-       horas = hs.toString().split(',').where((h) => h.trim().isNotEmpty).toList();
-       _simuladores=getSimuladores;
       var cid= filterController.municipio.value;
        _cidadeSelecionada =Utils.getNomeMunicipio(cid);
 

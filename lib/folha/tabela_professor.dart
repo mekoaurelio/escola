@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:GEM/services/GlobalFilterController.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
 import '../const/const.dart';
 import 'package:GEM/services/table_name_service.dart';
@@ -15,12 +16,14 @@ import 'tabela_salarial.dart';
 
 class SimuladorTabelaProfessor extends StatefulWidget {
   final String table;
-  final String horas;
+  final String hora;
+  final String idItens;
 
   const SimuladorTabelaProfessor({
     Key? key,
     required this.table,
-    required this.horas,
+    required this.idItens,
+    required this.hora,
   }) : super(key: key);
 
   @override
@@ -30,10 +33,10 @@ class SimuladorTabelaProfessor extends StatefulWidget {
 class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   int cargaHoraria = 15;
   double _percEntreColunas=0;
-  final List<String> niveis = ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'];
+  //final List<String> niveis = ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'];
 
   var profs; // Dados brutos da API
-  double valorBase = 0; // Valor inicial 'valor'
+  //double valorBase = 0; // Valor inicial 'valor'
   double penA = 0; // Diferença NB-NC (ou valor inicial de NC)
   double penB = 0; // Diferença NB-NC (ou valor inicial de NC)
   double penC = 0; // Diferença NC-ND (ou valor inicial de ND)
@@ -48,30 +51,37 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   int? selectedRow;
   int? selectedColumn;
   String selectedValue = 'Nenhuma célula selecionada';
-  String nivel = '',
-      coluna = '';
+  String nivel = '';
+  String  coluna = '';
   var professores;
   int totProf=0;
-  double perAumentoInfantil=0.00;
-  double perAumentoAdulto=0.00;
+  double perProgressaoEntreClasse=2;
+  //double perAumentoAdulto=0.00;
   double _custoMensal = 0.0;
   double totalFolha=0;
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
+
+  List<String> novosNiveis=[];
+  List<String> valorNivel=[];
+  List<String> niveisUnicos=[];
 
   // Adicione este método para lidar com a seleção
   void _handleCellSelection(int row, int column) async {
     setState(() {
       selectedRow = row;
       selectedColumn = column;
-      selectedValue = '${niveis[row]}  ${column + 1}';
+      selectedValue = '${niveisUnicos[row]}  ${column + 1}';
     });
 
-    nivel = niveis[row].substring(1, 2);
+    nivel = niveisUnicos[row];
+    //nivel = niveis[row].substring(1, 2);
     coluna = (column + 1).toString();
     if (coluna.length == 1) {
       coluna = '0$coluna';
     }
-    String ni = nivel + coluna;
+    var n=nivel.substring(0,1);
+    String ni = n + coluna;
+   // print('xxxxxxxxxxxx => $ni');
     List<Map<String, String>> professoresFiltrados = [];
     for (var item in professores) {
       if (item['nivel'] == ni) {
@@ -132,19 +142,30 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   }
 
   int quantidadeDeProfessores(String nivel, int coluna) {
-    // Formata o nível/classe no formato esperado (ex: "B01" para NB coluna 1)
-    String nivelFormatado = nivel.substring(1); // Remove o "N" do início
     String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
-    String chave = '$nivelFormatado$colunaFormatada';
+    String chave = '$nivel$colunaFormatada';
+   // print('CHAVE : $chave');
+
     return _professoresPorNivel[chave] ?? 0;
   }
 
   Future<void> _loadDataAndCalculate() async {
     try{
-      //getProfessorPorHora
-     // professores = await ApiMySql.getProfessorPorHora(widget.tipo,TBFolha,TBVantagens).timeout(const Duration(seconds: 30));
-      professores = await ApiMySql.getProfessorPorHora(widget.horas);
+      //Pega os novos níveis
+      var hs=widget.hora;
 
+
+      var getNiveis=await ApiMySql.getItensFromForm(TBSimulaForm,widget.idItens,null);
+      novosNiveis = getNiveis.map((item) => item['label'].toString()).toList();
+      valorNivel = getNiveis.map((item) => item['valor'].toString()).toList();
+
+      var nu=await ApiMySql.getProfPorNivel(TBFolha,widget.hora);
+      niveisUnicos = nu.map((item) => item['nivel'].toString()).toList();
+      print('NIVEIS UNICO');
+      print(niveisUnicos);
+
+
+      professores = await ApiMySql.getProPorHora(widget.hora,TBFolha,TBVantagens).timeout(const Duration(seconds: 30));
       if(professores==null){
         setState(() => isLoading = false);
         return;
@@ -155,18 +176,19 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       }
       ///Pega os totais
       final totais = await ApiMySql.get(TBTotais,null,null);
-      perAumentoInfantil=double.parse(totais[0]['perc_aumento_infantil']);
-      perAumentoAdulto=double.parse(totais[0]['perc_aumento_adulto']);
+
+      perProgressaoEntreClasse=double.parse(totais[0]['perc_aumento_infantil']);
 
       /// Pré-processa a contagem de professores por nível
       _professoresPorNivel = {};
       for (var item in professores) {
         final nivel = item['nivel']?.toString() ?? '';
+       // print('NIVEL : $nivel');
         _professoresPorNivel[nivel] = (_professoresPorNivel[nivel] ?? 0) + 1;
       }
+      print('_professoresPorNivel $_professoresPorNivel');
       ///Pega a quantidade de professores
       final totals = await Future.wait([
-        Utils.calculateTotals(professores),
         Utils.calculateTotals(professores),
       ]);
       setState(() {
@@ -180,42 +202,14 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
 
     }
     try {
-      String tB=TBProfessor;
-
-      //if(widget.tipo=='INFANTIL'){
-        //tB=TBInfantil;
-     // }
-      profs = await ApiMySql.get(tB, null, 'ordem');
-
-      valorBase = double.parse(profs[0]['valor']);
-
-      //if(perAumentoAdulto>0 && widget.tipo=='ADULTO' ){
-        //valorBase=valorBase+(valorBase*perAumentoAdulto/100);
-     // }
-
-      //if(perAumentoInfantil>0 && widget.tipo=='INFANTIL'){
-        //valorBase=valorBase+(valorBase*perAumentoInfantil/100);
-     // }
-      ///PISO INFANTIL
-      penA = double.parse(profs[2]['valor']);
-      ///PROGRESSÃO ENTRE NÍVEIS
-      penB = double.parse(profs[3]['valor']);
-      penC = double.parse(profs[4]['valor']);
-      penD = double.parse(profs[5]['valor']);
-      penE = double.parse(profs[6]['valor']);
-      _percEntreColunas = double.parse(profs[1]['percentual']);
+      double  valorBase = double.parse(valorNivel[0]);
+      valorBase=valorBase+(valorBase*perProgressaoEntreClasse/100);
+      _percEntreColunas = perProgressaoEntreClasse;
 
       ///Percentual de cálculo entre as colunas
-
       final result = calculateTableAndDispersions(
-        niveis: ['NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
-        //niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
-        valorBase: valorBase,
-        penA: penA,
-        penB: penB,
-        penC: penC,
-        penD: penD,
-        penE: penE,
+        niveis: novosNiveis,
+        valoresIniciaisNiveis:valorNivel ,
         cargaHoraria: cargaHoraria,
         percEntreColunas: _percEntreColunas,
       );
@@ -228,7 +222,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
 
       // Calcula a tabela e dispersões
     } catch (e) {
-      print('Erro ao carregar dados ou calcular: $e');
+      print('Erro ao carregar dados ou calcular KKKKKKKKKKKKKKK: $e');
 
     } finally {
       setState(() => isLoading = false);
@@ -287,49 +281,26 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                 textColor: Colors.black,   // Sua cor de texto
                 borderColor: Colors.grey.shade300,
                 cargaHoraria: cargaHoraria, // Sua carga horária
-                niveis: ['NB', 'NC', 'ND', 'NE'], // Seus níveis
-               // niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Seus níveis
+                niveis: novosNiveis,
+                niveisP: niveisUnicos,
                 calculatedTableValues: _calculatedTableValues, // Seus valores calculados
                 quantidadeDeProfessores: (nivel, coluna) {
-                  // Sua implementação para contar professores
                   return quantidadeDeProfessores(nivel, coluna);
                 },
                 onCellSelected: (row, column) {
-                  // Ação quando uma célula é selecionada
                   _handleCellSelection(row, column);
                 },
               ),
-              SizedBox(height: 24),
-              ///Quantidade de professores por nível e classe
-              ///Acho que deveria sar
-/*
-              ProfessorDistributionTable(
-                primaryColor: Colors.blue, // Your primary color
-                textColor: Colors.black,   // Your text color
-                borderColor: Colors.grey.shade300,
-                cargaHoraria: 20, // Your workload value
-                niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'], // Your levels
-                calculatedTableValues: _calculatedTableValues, // Your calculated values
-                quantidadeDeProfessores: (nivel, coluna) {
-                  // Your implementation to count professors
-                  return quantidadeDeProfessores(nivel, coluna);
-                },
-                onCellSelected: (row, column) {
-                  // Action when a cell is selected
-                  _handleCellSelection(row, column);
-                },
-              ),
-
- */
               SizedBox(height: 24),
               ///Quantidade de professores com as somas dos saários
               ///Somatório de vencimentos por nível e classe
               SalaryTotalsTable(
                 primaryColor: Colors.blue, // ou sua cor primária
                 textColor: Colors.black,   // ou sua cor de texto
-                tipo: widget.horas,
+                tipo: widget.hora,
                 cargaHoraria: cargaHoraria, // ou seu valor
-                niveis: ['NA', 'NB', 'NC', 'ND', 'NE'], // sua lista de níveis
+                niveis: novosNiveis,
+                niveisP: niveisUnicos,
                 calculatedTableValues: _calculatedTableValues, // seus valores calculados
                 quantidadeDeProfessores: (nivel, coluna) {
                   return quantidadeDeProfessores(nivel, coluna);
@@ -337,6 +308,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                 professores: professores, // sua lista de professores
               ),
               SizedBox(height: 24),
+
 
               SummaryTable(
                   totalProfissionais: totProf,
@@ -348,6 +320,8 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                   totalEncargos: 6968798,
                   totalComEncargos: 0697079709
               )
+
+
             ],
           ),
         ),
@@ -475,14 +449,9 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
         setState(() {
           cargaHoraria = int.tryParse(novoValor)!;
           final result = calculateTableAndDispersions(
-            niveis: ['NA', 'NB', 'NC', 'ND', 'NE'],
-            //niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'],// Exemplo de níveis
-            valorBase: valorBase,
-            penA: penA,
-            penB: penB,
-            penC: penC,
-            penD: penD,
-            penE: penE,
+           niveis: novosNiveis,
+           valoresIniciaisNiveis: valorNivel,
+           // niveis: ['NA', 'NB', 'NC', 'ND', 'NE'],
             cargaHoraria: cargaHoraria,
             percEntreColunas: _percEntreColunas,
           );
@@ -504,20 +473,18 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       titulo: 'Editar Progressão',
       labelCampo: 'Percentual',
       valorInicial: _percEntreColunas.toString(),
-      aoSalvar: (novoValor) {
-        novoValor=novoValor.replaceAll('R\$', '');
+      inputFormatters: [
+        CurrencyTextInputFormatter.currency(symbol: '%', locale: 'pt')
+      ],
+      aoSalvar: (novoValor) async {
+        novoValor=novoValor.replaceAll('%', '');
         novoValor=novoValor.replaceAll(',', '.');
+        novoValor=novoValor.trim();
         setState(() {
           _percEntreColunas = double.tryParse(novoValor)!;
           final result = calculateTableAndDispersions(
-            niveis: [ 'NA', 'NB', 'NC', 'ND', 'NE'], // Exemplo de níveis
-            // niveis: ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'],
-            valorBase: valorBase,
-            penA: penA,
-            penB: penB,
-            penC: penC,
-            penD: penD,
-            penE: penE,
+            niveis: novosNiveis,
+            valoresIniciaisNiveis: valorNivel,
             cargaHoraria: cargaHoraria,
             percEntreColunas: _percEntreColunas,
           );
@@ -529,6 +496,12 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
 
           });
         });
+        ///atualiza a base de dados
+       var vr=Utils.saldoToSave(novoValor);
+        double? vr2=double.tryParse(vr);
+        vr2=(vr2! / 100)!;
+        print('Update $TBTotais set perc_aumento_infantil=$vr2');
+        await ApiMySql.executaSql('Update $TBTotais set perc_aumento_infantil=$vr2');
       },
     );
   }

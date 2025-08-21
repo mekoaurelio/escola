@@ -34,15 +34,14 @@ class ProfessorUtils {
   }
 
 
-  static Future<double> totalDeVencimentosProposta(String nivel, int coluna, var professores, var tipo) async {
+  static Future<double> totalDeVencimentosProposta(String nivel, int coluna, var professores) async {
     try {
       final totais = await ApiMySql.get(TBTotais, null, null);
       double perAumentoInfantil = double.tryParse(totais[0]['perc_aumento_infantil'].toString()) ?? 0.0;
-      double perAumentoAdulto = double.tryParse(totais[0]['perc_aumento_adulto'].toString()) ?? 0.0;
 
-      String nivelFormatado = nivel.substring(1);
+     // String nivelFormatado = nivel.substring(1);
       String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
-      String chave = '$nivelFormatado$colunaFormatada';
+      String chave = '$nivel$colunaFormatada';
 
       double total = 0.0;
 
@@ -52,13 +51,8 @@ class ProfessorUtils {
           total += vencimento;
         }
       }
-
       // Aplica o aumento percentual
-      if (tipo == 'INFANTIL') {
-        total += total * perAumentoInfantil / 100;
-      } else {
-        total += total * perAumentoAdulto / 100;
-      }
+      total += total * perAumentoInfantil / 100;
 
       return total;
     } catch (e) {
@@ -84,27 +78,26 @@ class ProfessorUtils {
   }
 
   // Método auxiliar para calcular o total por nível
-  static Future<double> calculateTotalForLevel(String nivel, var professores, int cargaHoraria, var tipo) async {
+  static Future<double> calculateTotalForLevel(String nivel, var professores, int cargaHoraria) async {
     try {
       // Cache dos totais (busca apenas uma vez)
       final totais = await ApiMySql.get(TBTotais, null, null);
       double perAumentoInfantil = double.parse(totais[0]['perc_aumento_infantil']);
-      double perAumentoAdulto = double.parse(totais[0]['perc_aumento_adulto']);
 
       double total = 0.0;
 
       for (int coluna = 0; coluna < cargaHoraria; coluna++) {
-        String nivelFormatado = nivel.substring(1);
         String colunaFormatada = (coluna + 1) < 10 ? '0${coluna + 1}' : '${coluna + 1}';
-        String chave = '$nivelFormatado$colunaFormatada';
+        String chave = '$nivel$colunaFormatada';
 
         for (var professor in professores) {
           if (professor['nivel'] == chave && professor['vencimento'] != null) {
             double vencimento = double.tryParse(professor['vencimento'].toString()) ?? 0.0;
-            double aumento = tipo == 'INFANTIL' ? perAumentoInfantil : perAumentoAdulto;
+            double aumento =perAumentoInfantil;
             total += vencimento * (1 + aumento / 100);
           }
         }
+        print('TOTAL $total');
       }
 
       return total;

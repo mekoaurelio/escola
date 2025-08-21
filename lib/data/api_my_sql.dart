@@ -163,6 +163,75 @@ WHERE id_user = $idUser;
     }
   }
 
+  static Future<List<dynamic>> getProPorHora(String hora,String tbFolha,String tbVantagem) async {
+    var url = Uri.parse('https://www.xmktech.net/dados/get_prof_por_hora.php?nocache=${DateTime.now().millisecondsSinceEpoch}');
+
+    // Corpo da requisição em formato JSON
+    final body = json.encode({
+      'action': 'getProfessor', // O nome da ação que o PHP vai identificar
+      'hora': hora, // Os parâmetros que o PHP precisa
+      'tbfolha': tbFolha,
+      'tbvantagem': tbVantagem,
+    });
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: body,
+      );
+      if (response.statusCode == 200) {
+
+        final List<dynamic> data = json.decode(response.body);
+        return data;
+      } else {
+        // Erro retornado pelo PHP
+        final errorData = json.decode(response.body);
+        print('Erro do servidor (${response.statusCode}): ${errorData['error']}');
+        return [];
+      }
+    } catch (e) {
+      print('Erro de conexão ao buscar professores: $e');
+      return [];
+    }
+  }
+
+  static Future<List<dynamic>> getProfPorNivel(String tbFolha,String hora) async {
+    var url = Uri.parse('https://www.xmktech.net/dados/get_prof_por_nivel.php?nocache=${DateTime.now().millisecondsSinceEpoch}');
+
+    // Corpo da requisição em formato JSON
+    final body = json.encode({
+      'action': 'getProfessor', // O nome da ação que o PHP vai identificar
+      'tbfolha': tbFolha,
+      'hora': hora,
+    });
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: body,
+      );
+      if (response.statusCode == 200) {
+
+        final List<dynamic> data = json.decode(response.body);
+        return data;
+      } else {
+        // Erro retornado pelo PHP
+        final errorData = json.decode(response.body);
+        print('Erro do servidor (${response.statusCode}): ${errorData['error']}');
+        return [];
+      }
+    } catch (e) {
+      print('Erro de conexão ao buscar professores: $e');
+      return [];
+    }
+  }
+
   static Future<dynamic> insereSql(String sql) async {
     String cleanSql = sql.replaceAll(r'\"', '"');
     if(sql.contains('$TBExercicio')) {
@@ -215,10 +284,10 @@ WHERE id_user = $idUser;
     var sql1="SELECT  f.id AS folha_id,f.id_municipio,f.matricula,f.nome,f.cpf,f.unidade,f.local_lotacao,f.horas,";
     sql1+="f.vencimento,f.cargo,f.nivel,DATE_FORMAT(f.admissao, '%d/%m/%Y') AS admissao,";
     sql1+="GROUP_CONCAT(CONCAT(dv.codigo, ':', dv.descricao, ':', dv.percentual, ':', ' R/\$ ', FORMAT(dv.valor, 2)) SEPARATOR ' | ') AS vantagens_detalhadas, SUM(dv.valor) AS soma_vantagens,";
-    sql1+="(SELECT SUM(vencimento) FROM $TBFolha WHERE status = 'A' AND horas='$hora') AS total_vencimentos_geral";
+    sql1+="(SELECT SUM(vencimento) FROM $TBFolha WHERE f.status = 'A' AND f.horas LIKE '%$hora%') AS total_vencimentos_geral";
     sql1+=" FROM $TBFolha f";
     sql1+=" LEFT JOIN $TBVantagens dv ON f.matricula = dv.folha_id";
-    sql1+=" WHERE f.status = 'A' AND horas= '$hora'";
+    sql1+=" WHERE f.status = 'A' AND horas LIKE '%$hora%'";
     sql1+=" GROUP BY f.matricula ORDER BY f.matricula";
     print(sql1);
     return await executaSql(sql1);

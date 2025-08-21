@@ -47,7 +47,7 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
     final labelController = TextEditingController(text: isEditing ? item.label : '');
 
     final percentController = TextEditingController(
-        text: isEditing && item.percentual != null ? percentFormatter.format(item.percentual) : '');
+        text: isEditing && item.percentual != null ? percentFormatter.format(item.valor) : '');
     final valorController = TextEditingController(
         text: isEditing && item.valor != 0 ? valorFormatter.format(item.valor) : '');
 
@@ -93,18 +93,20 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
                       ),
                       if (tipoSelecionado != TipoItem.cabecalho)
                         TextFormField(
-                          controller: percentController,
-                          decoration: const InputDecoration(labelText: 'Percentual (%)'),
+                          controller: valorController,
+                         // controller: percentController,
+                          decoration: const InputDecoration(labelText: 'Valor (R\$)'),
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
-                            PercentInputFormatter(),
+                            ValorInputFormatter(),
+                            //PercentInputFormatter(),
                           ],
                         ),
                       if (tipoSelecionado == TipoItem.cabecalho)
                         TextFormField(
                           controller: valorController,
-                          decoration: const InputDecoration(labelText: 'Valor Base (R\$)'),
+                          decoration: const InputDecoration(labelText: 'Valor  (R\$)'),
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           validator: (value) => (value?.isEmpty ?? true) ? 'Campo obrigatório' : null,
                           inputFormatters: [
@@ -130,10 +132,9 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
                       var idForm=_formulario.id;
                       if(isEditing){
                         var idI=item.id;
-                        print('update $TBSimulaForm set label="$label",tipo="$tipoSelecionado",valor=$valor,perc=$percent where id=$idI');
-                        await ApiMySql.executaSql('update $TBSimulaForm set label="$label",tipo="$tipoSelecionado",valor=$valor,perc=$percent where id=$idI');
+                        await ApiMySql.executaSql('update $TBSimulaForm set label="$label",tipo="$tipoSelecionado",valor=$valor where id=$idI');
                       }else{
-                        await ApiMySql.executaSql('insert INTO $TBSimulaForm (label,tipo,valor,perc,id_form) Values ("$label","$tipoSelecionado",$valor,$percent,$idForm)');
+                        await ApiMySql.executaSql('insert INTO $TBSimulaForm (label,tipo,valor,id_form) Values ("$label","$tipoSelecionado",$valor,$idForm)');
                       }
 
                       setState(() {
@@ -147,7 +148,7 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
                             id: _dbService.getProximoItemId(),
                             label: label,
                             tipo: tipoSelecionado,
-                            percentual: double.parse(percent),
+                            percentual: double.parse(valor),
                             valor: double.parse(valor),
                           ));
                         }

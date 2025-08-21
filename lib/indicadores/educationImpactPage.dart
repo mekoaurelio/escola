@@ -34,7 +34,6 @@ class _EducationImpactPage extends State<EducationImpactPage> {
 
   void _loadData()async{
     lista=await ApiMySql.get(TBImpactoEducacao,null,null);
-    print(lista);
     setState(() {
       _isLoading=false;
       _isMaster=Utils.getUserType()=='M';

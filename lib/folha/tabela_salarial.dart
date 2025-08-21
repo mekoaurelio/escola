@@ -10,6 +10,7 @@ class TabelaSalarial extends StatefulWidget {
   final Color borderColor;
   final int cargaHoraria;
   final List<String> niveis;
+  final List<String> niveisP;
   final List<List<double>> calculatedTableValues;
   final Function(String, int) quantidadeDeProfessores;
   final Function(int, int) onCellSelected;
@@ -21,6 +22,7 @@ class TabelaSalarial extends StatefulWidget {
     required this.borderColor,
     required this.cargaHoraria,
     required this.niveis,
+    required this.niveisP,
     required this.calculatedTableValues,
     required this.quantidadeDeProfessores,
     required this.onCellSelected,
@@ -73,62 +75,60 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
                         ),
                       ),
                       child: Row(
-                            children: [
-                              Container(
-                                width: 80,
-                                padding: EdgeInsets.symmetric(vertical: 12),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  widget.niveis[nivelIndex],
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: nivelIndex == 0 ? Colors.blue : widget.textColor,
-                                  ),
+                        children: [
+                          Container(
+                            width: 80,
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            alignment: Alignment.center,
+                            child: Text(
+                              widget.niveis[nivelIndex],
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: nivelIndex == 0 ? Colors.blue : widget.textColor,
+                              ),
+                            ),
+                          ),
+
+                            for (int coluna = 0; coluna < widget.calculatedTableValues[nivelIndex].length; coluna++)
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  selectedRow = nivelIndex;
+                                  selectedColumn = coluna;
+                                });
+                                widget.onCellSelected(nivelIndex, coluna);
+                              },
+                              child: Container(
+                                width: 90,
+                                padding: EdgeInsets.symmetric(vertical: 8),
+                                color: selectedRow == nivelIndex && selectedColumn == coluna
+                                    ? Colors.blue.withOpacity(0.2)
+                                    : Colors.transparent,
+                                child: Row(
+                                  children: [
+                                    ///VALOR
+                                    Expanded(
+                                      child: Text(
+                                        Utils.formatVr.format(widget.calculatedTableValues[nivelIndex][coluna]),
+                                        textAlign: TextAlign.right,
+                                        style: TextStyle(
+                                          fontSize: coluna == 0 ? 16 : 13,
+                                          color: coluna == 0 ? Colors.blue : widget.textColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+
+                                    ),
+                                    SizedBox(width: 4),
+                                    ///QUANTIDADE DE PROFESSORES POR NIVEL
+                                    achaNivel(widget.niveisP[nivelIndex], coluna + 1),
+
+                                  ],
                                 ),
                               ),
-                             // if(widget.calculatedTableValues[nivelIndex].length>0)
-                              for (int coluna = 0; coluna < widget.calculatedTableValues[nivelIndex].length; coluna++)
-                                GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      selectedRow = nivelIndex;
-                                      selectedColumn = coluna;
-                                    });
-                                    widget.onCellSelected(nivelIndex, coluna);
-                                  },
-                                  child: Container(
-                                    width: 90,
-                                    padding: EdgeInsets.symmetric(vertical: 8),
-                                    color: selectedRow == nivelIndex && selectedColumn == coluna
-                                        ? Colors.blue.withOpacity(0.2)
-                                        : Colors.transparent,
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            Utils.formatVr.format(widget.calculatedTableValues[nivelIndex][coluna]),
-                                            textAlign: TextAlign.right,
-                                            style: TextStyle(
-                                              fontSize: coluna == 0 ? 16 : 13,
-                                              color: coluna == 0 ? Colors.blue : widget.textColor,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(width: 4),
-                                        Text(
-                                          '(${widget.quantidadeDeProfessores(widget.niveis[nivelIndex], coluna + 1)})',
-                                          style: TextStyle(
-                                            fontSize: 9,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
+                            ),
+                        ],
+                      ),
                     ),
                 ],
               ),
@@ -137,5 +137,18 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
         ),
       ),
     );
+  }
+
+  Widget achaNivel(String nivel,var coluna){
+    String n=nivel.substring(0,1);
+    n=n.trim();
+    return
+      Text(
+        '(${widget.quantidadeDeProfessores(n, coluna)}) $n$coluna',
+        style: TextStyle(
+          fontSize: 9,
+          color: Colors.black54,
+        ),
+      );
   }
 }

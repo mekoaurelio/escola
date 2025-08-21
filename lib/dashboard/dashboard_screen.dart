@@ -7,6 +7,7 @@ import '../indicadores/pacDashboardPage.dart';
 import '../indicadores/receiptsDemonstrativePage.dart';
 import '../login/login.dart';
 import '../services/utils.dart';
+//import '../simulador/simula.dart';
 import '../simulador/simula.dart';
 import '../widgets/texto.dart';
 import 'package:GEM/services/GlobalFilterController.dart';
