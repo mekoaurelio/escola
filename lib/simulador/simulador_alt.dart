@@ -61,11 +61,7 @@ class SimuladorAlt extends StatelessWidget {
                 formValues['percentual'].toString().replaceAll(RegExp(r'[^\d,]'), '').replaceAll(',', '.'),
               ) ?? 0;
 
-              if (tb == TBProfessor) {
-                await ApiMySql.executaSql('UPDATE $TBTotais SET perc_aumento_adulto = $novoPercentual');
-              } else if (tb == TBInfantil) {
-                await ApiMySql.executaSql('UPDATE $TBTotais SET perc_aumento_infantil = $novoPercentual');
-              }
+                await ApiMySql.executaSql('UPDATE $TBTotais SET qtde_classe = $novoPercentual');
             }
 
             Get.back();

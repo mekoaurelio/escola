@@ -258,13 +258,16 @@ class SalaryTotalsTable extends StatelessWidget {
                               child: Column(
                                 children: [
                                   if (quantidadeDeProfessores(getNivel(niveisP[nivelIndex]), getColuna(coluna + 1)) != 0)
+                                   nivelIndex > 0?
                                     Texto(
-                                      tit: '${quantidadeDeProfessores(getNivel(niveisP[nivelIndex]), coluna + 1)} Profs.', tam: 11, cor: textColor.withOpacity(0.8),),
+                                      tit: '${quantidadeDeProfessores(getNivel(niveisP[nivelIndex-1]), coluna + 1)} Profs.', tam: 11, cor: textColor.withOpacity(0.8),):
+                                       Container(),
 
                                   if (quantidadeDeProfessores(getNivel(niveisP[nivelIndex]), coluna + 1) != 0)
+                                    nivelIndex > 0?
                                     FutureBuilder<double>(
                                       future: ProfessorUtils.totalDeVencimentosProposta(
-                                          getNivel(niveisP[nivelIndex]),
+                                          getNivel(niveisP[nivelIndex-1]),
                                           coluna + 1,
                                           professores,
                                       ),
@@ -278,7 +281,7 @@ class SalaryTotalsTable extends StatelessWidget {
                                         return Texto(
                                           tit: Utils.formatVr.format(snapshot.data ?? 0.0), tam: 11, negrito: true, cor: primaryColor,);
                                       },
-                                    ),
+                                    ):Container()
                                 ],
                               ),
                             ),
@@ -287,11 +290,12 @@ class SalaryTotalsTable extends StatelessWidget {
                             width: 120,
                             padding: EdgeInsets.symmetric(vertical: 12),
                             alignment: Alignment.center,
-                            child: Column(
+                            child: nivelIndex>0?
+                            Column(
                               children: [
                                 Texto(tit: 'Total',tam: 11,cor:textColor.withOpacity(0.8)),
                                 FutureBuilder<double>(
-                                  future: ProfessorUtils.calculateTotalForLevel(getNivel(niveisP[nivelIndex]), professores, cargaHoraria,),
+                                  future: ProfessorUtils.calculateTotalForLevel(getNivel(niveisP[nivelIndex-1]), professores, cargaHoraria,),
                                   builder: (context, snapshot) {
                                     if (snapshot.connectionState == ConnectionState.waiting) {
                                       return Texto(tit: 'Calculando...', tam: 11, cor: primaryColor);
@@ -305,7 +309,7 @@ class SalaryTotalsTable extends StatelessWidget {
                                 )
 
                               ],
-                            ),
+                            ):Container()
                           ),
                         ],
                       ),

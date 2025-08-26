@@ -98,7 +98,6 @@ WHERE id_user = $idUser;
     if (orderBy != null) {
       sql += ' order by $orderBy';
     }
-   // print(sql);
     return await executaSql(sql);
   }
 
@@ -112,6 +111,41 @@ WHERE id_user = $idUser;
     // print(sql);
     return await executaSql(sql);
   }
+
+  static Future<List<dynamic>> getTotolSalPorHora(String tFolha,String tSimula,String tVantagem) async {
+    var sql = 'SELECT a.horas,s.descricao,SUM(a.vencimento) as total_vencimento,s.id,';
+    sql+='COUNT(*) as quantidade_registros,COALESCE(SUM(v.valor), 0) as total_vantagens';
+    sql+=" FROM $tFolha a LEFT JOIN $tSimula s ON REPLACE(a.horas, 'hs', '') = s.horas";
+    sql+= ' LEFT JOIN $tVantagem v ON a.matricula = v.folha_id';
+    sql+=' WHERE a.vencimento IS NOT NULL GROUP BY a.horas, s.descricao ORDER BY a.horas;';
+    print(sql);
+    return await executaSql(sql);
+  }
+  /*
+
+
+*****************************************
+
+SELECT
+    a.horas,
+    s.descricao,
+    SUM(a.vencimento) as total_vencimento,
+    COUNT(DISTINCT a.matricula) as quantidade_funcionarios,
+    COUNT(*) as quantidade_registros,
+    COALESCE(SUM(v.valor), 0) as total_vantagens,
+    COUNT(v.folha_id) as quantidade_vantagens
+FROM cia_2505 a
+LEFT JOIN cia_simula_cab2505 s
+    ON REPLACE(a.horas, 'hs', '') = s.horas
+LEFT JOIN cia_vantagens2505 v
+    ON a.matricula = v.folha_id
+WHERE a.vencimento IS NOT NULL
+GROUP BY a.horas, s.descricao
+ORDER BY a.horas;
+   */
+
+
+
 
   static Future<List<dynamic>> executaSql(String sql) async {
     try {
@@ -194,7 +228,10 @@ WHERE id_user = $idUser;
       }
     } catch (e) {
       print('Erro de conexão ao buscar professores: $e');
-      return [];
+      List<dynamic> lista = [
+        {'Erro': 'Erro de conexão ao buscar professores: $e'}, // Map
+      ];
+      return lista;
     }
   }
 
@@ -279,19 +316,7 @@ WHERE id_user = $idUser;
 
     return await executaSql(sql1);
   }
-  
-  static getProfessorPorHora(String hora) async {
-    var sql1="SELECT  f.id AS folha_id,f.id_municipio,f.matricula,f.nome,f.cpf,f.unidade,f.local_lotacao,f.horas,";
-    sql1+="f.vencimento,f.cargo,f.nivel,DATE_FORMAT(f.admissao, '%d/%m/%Y') AS admissao,";
-    sql1+="GROUP_CONCAT(CONCAT(dv.codigo, ':', dv.descricao, ':', dv.percentual, ':', ' R/\$ ', FORMAT(dv.valor, 2)) SEPARATOR ' | ') AS vantagens_detalhadas, SUM(dv.valor) AS soma_vantagens,";
-    sql1+="(SELECT SUM(vencimento) FROM $TBFolha WHERE f.status = 'A' AND f.horas LIKE '%$hora%') AS total_vencimentos_geral";
-    sql1+=" FROM $TBFolha f";
-    sql1+=" LEFT JOIN $TBVantagens dv ON f.matricula = dv.folha_id";
-    sql1+=" WHERE f.status = 'A' AND horas LIKE '%$hora%'";
-    sql1+=" GROUP BY f.matricula ORDER BY f.matricula";
-    print(sql1);
-    return await executaSql(sql1);
-  }
+
   
   /// ==========================================================
   /// Criação das tabelas                                      =
@@ -348,9 +373,10 @@ WHERE id_user = $idUser;
   static  Future<List<dynamic>> CriaTabelaSimulaCab(String tb)async{
     var sql='CREATE TABLE IF NOT EXISTS $tb (';
     sql+='id int(11) NOT NULL,';
+    sql+='horas int(11) NOT NULL,';
     sql+='descricao varchar(200) NOT NULL,';
     sql+='created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP);';
-    var result= executaSql(sql);
+    var result=await executaSql(sql);
     await criaIndiceEAutoIncremento(tb);
     return result;
   }
@@ -459,8 +485,9 @@ WHERE id_user = $idUser;
     sql+= 'matricula decimal(15,2) NOT NULL DEFAULT "0.00",';
     sql+= 'receita decimal(15,2) NOT NULL DEFAULT "0.00",';
     sql+= 'fundeb_10_5 decimal(15,2) NOT NULL DEFAULT "0.00",';
-    sql+= 'perc_aumento_adulto decimal(15,2) NOT NULL DEFAULT "0.00",';
-    sql+= 'perc_aumento_infantil decimal(15,2) NOT NULL DEFAULT "0.00")';
+    sql+= 'qtde_classe int(11) NOT NULL,';
+    sql+= 'perc_aumento_infantil decimal(15,2) NOT NULL DEFAULT "0.00",';
+    sql+= 'perc_aumento_adulto decimal(15,2) NOT NULL DEFAULT "0.00")';
     await executaSql(sql);
     await criaIndiceEAutoIncremento(tb);
   }
@@ -727,7 +754,7 @@ WHERE id_user = $idUser;
     if(!temDados) {
       var sql = 'INSERT INTO $tb';
       sql +=
-      '(decendio_projetado, decendio_5, imposto_projetado, imposto_25, matricula, receita, fundeb_10_5, perc_aumento_adulto, perc_aumento_infantil) VALUES';
+      '(decendio_projetado, decendio_5, imposto_projetado, imposto_25, matricula, receita, fundeb_10_5, qtde_classe, perc_aumento_infantil) VALUES';
       sql += '(0.00, 0.00, 0.00, 0.00, 0.00, 0.60, 0.00, 0.00, 0.00)';
       executaSql(sql);
     }

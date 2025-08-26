@@ -18,12 +18,14 @@ class SimuladorTabelaProfessor extends StatefulWidget {
   final String table;
   final String hora;
   final String idItens;
+  final String descricao;
 
   const SimuladorTabelaProfessor({
     Key? key,
     required this.table,
     required this.idItens,
     required this.hora,
+    required this.descricao
   }) : super(key: key);
 
   @override
@@ -31,17 +33,9 @@ class SimuladorTabelaProfessor extends StatefulWidget {
 }
 
 class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
-  int cargaHoraria = 15;
+  int cargaHoraria = 30;
   double _percEntreColunas=0;
-  //final List<String> niveis = ['BASE', 'NA', 'NB', 'NC', 'ND', 'NE'];
-
   var profs; // Dados brutos da API
-  //double valorBase = 0; // Valor inicial 'valor'
-  double penA = 0; // Diferença NB-NC (ou valor inicial de NC)
-  double penB = 0; // Diferença NB-NC (ou valor inicial de NC)
-  double penC = 0; // Diferença NC-ND (ou valor inicial de ND)
-  double penD = 0; // Diferença ND-NE (ou valor inicial de NE)
-  double penE = 0; // Diferença ND-NE (ou valor inicial de NE)
   bool isLoading = true;
   // Variáveis para armazenar os resultados calculados
   List<List<double>> _calculatedTableValues = [];
@@ -154,18 +148,27 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       //Pega os novos níveis
       var hs=widget.hora;
 
-
       var getNiveis=await ApiMySql.getItensFromForm(TBSimulaForm,widget.idItens,null);
+      if(getNiveis.isEmpty){
+        Utils.snak('Atenção', 'Não tem nenhum nível cadastrado para ${widget.descricao}', false, Colors.red);
+        setState(() => isLoading = false);
+        return;
+      }
+      if(getNiveis.contains('Erro')){
+        Utils.snak('Atenção', 'Não foi possível conectar com o servidor. Tente novamente', false, Colors.red);
+        return;
+      }
       novosNiveis = getNiveis.map((item) => item['label'].toString()).toList();
       valorNivel = getNiveis.map((item) => item['valor'].toString()).toList();
 
       var nu=await ApiMySql.getProfPorNivel(TBFolha,widget.hora);
       niveisUnicos = nu.map((item) => item['nivel'].toString()).toList();
-      print('NIVEIS UNICO');
-      print(niveisUnicos);
+      //print('NIVEIS UNICO');
+      //print(niveisUnicos);
 
 
       professores = await ApiMySql.getProPorHora(widget.hora,TBFolha,TBVantagens).timeout(const Duration(seconds: 30));
+     // print(professores);
       if(professores==null){
         setState(() => isLoading = false);
         return;
@@ -174,10 +177,19 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
         setState(() => isLoading = false);
         return;
       }
+     // print(professores);
+     // if(professores.erro!=null){
+       // print('MMMMMMMMMMMMMMMM');
+     // }
+
       ///Pega os totais
       final totais = await ApiMySql.get(TBTotais,null,null);
+      print('TOTAIS $totais');
 
       perProgressaoEntreClasse=double.parse(totais[0]['perc_aumento_infantil']);
+      print('perProgressaoEntreClasse $perProgressaoEntreClasse');
+      cargaHoraria=int.parse(totais[0]['qtde_classe']);
+      print('CARGA HORARIA =$cargaHoraria');
 
       /// Pré-processa a contagem de professores por nível
       _professoresPorNivel = {};
@@ -186,20 +198,23 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
        // print('NIVEL : $nivel');
         _professoresPorNivel[nivel] = (_professoresPorNivel[nivel] ?? 0) + 1;
       }
-      print('_professoresPorNivel $_professoresPorNivel');
+     // print('_professoresPorNivel $_professoresPorNivel');
       ///Pega a quantidade de professores
-      final totals = await Future.wait([
+      final tot = await Future.wait([
         Utils.calculateTotals(professores),
       ]);
+    //  print('totals $totals');
       setState(() {
-        _custoMensal = totals[0]['total']!;
+        _custoMensal = tot[0]['total']!;
+        print('custo toal => $_custoMensal');
         totProf=professores.length;
+        print('totla de professores $totProf');
         isLoading = true;
       });
+
       totalFolha=double.parse(professores[0]['total_vencimentos_geral']);
     } catch (e) {
       print('Erro ao carregar dados ou calcular: $e');
-
     }
     try {
       double  valorBase = double.parse(valorNivel[0]);
@@ -222,6 +237,12 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
 
       // Calcula a tabela e dispersões
     } catch (e) {
+      Utils.snak('Atenção', 'Erro ao caulcular', false, Colors.red);
+      setState(() {
+        _calculatedTableValues = [];
+        _dispersaoHorizontal = '0';
+        _dispersaoTotal = '0';
+      });
       print('Erro ao carregar dados ou calcular KKKKKKKKKKKKKKK: $e');
 
     } finally {
@@ -283,6 +304,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                 cargaHoraria: cargaHoraria, // Sua carga horária
                 niveis: novosNiveis,
                 niveisP: niveisUnicos,
+                descricao: widget.descricao,
                 calculatedTableValues: _calculatedTableValues, // Seus valores calculados
                 quantidadeDeProfessores: (nivel, coluna) {
                   return quantidadeDeProfessores(nivel, coluna);
@@ -308,7 +330,6 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                 professores: professores, // sua lista de professores
               ),
               SizedBox(height: 24),
-
 
               SummaryTable(
                   totalProfissionais: totProf,
@@ -445,13 +466,13 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       titulo: 'Editar Carga Horária',
       labelCampo: 'Horas',
       valorInicial: cargaHoraria.toString(),
-      aoSalvar: (novoValor) {
+      aoSalvar: (novoValor)async {
+        await ApiMySql.executaSql('update $TBTotais set qtde_classe=$novoValor');
         setState(() {
           cargaHoraria = int.tryParse(novoValor)!;
           final result = calculateTableAndDispersions(
            niveis: novosNiveis,
            valoresIniciaisNiveis: valorNivel,
-           // niveis: ['NA', 'NB', 'NC', 'ND', 'NE'],
             cargaHoraria: cargaHoraria,
             percEntreColunas: _percEntreColunas,
           );

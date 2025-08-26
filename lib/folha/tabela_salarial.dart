@@ -14,6 +14,7 @@ class TabelaSalarial extends StatefulWidget {
   final List<List<double>> calculatedTableValues;
   final Function(String, int) quantidadeDeProfessores;
   final Function(int, int) onCellSelected;
+  final String descricao;
 
   const TabelaSalarial({
     Key? key,
@@ -26,6 +27,7 @@ class TabelaSalarial extends StatefulWidget {
     required this.calculatedTableValues,
     required this.quantidadeDeProfessores,
     required this.onCellSelected,
+    required this.descricao,
   }) : super(key: key);
 
   @override
@@ -35,6 +37,7 @@ class TabelaSalarial extends StatefulWidget {
 class _TabelaSalarialState extends State<TabelaSalarial> {
   int? selectedRow;
   int? selectedColumn;
+  int? ind;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +51,13 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Texto(tit: 'Tabela Salarial',cor:widget.textColor ,tam: 18,negrito: true,bottom: 4,),
+            Row(
+              children: [
+                Texto(tit: 'Tabela Salarial para ',cor:widget.textColor ,tam: 18,negrito: true,bottom: 4,),
+                Texto(tit: '${widget.descricao}',cor:Colors.blue ,tam: 18,negrito: true,bottom: 4,),
+              ],
+            ),
+
             Texto(tit: 'Valores calculados para cada nível e classe',cor:widget.textColor.withOpacity(0.6),tam: 14,bottom: 16,),
 
             SingleChildScrollView(
@@ -121,7 +130,12 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
                                     ),
                                     SizedBox(width: 4),
                                     ///QUANTIDADE DE PROFESSORES POR NIVEL
-                                    achaNivel(widget.niveisP[nivelIndex], coluna + 1),
+                                    ///
+
+                                   // nivelIndex > 0?
+                                    //achaNivel(widget.niveisP[nivelIndex-1], coluna + 1,nivelIndex):Container()
+
+                                   // achaNivel(widget.niveisP[nivelIndex-1], coluna + 1,nivelIndex),
 
                                   ],
                                 ),
@@ -139,16 +153,23 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
     );
   }
 
-  Widget achaNivel(String nivel,var coluna){
-    String n=nivel.substring(0,1);
-    n=n.trim();
-    return
-      Text(
-        '(${widget.quantidadeDeProfessores(n, coluna)}) $n$coluna',
-        style: TextStyle(
-          fontSize: 9,
-          color: Colors.black54,
-        ),
-      );
+  Widget achaNivel(String nivel,var coluna, var nivelIndex) {
+    String n = nivel.substring(0, 1);
+    n = n.trim();
+    print('$nivel $nivelIndex $n');
+    if (nivelIndex > 0) {
+      return
+        Text(
+          '(${widget.quantidadeDeProfessores(n, coluna)}) $n$coluna',
+          style: TextStyle(
+            fontSize: 9,
+            color: Colors.black54,
+          ),
+        );
+    }else{
+      return Container();
+    }
+
+
   }
 }

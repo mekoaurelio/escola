@@ -131,9 +131,16 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
 
                       var idForm=_formulario.id;
                       if(isEditing){
+                        print('ATUALIZANDO');
                         var idI=item.id;
                         await ApiMySql.executaSql('update $TBSimulaForm set label="$label",tipo="$tipoSelecionado",valor=$valor where id=$idI');
                       }else{
+                        print('INSERINDO');
+                        final temTabela=await ApiMySql.tabelaExiste(TBSimulaForm);
+                        if(!temTabela){
+                          await ApiMySql.CriaTabelaSimulaForm(TBSimulaForm);
+                        }
+
                         await ApiMySql.executaSql('insert INTO $TBSimulaForm (label,tipo,valor,id_form) Values ("$label","$tipoSelecionado",$valor,$idForm)');
                       }
 

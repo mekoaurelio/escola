@@ -133,31 +133,16 @@ class _StartState extends State<Start> {
       ...formItens.map((itens) => {
         'id': 'prof_educador_${itens['id']}',
         'group': 'professores',
-        'drawerLabel': 'Professor ${itens['descricao']}',
-        'appBarTitle': 'Professor ${itens['descricao']}',
+        'drawerLabel': '${itens['descricao']}',
+        'appBarTitle': '${itens['descricao']}',
         'builder': () => SimuladorTabelaProfessor(
           key: ValueKey('SimuladorTabelaProfessor_${itens['id']}'),
           table: '${muni}professor',
           hora: itens['horas']!,
           idItens: itens['id']!,
-         // descricao: itens['descricao']!,
-          //hora: itens['horas']!,
+          descricao: itens['descricao']!,
         ),
       }).toList(),
-
-    /*
-    ...horas.map((hora) => {
-        'id': 'prof_educador_${horas.indexOf(hora)}',
-        'group': 'professores',
-        'drawerLabel': 'Professor $hora',
-        'appBarTitle': 'Professor $hora',
-        'builder': () => SimuladorTabelaProfessor(
-          key: ValueKey('SimuladorTabelaProfessor_${horas.indexOf(hora)}'),
-          table: '${muni}professor',
-          horas: hora,
-        ),
-      }).toList(),
-     */
 
       {
         'id': 'prof_conferencia',
@@ -231,7 +216,8 @@ class _StartState extends State<Start> {
 
   void start() async{
     ///Pega as horas
-    var getHoras=await ApiMySql.get(TBSimulaCab, null, null);;
+    var getHoras=await ApiMySql.get(TBSimulaCab, null, null);
+    formItens.clear();
     for(int i = 0 ; i<getHoras.length ; i++) {
       formItens.add({
         'id': getHoras[i]['id']?.toString() ?? 'Nome não disponível',
@@ -394,7 +380,7 @@ class _StartState extends State<Start> {
             padding: const EdgeInsets.all(16),
             width: double.infinity,
             child: const Text(
-              'Copyright © 2025 XmkTech. V.010\nAll rights reserved (41-9-9558-2579)',
+              'Copyright © 2025 XmkTech. V.012\nAll rights reserved (41-9-9558-2579)',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),

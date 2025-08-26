@@ -97,7 +97,7 @@ class ProfessorUtils {
             total += vencimento * (1 + aumento / 100);
           }
         }
-        print('TOTAL $total');
+       // print('TOTAL $total');
       }
 
       return total;

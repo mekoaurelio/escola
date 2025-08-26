@@ -1,9 +1,12 @@
 import 'package:GEM/services/table_name_service.dart';
+import 'package:flutter/material.dart';
 
 import '../data/api_my_sql.dart';
 import '../simulador/formulario/formulario.dart';
 import 'package:GEM/services/GlobalFilterController.dart';
 import 'package:get/get.dart';
+
+import 'utils.dart';
 
 class DatabaseService {
   // Simula uma tabela de formulários no banco de dados
@@ -29,21 +32,24 @@ class DatabaseService {
   }
 
   // Cria um novo formulário com um título e o salva.
-  Future<Formulario> criarNovoFormulario(String titulo) async {
-    var tb=await montaNomeTabela('simula_cab');
-    final temTabela=await ApiMySql.tabelaExiste(tb);
-    if(!temTabela){
-      var tbCriada=await ApiMySql.CriaTabelaSimulaCab(tb);
-    }
-    var itens=await ApiMySql.executaSql('insert into $tb (descricao) values ("$titulo")');
-    var result=await ApiMySql.executaSql('select * from $tb where descricao="$titulo"');
-    final novoFormulario = Formulario(
-      id: int.parse(result[0]['id']),
-      titulo: titulo,
-      itens: [], // Começa sem itens
-    );
-    _formulariosSalvos.add(novoFormulario);
-    return novoFormulario;
+  Future<Formulario> criarNovoFormulario(String titulo, String horas) async {
+      var tb = await montaNomeTabela('simula_cab');
+      final temTabela = await ApiMySql.tabelaExiste(tb);
+      if (!temTabela) {
+        var tbCriada = await ApiMySql.CriaTabelaSimulaCab(tb);
+      }
+      var itens = await ApiMySql.executaSql('insert into $tb (descricao,horas) values ("$titulo","$horas")');
+      print(itens);
+      var result = await ApiMySql.executaSql('select * from $tb where descricao="$titulo"');
+      final novoFormulario = Formulario(
+        id: int.parse(result[0]['id']),
+        titulo: titulo,
+        itens: [], // Começa sem itens
+      );
+      _formulariosSalvos.add(novoFormulario);
+      return novoFormulario;
+
+
   }
 
   Future<String> montaNomeTabela(var tb) async {
@@ -56,6 +62,7 @@ class DatabaseService {
   Future<void> salvarFormulario(Formulario formulario) async {
     final index = _formulariosSalvos.indexWhere((f) => f.id == formulario.id);
     var tb=await montaNomeTabela('simula_form');
+    print(tb);
     if (index != -1) {
       /// ==========================================================
       /// Altera o formulário                                      =
@@ -106,10 +113,14 @@ class DatabaseService {
   /// ==========================================================
   /// delete formulário                                        =
   /// ==========================================================
-  Future<void> deletarFormulario(int id) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    _formulariosSalvos.removeWhere((f) => f.id == id);
-    print("Formulário ID $id deletado.");
+  Future<void> deletarFormulario(int id,BuildContext context) async {
+    final bool confirmar = await Utils.showDlg(
+      'Atenção', 'Confirma a exclusão ?', context, 'Sim', 'Não',);
+    if (confirmar) {
+      await ApiMySql.executaSql("DELETE FROM $TBSimulaCab WHERE id=$id",);
+      _formulariosSalvos.removeWhere((f) => f.id == id);
+      print("Formulário ID $id deletado.");
+    }
   }
 
   // Gera um ID único para um novo item.

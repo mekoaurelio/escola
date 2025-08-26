@@ -3,6 +3,7 @@ import 'package:GEM/services/table_name_service.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/databaseService.dart';
+import '../../services/utils.dart';
 import 'formulario.dart';
 import 'formularioBuilderScreen.dart';
 
@@ -31,14 +32,24 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
 
   void _criarNovoFormulario() {
     final tituloController = TextEditingController();
+    final horasController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Criar Novo Formulário'),
-        content: TextField(
-          controller: tituloController,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Título do Formulário'),
+        content: Column(
+          children: [
+            TextField(
+              controller: tituloController,
+              autofocus: true,
+              decoration: const InputDecoration(hintText: 'Título do Formulário'),
+            ),
+            TextField(
+              controller: horasController,
+              autofocus: true,
+              decoration: const InputDecoration(hintText: 'Quantidade de Horas'),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -47,14 +58,16 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (tituloController.text.isNotEmpty) {
-                final novoFormulario = await _dbService.criarNovoFormulario(tituloController.text);
+              if (tituloController.text.isNotEmpty && horasController.text.isNotEmpty) {
+                final novoFormulario = await _dbService.criarNovoFormulario(tituloController.text,horasController.text);
                 Navigator.of(context).pop(); // Fecha o dialog
                 // Navega para a tela de construção e atualiza a lista quando voltar
                 await Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => FormularioBuilderScreen(formulario: novoFormulario),
                 ));
                 _reloadData();
+              }else{
+                Utils.snak('Atenção', 'Preencha todos os Dados', false, Colors.red);
               }
             },
             child: const Text('Criar e Abrir'),
@@ -66,6 +79,7 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
 
   void _abrirFormulario(Formulario formulario) async {
     var _itens=await ApiMySql.getItensFromForm(TBSimulaForm,formulario.id,null);
+    print(_itens);
     for(int i = 0 ; i<_itens.length ; i++) {
       formulario.itens.add(ItemFormulario(
         id: int.parse(_itens[i]['id']),
@@ -101,7 +115,7 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text("Erro: ${snapshot.error}"));
+            return Utils.vazio('Nenhum formulário criado.\nClique no botão "+" para começar.');
           }
           final formularios = snapshot.data ?? [];
           if (formularios.isEmpty) {
@@ -123,7 +137,7 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                     onPressed: () async {
-                      await _dbService.deletarFormulario(form.id);
+                      await _dbService.deletarFormulario(form.id,context);
                       _reloadData();
                     },
                   ),
