@@ -43,7 +43,7 @@ class _ProfessoresState extends State<Professores> {
 
   Future<void> _loadData() async {
     try {
-      listaCompleta = await ApiMySql.getProfessor();
+      listaCompleta = await ApiMySql.getProfessor().timeout(const Duration(seconds: 30));
       lista = listaCompleta;
 
       if (mounted) {

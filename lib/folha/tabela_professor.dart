@@ -136,9 +136,11 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   }
 
   int quantidadeDeProfessores(String nivel, int coluna) {
+    print('nivel $nivel coluna $coluna');
     String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
     String chave = '$nivel$colunaFormatada';
-   // print('CHAVE : $chave');
+    chave=chave.replaceAll('NIVEL', '').trim();
+    print('CHAVE : $chave');
 
     return _professoresPorNivel[chave] ?? 0;
   }
@@ -148,7 +150,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       //Pega os novos níveis
       var hs=widget.hora;
 
-      var getNiveis=await ApiMySql.getItensFromForm(TBSimulaForm,widget.idItens,null);
+      var getNiveis=await ApiMySql.getItensFromForm(TBSimulaForm,widget.idItens,null).timeout(const Duration(seconds: 30));
       if(getNiveis.isEmpty){
         Utils.snak('Atenção', 'Não tem nenhum nível cadastrado para ${widget.descricao}', false, Colors.red);
         setState(() => isLoading = false);
@@ -161,7 +163,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       novosNiveis = getNiveis.map((item) => item['label'].toString()).toList();
       valorNivel = getNiveis.map((item) => item['valor'].toString()).toList();
 
-      var nu=await ApiMySql.getProfPorNivel(TBFolha,widget.hora);
+      var nu=await ApiMySql.getProfPorNivel(TBFolha,widget.hora).timeout(const Duration(seconds: 30));
       niveisUnicos = nu.map((item) => item['nivel'].toString()).toList();
       //print('NIVEIS UNICO');
       //print(niveisUnicos);
@@ -183,7 +185,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
      // }
 
       ///Pega os totais
-      final totais = await ApiMySql.get(TBTotais,null,null);
+      final totais = await ApiMySql.get(TBTotais,null,null).timeout(const Duration(seconds: 30));
       print('TOTAIS $totais');
 
       perProgressaoEntreClasse=double.parse(totais[0]['perc_aumento_infantil']);
@@ -195,7 +197,6 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       _professoresPorNivel = {};
       for (var item in professores) {
         final nivel = item['nivel']?.toString() ?? '';
-       // print('NIVEL : $nivel');
         _professoresPorNivel[nivel] = (_professoresPorNivel[nivel] ?? 0) + 1;
       }
      // print('_professoresPorNivel $_professoresPorNivel');
@@ -321,8 +322,9 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                 textColor: Colors.black,   // ou sua cor de texto
                 tipo: widget.hora,
                 cargaHoraria: cargaHoraria, // ou seu valor
-                niveis: novosNiveis,
-                niveisP: niveisUnicos,
+                //niveis: novosNiveis,
+                novosNiveis: novosNiveis,
+                //niveisP: niveisUnicos,
                 calculatedTableValues: _calculatedTableValues, // seus valores calculados
                 quantidadeDeProfessores: (nivel, coluna) {
                   return quantidadeDeProfessores(nivel, coluna);
@@ -467,7 +469,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       labelCampo: 'Horas',
       valorInicial: cargaHoraria.toString(),
       aoSalvar: (novoValor)async {
-        await ApiMySql.executaSql('update $TBTotais set qtde_classe=$novoValor');
+        await ApiMySql.executaSql('update $TBTotais set qtde_classe=$novoValor').timeout(const Duration(seconds: 30));
         setState(() {
           cargaHoraria = int.tryParse(novoValor)!;
           final result = calculateTableAndDispersions(
@@ -478,7 +480,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
           );
 
           setState(() {
-            _calculatedTableValues = result.calculatedTableValues;
+            _calculatedTableValues = result.calculatedTableValues;//São os valores calculados
             _dispersaoHorizontal = result.dispersaoHorizontal;
             _dispersaoTotal = result.dispersaoTotal;
 
@@ -522,7 +524,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
         double? vr2=double.tryParse(vr);
         vr2=(vr2! / 100)!;
         print('Update $TBTotais set perc_aumento_infantil=$vr2');
-        await ApiMySql.executaSql('Update $TBTotais set perc_aumento_infantil=$vr2');
+        await ApiMySql.executaSql('Update $TBTotais set perc_aumento_infantil=$vr2').timeout(const Duration(seconds: 30));
       },
     );
   }

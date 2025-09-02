@@ -26,16 +26,14 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
   ///Para os totais
   double somaVencimentos = 0;
   double somaPropostas = 0;
+  List<String> novosNiveis=[];
+  List<String> niveisUnicos=[];
+  List<String> valorNivel=[];
+  double totalFolha=0;
+  double totalVantagens=0;
 
-  double valorBase=0;
-  double penA=0;
-  double penB=0;
-  double penC=0;
-  double penD=0;
-  double penE=0;
-  double perc=0;
-  List<double> matrizProfessor =[];
-  List<double> matrizInfantil =[];
+
+  List<String> matrizProfessor =[];
   double percP=0,percI=0;
   int hoverIndex = -1;
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
@@ -68,35 +66,35 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
     }
   }
 
-  Future<void> carregaMatriz(var tb,String tipo) async {
+  Future<void> carregaMatriz(var tb) async {
+    var getNiveis=await ApiMySql.getItensFromForm(TBSimulaForm,'5',null).timeout(const Duration(seconds: 30));
 
-    valorBase = double.parse(tb[0]['valor']); ///PISO
-    penA = double.parse(tb[2]['valor']);
-    penB = double.parse(tb[3]['valor']);
-    penC = double.parse(tb[4]['valor']);
-    penD = double.parse(tb[5]['valor']);
-    penE = double.parse(tb[6]['valor']);
-    perc=double.parse(tb[1]['percentual']); ///Percentual de progressão entre níveis
+    //var getNiveis=await ApiMySql.getItensFromForm(TBSimulaForm,getProfessores[i]['id'],null).timeout(const Duration(seconds: 30));
+    novosNiveis = getNiveis.map((item) => item['label'].toString()).toList();
+    print('novosNiveis $novosNiveis');
+    valorNivel = getNiveis.map((item) => item['valor'].toString()).toList();
+    print('valorNivel $valorNivel');
 
-    if(tipo=='P'){
-      percP=perc;
-    }else{
-      percI=perc;
-    }
-    matrizProfessor = [valorBase, penA, penB, penC, penD, penE];
-    matrizInfantil = [valorBase, penA, penB, penC, penD, penE];
+   // percI=perc;
+
+    matrizProfessor = valorNivel;
   }
 
   Future<void> carregarFolha() async {
-    var profs = await ApiMySql.get(TBProfessor, null, 'ordem');
-    var infantil = await ApiMySql.get(TBInfantil, null, 'ordem');
-    await carregaMatriz(profs,'P');
-    await carregaMatriz(infantil,'I');
 
-    listaCompleta = await ApiMySql.getProfessor(); // Salva a lista completa
+    listaCompleta  = await ApiMySql.getTotolSalPorHora(TBFolha,TBSimulaCab,TBVantagens).timeout(const Duration(seconds: 30));
+
+    //await ApiMySql.getProfessor().timeout(const Duration(seconds: 30)); // Salva a lista completa
     lista = listaCompleta; // Inicialmente, lista exibida é igual à completa
+
+   // var getVencimentos=await ApiMySql.executaSql('SELECT sum(vencimento) as totFolha from $TBFolha').timeout(const Duration(seconds: 30));
+    //var getVantagens=await ApiMySql.executaSql('SELECT sum(valor) as totVan from $TBVantagens').timeout(const Duration(seconds: 30));
+
+    await carregaMatriz(listaCompleta);
     setState(() {
       pageSize=lista.length;
+      //totalFolha=double.parse(getVencimentos[0]['totFolha']) ;
+      //totalVantagens=double.parse(getVantagens[0]['totVan']) ;
       isLoading=false;
     });
   }
@@ -181,25 +179,39 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
                                 itemBuilder: (context, index) {
                                   final item = currentItems[index];
                                   ///Acha o valor do salário base ********************
-                                  String vantagensDetalhadas=currentItems[index]['vantagens_detalhadas'];
-                                  final vantagens = vantagensDetalhadas.split(' | ');
                                   String vencimento=currentItems[index]['vencimento'];
-                                  bool isInfante=currentItems[index]['unidade'].toString().contains('Prof.Educ.Inf');//Prof.Educ.Inf.Lic.Plena
+                                  //Pega o percentual de progressa
+                                  final perc=currentItems[index]['progressao'];
+                                  final ifForm=currentItems[index]['id'];
+                                  //final vr=currentItems[index]['valor'];
 
+                                  print('percentual $perc');
+                                  //print('ni $ni');
+                                  //print('vr $vr');
+                                 // print('')
                                   ///acha os salario PROPOSTO *******
                                   String n=Utils.getNivel(item['nivel']);
+                                  print('kkkkkk');
+                                  print(n);
+                                  var vrP='0';
+                                  /*
                                   var vrP= Utils.getValueFromMatrix(
-                                    baseValues:isInfante? matrizInfantil:matrizProfessor,
-                                    //baseValues: matrizProfessor,
+                                    baseValues:matrizProfessor,
                                     progressionRate: perc,
                                     code: n,
                                     numberOfColumns: 99, ///quantidade de colunas
                                   );
 
+                                   */
+
+
                                   ///Veririca quem tem a proposta Menor do que o vencimento
+                                 print('vencimento $vencimento vrP $vrP');
                                   bool propostaMenorVecto=double.parse(vencimento)<double.parse(vrP.toString());
 
+
                                   String proposta=Utils.formatVr.format(vrP).toString();
+                                  print('proposta $proposta');
 
                                   //String atps=item['soma_apts'].toString().replaceAll('-', '');
 
@@ -259,7 +271,7 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
                                               Line(tex: item['matricula'], tam: 90, alin: Alignment.centerLeft,cor: cor,negrito:
                                               negrito,top: 10,fontSize: 18,),
                                               Line(tex: item['nome'], tam: 250, alin: Alignment.centerLeft,cor: cor,negrito: true),
-                                              Line(tex: isInfante?'Normal':'Infantil', tam: 70, alin: Alignment.center,cor: cor,negrito: negrito,),
+                                              Line(tex: 'Normal', tam: 70, alin: Alignment.center,cor: cor,negrito: negrito,),
                                               Line(tex: item['nivel'], tam: 70, alin: Alignment.center,cor: cor,negrito: negrito,),
                                               Line(tex: vencimento, tam: 100, alin: Alignment.centerRight,cor: cor,negrito: !propostaMenorVecto,),
                                               ///adicional por tempo de serviço

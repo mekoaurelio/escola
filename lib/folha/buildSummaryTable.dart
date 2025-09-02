@@ -33,6 +33,7 @@ class SummaryTable extends StatefulWidget {
 class _SummaryTableState extends State<SummaryTable> {
   late int _meses;
   late double _ferias;
+  late double _encargosPercentual;
   late double _custoMensal;
   late double _remuneracaoTotal;
   late double _totalEncargos;
@@ -43,6 +44,7 @@ class _SummaryTableState extends State<SummaryTable> {
     super.initState();
     _meses = widget.meses;
     _ferias = widget.ferias;
+    _encargosPercentual = widget.encargosPercentual;
     _custoMensal = widget.custoMensal;
     _totalEncargos = _custoMensal * 0.14;
     _remuneracaoTotal = _custoMensal * _meses;
@@ -113,7 +115,6 @@ class _SummaryTableState extends State<SummaryTable> {
                 setState(() {
                   _meses = int.tryParse(novoValor) ?? widget.meses;
                 });
-                // Adicione aqui qualquer cálculo que precise ser atualizado
               },
             ),
             _buildEditableTableRow(
@@ -122,12 +123,10 @@ class _SummaryTableState extends State<SummaryTable> {
               [CurrencyTextInputFormatter.currency(symbol: '%', locale: 'pt')],
               onSave: (novoValor) {
                 setState(() {
-                  _ferias = double.tryParse(novoValor) ?? widget.ferias;
+                  final nv=Utils.saldoToSave(novoValor);
+                  _ferias = double.tryParse(nv) ?? widget.ferias;
                   _remuneracaoTotal = _custoMensal * (_meses * _ferias);
-
-                  //_custoMensal=widget.custoMensal*_ferias;
                 });
-                // Adicione aqui qualquer cálculo que precise ser atualizado
               },
             ),
             _buildTableRow(
@@ -138,10 +137,19 @@ class _SummaryTableState extends State<SummaryTable> {
               isTotal: true,
             ),
 
-            _buildTableRow(
+            _buildEditableTableRow(
               'Encargos Sociais',
-              '${widget.encargosPercentual.toStringAsFixed(0)}%',
+              _encargosPercentual.toString(),
+              [CurrencyTextInputFormatter.currency(symbol: '%', locale: 'pt')],
+              onSave: (novoValor) {
+                final nv=Utils.saldoToSave(novoValor);
+                setState(() {
+                  _encargosPercentual = double.tryParse(nv) ?? widget.encargosPercentual;
+                });
+              },
             ),
+
+
             _buildTableRow(
               'TOTAL Encargos',
               Utils.formatVr.format(_totalEncargos),

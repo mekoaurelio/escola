@@ -9,9 +9,9 @@ import '../data/api_my_sql.dart';
 import '../services/utils.dart';
 import '../widgets/texto.dart';
 
-class ProjecaoDeRecursos extends StatelessWidget {
+class ProjecaoDeRecursos extends StatefulWidget {
   const ProjecaoDeRecursos({super.key});
-
+/*
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -22,21 +22,25 @@ class ProjecaoDeRecursos extends StatelessWidget {
   }
 }
 
-class ProjecaoRecursosScreen extends StatefulWidget {
-  const ProjecaoRecursosScreen({super.key});
-
+ */
   @override
-  State<ProjecaoRecursosScreen> createState() => _ProjecaoRecursosScreenState();
+  State<ProjecaoDeRecursos> createState() => _ProjecaoRecursosScreenState();
 }
-class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
+
+
+class _ProjecaoRecursosScreenState extends State<ProjecaoDeRecursos> {
   final List<Map<String, dynamic>> decenios = [];
   final List<Map<String, dynamic>> impostos = [];
   var totais;
   bool isLoading = true;
-  String vrInput='0.0';
-  String receitaTotalFundeb='0.0';
-  String receitaTotal='0.0';
-  final GlobalFilterController filterController = Get.find<GlobalFilterController>();
+  String vrInput = '0.0';
+  String vrVaaf = '0.0';
+  String vrVaar = '0.0';
+  String receitaRecebida = '0.0';
+  String receitaTotalFundeb = '0.0';
+  String receitaTotal = '0.0';
+  final GlobalFilterController filterController = Get.find<
+      GlobalFilterController>();
 
   @override
   void initState() {
@@ -53,38 +57,59 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
   }
 
   List<Map<String, dynamic>> _mapearDados(List<Map<String, dynamic>> dados) {
-    return dados.map((item) => {
+    return dados.map((item) =>
+    {
       'id': int.tryParse(item['id'].toString()) ?? 0,
       'descricao': item['descricao'] as String,
       'valorProjetado': double.tryParse(item['vr1'].toString()) ?? 0.0,
-      'recursoProprio': double.tryParse(item['vr2'].toString()) ?? 0.0,
+      'recursoProprio': double.tryParse(item['vr12'].toString()) ?? 0.0,
     }).toList();
   }
 
   Future<void> _carregarDados() async {
     try {
-      final dadosDecenios = (await ApiMySql.get(TBDecenio, null, null) as List).cast<Map<String, dynamic>>();
-      final dadosImpostos = (await ApiMySql.get(TBImpostos, null, null) as List).cast<Map<String, dynamic>>();
-      var tt=await ApiMySql.get(TBTotais,null,null);
-      if(tt.isEmpty){ // Verificação mais segura
+      final dadosDecenios = (await ApiMySql.get(TBDecenio, null, null) as List)
+          .cast<Map<String, dynamic>>();
+      final dadosImpostos = (await ApiMySql.get(TBImpostos, null, null) as List)
+          .cast<Map<String, dynamic>>();
+      var tt = await ApiMySql.get(TBTotais, null, null).timeout(
+          const Duration(seconds: 30));
+      if (tt.isEmpty) { // Verificação mais segura
         setState(() => isLoading = false);
         return;
       }
 
       setState(() {
-        totais=tt;
-        decenios.clear(); // Limpa antes de adicionar para evitar duplicatas em recargas
+        totais = tt;
+        decenios
+            .clear(); // Limpa antes de adicionar para evitar duplicatas em recargas
         impostos.clear();
         decenios.addAll(_mapearDados(dadosDecenios));
         impostos.addAll(_mapearDados(dadosImpostos));
+        receitaRecebida = totais[0]['receita'] ?? '0.0';
         vrInput = totais[0]['fundeb_10_5'] ?? '0.0';
 
-        var vrI = double.tryParse(totais[0]['fundeb_10_5']?.toString() ?? '0.0') ?? 0.0;
-        var r = double.tryParse(totais[0]['receita']?.toString() ?? '0.0') ?? 0.0;
-        var d5 = double.tryParse(totais[0]['decendio_5']?.toString() ?? '0.0') ?? 0.0;
-        var i25 = double.tryParse(totais[0]['imposto_25']?.toString() ?? '0.0') ?? 0.0;
+        vrVaaf = totais[0]['vaaf'] ?? '0.0';
+        vrVaar = totais[0]['vaar'] ?? '0.0';
 
-        receitaTotalFundeb = (vrI + r).toString();
+        var r = double.tryParse(totais[0]['receita']?.toString() ?? '0.0') ??
+            0.0; //1
+        var vrI = double.tryParse(
+            totais[0]['fundeb_10_5']?.toString() ?? '0.0') ?? 0.0; //1.2
+        var d5 = double.tryParse(
+            totais[0]['decendio_5']?.toString() ?? '0.0') ?? 0.0;
+        var i25 = double.tryParse(
+            totais[0]['imposto_25']?.toString() ?? '0.0') ?? 0.0;
+        var vaaf = double.tryParse(totais[0]['vaaf']?.toString() ?? '0.0') ??
+            0.0;
+        var vaar = double.tryParse(totais[0]['vaar']?.toString() ?? '0.0') ??
+            0.0;
+
+
+        print('valores iniciais');
+        print('$vrI + $r+ $vaaf + $vaar');
+        receitaTotalFundeb = (vrI + r + vaaf + vaar).toString();
+        print('receitaTotalFundeb $receitaTotalFundeb');
         receitaTotal = (vrI + r + d5 + i25).toString();
         isLoading = false;
       });
@@ -95,43 +120,56 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
     }
   }
 
-  Future<void> _editarCampo({required int index, required bool isDecenio, required String campo}) async {
+  Future<void> _editarCampo(
+      {required int index, required bool isDecenio, required String campo}) async {
     final list = isDecenio ? decenios : impostos;
-    final controller = TextEditingController(text: list[index][campo].toString());
+    final controller = TextEditingController(
+        text: list[index][campo].toString());
 
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Editar ${campo == 'descricao' ? 'Descrição' : 'Valor Projetado'}'),
-        content: TextField(
-          controller: controller,
-          keyboardType: campo == 'valorProjetado' ? TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
-          inputFormatters: campo == 'valorProjetado'
-              ? [CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt')]
-              : [],
-          decoration: InputDecoration(labelText: campo == 'descricao' ? 'Nova descrição' : 'Novo valor'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancelar')),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                if (campo == 'descricao') {
-                  list[index][campo] = controller.text;
-                } else {
-                  // print()
-                  final valor = double.tryParse(Utils.saldoToSave(controller.text)) ?? 0.0;
-                  list[index]['valorProjetado'] = valor ;
-                  list[index]['recursoProprio'] = valor * (isDecenio ? 0.05 : 0.25);
-                }
-              });
-              _salvarDadosTabela(isDecenio: isDecenio, index: index);
-              Navigator.pop(context);
-            },
-            child: Text('Salvar'),
+      builder: (context) =>
+          AlertDialog(
+            title: Text('Editar ${campo == 'descricao'
+                ? 'Descrição'
+                : 'Valor Projetado'}'),
+            content: TextField(
+              controller: controller,
+              keyboardType: campo == 'valorProjetado' ? TextInputType
+                  .numberWithOptions(decimal: true) : TextInputType.text,
+              inputFormatters: campo == 'valorProjetado'
+                  ? [
+                CurrencyTextInputFormatter.currency(symbol: 'R\$', locale: 'pt')
+              ]
+                  : [],
+              decoration: InputDecoration(labelText: campo == 'descricao'
+                  ? 'Nova descrição'
+                  : 'Novo valor'),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context),
+                  child: Text('Cancelar')),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    if (campo == 'descricao') {
+                      list[index][campo] = controller.text;
+                    } else {
+                      // print()
+                      final valor = double.tryParse(
+                          Utils.saldoToSave(controller.text)) ?? 0.0;
+                      list[index]['valorProjetado'] = valor;
+                      list[index]['recursoProprio'] =
+                          valor * (isDecenio ? 0.05 : 0.25);
+                    }
+                  });
+                  _salvarDadosTabela(isDecenio: isDecenio, index: index);
+                  Navigator.pop(context);
+                },
+                child: Text('Salvar'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -139,28 +177,34 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
     return items.fold(0.0, (sum, item) => sum + (item[campo] ?? 0.0));
   }
 
-  Future<void> _salvarDadosTabela({required bool isDecenio, required int index}) async {
+  Future<void> _salvarDadosTabela(
+      {required bool isDecenio, required int index}) async {
     final item = isDecenio ? decenios[index] : impostos[index];
     final tabela = isDecenio ? TBDecenio : TBImpostos;
     final double vr1 = item['valorProjetado'] ?? 0.0;
     final double vr2 = item['recursoProprio'] ?? 0.0;
-    var dados=isDecenio ? decenios:impostos;
+    var dados = isDecenio ? decenios : impostos;
 
     try {
-      var des=item['descricao'];
+      var des = item['descricao'];
 
-      var tot1=_calcularTotal(dados, 'valorProjetado');
-      var tot2=_calcularTotal(dados, 'recursoProprio');
+      var tot1 = _calcularTotal(dados, 'valorProjetado');
+      var tot2 = _calcularTotal(dados, 'recursoProprio');
       var _result;
-      _result=await ApiMySql.executaSql("Update $tabela set descricao='$des', vr1=$vr1,vr2=$vr2  where id = ${item['id']}");
-      Utils.verificaErro(_result);
+      print(
+          "Update $tabela set descricao='$des', vr1=$vr1,vr12=$vr2  where id = ${item['id']}");
+      _result = await ApiMySql.executaSql(
+          "Update $tabela set descricao='$des', vr1=$vr1,vr12=$vr2  where id = ${item['id']}");
+      // Utils.verificaErro(_result);
 
-      if(isDecenio){
-        _result=await ApiMySql.executaSql("Update $TBTotais set decendio_projetado=$tot1, decendio_5=$tot2");
-      }else {
-        _result=await ApiMySql.executaSql("Update $TBTotais set imposto_projetado=$tot1, imposto_25=$tot2");
+      if (isDecenio) {
+        _result = await ApiMySql.executaSql(
+            "Update $TBTotais set decendio_projetado=$tot1, decendio_5=$tot2");
+      } else {
+        _result = await ApiMySql.executaSql(
+            "Update $TBTotais set imposto_projetado=$tot1, imposto_25=$tot2");
       }
-      Utils.verificaErro(_result);
+      // Utils.verificaErro(_result);
 
     } catch (e) {
       print('Falha ao salvar: $e');
@@ -178,7 +222,8 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         color: Colors.blue.shade50,
-        border: Border(bottom: BorderSide(color: Colors.blue.shade200, width: 2)),
+        border: Border(
+            bottom: BorderSide(color: Colors.blue.shade200, width: 2)),
       ),
       child: Row(
         children: List.generate(titles.length, (index) {
@@ -203,7 +248,8 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
   Widget _buildTableRow(Map<String, dynamic> item, int index, bool isDecenio) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
+      decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -211,31 +257,41 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
           Expanded(
             flex: 5,
             child: InkWell(
-              onTap: () => _editarCampo(index: index, isDecenio: isDecenio, campo: 'descricao'),
+              onTap: () =>
+                  _editarCampo(
+                      index: index, isDecenio: isDecenio, campo: 'descricao'),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8.0, vertical: 8.0),
                 child: Row(
                   children: [
-                    Expanded(child: Texto(tit: item['descricao'], alin: TextAlign.left)),
+                    Expanded(child: Texto(
+                        tit: item['descricao'], alin: TextAlign.left)),
                     const Icon(Icons.edit, size: 14, color: Colors.black54),
                   ],
                 ),
               ),
             ),
           ),
-          // Coluna Valor Projetado
+
+          /// Coluna Valor Projetado
           Expanded(
             flex: 3,
             child: InkWell(
-              onTap: () => _editarCampo(index: index, isDecenio: isDecenio, campo: 'valorProjetado'),
+              onTap: () =>
+                  _editarCampo(index: index,
+                      isDecenio: isDecenio,
+                      campo: 'valorProjetado'),
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(4)),
+                decoration: BoxDecoration(color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(4)),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Flexible(child: Texto(tit: Utils.formatVr.format(item['valorProjetado']),)),
+                    Flexible(child: Texto(
+                      tit: Utils.formatVr.format(item['valorProjetado']),)),
                     const Icon(Icons.edit, size: 14, color: Colors.black54),
                   ],
                 ),
@@ -247,7 +303,8 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
             flex: 3,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Texto(tit: Utils.formatVr.format(item['recursoProprio']), alin: TextAlign.right),
+              child: Texto(tit: Utils.formatVr.format(item['recursoProprio']),
+                  alin: TextAlign.right),
             ),
           ),
         ],
@@ -262,16 +319,34 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
       decoration: BoxDecoration(color: Colors.blue.shade50),
       child: Row(
         children: [
-          Expanded(flex: 5, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Texto(tit: 'Total', negrito: true, cor: Colors.blue.shade800, alin: TextAlign.left))),
-          Expanded(flex: 3, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Texto(tit: Utils.formatVr.format(_calcularTotal(dados, 'valorProjetado')), negrito: true, cor: Colors.blue.shade800, alin: TextAlign.right))),
-          Expanded(flex: 3, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Texto(tit: Utils.formatVr.format(_calcularTotal(dados, 'recursoProprio')), negrito: true, cor: Colors.blue.shade800, alin: TextAlign.right))),
+          Expanded(flex: 5,
+              child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Texto(tit: 'Total',
+                      negrito: true,
+                      cor: Colors.blue.shade800,
+                      alin: TextAlign.left))),
+          Expanded(flex: 3,
+              child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Texto(tit: Utils.formatVr.format(
+                      _calcularTotal(dados, 'valorProjetado')),
+                      negrito: true,
+                      cor: Colors.blue.shade800,
+                      alin: TextAlign.right))),
+          Expanded(flex: 3,
+              child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Texto(tit: Utils.formatVr.format(
+                      _calcularTotal(dados, 'recursoProprio')),
+                      negrito: true,
+                      cor: Colors.blue.shade800,
+                      alin: TextAlign.right))),
         ],
       ),
     );
   }
 
   /// Método `_buildTabela` refatorado para usar os helpers.
-  Widget _buildTabela(String titulo, List<Map<String, dynamic>> dados, bool isDecenio) {
+  Widget _buildTabela(String titulo, List<Map<String, dynamic>> dados,
+      bool isDecenio) {
     return Card(
       color: Colors.white,
       elevation: 2,
@@ -282,11 +357,20 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
           Container(
             width: double.infinity,
             color: Colors.blue,
-            child: Texto(tit: titulo, negrito: true, tam: 16,
-              alin: TextAlign.center, bottom: 10,top: 10,left: 20,cor: Colors.grey.shade300,),
+            child: Texto(tit: titulo,
+              negrito: true,
+              tam: 16,
+              alin: TextAlign.center,
+              bottom: 10,
+              top: 10,
+              left: 20,
+              cor: Colors.grey.shade300,),
           ),
-          _buildTableHeader(['Descrição', 'Valor Projetado Ano', 'Recurso Próprio'], [5, 3, 3]),
-          ...dados.map((item) => _buildTableRow(item, dados.indexOf(item), isDecenio)),
+          _buildTableHeader(
+              ['Descrição', 'Valor Projetado Ano', 'Recurso Próprio'],
+              [5, 3, 3]),
+          ...dados.map((item) =>
+              _buildTableRow(item, dados.indexOf(item), isDecenio)),
           _buildTotalRow(dados),
         ],
       ),
@@ -307,13 +391,58 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
             Container(
               width: double.infinity,
               color: Colors.blue,
-              child: Texto(tit: 'Consolidações de Recursos Anuais para MDE', negrito: true, tam: 16,
-                  alin: TextAlign.center, bottom: 10,top: 10,left: 20,cor: Colors.grey.shade300,),
+              child: Texto(tit: 'Consolidações de Recursos Anuais para MDE',
+                negrito: true,
+                tam: 16,
+                alin: TextAlign.center,
+                bottom: 10,
+                top: 10,
+                left: 20,
+                cor: Colors.grey.shade300,),
             ),
 
             _buildResumoHeader(),
-            _buildResumoRow('1. Receitas recebidas do FUNDEB', totais[0]['receita']),
-            _buildResumoRow('1.1. Complementação da UNIÃO - FUNDEB - VAAF - 10%', '0'),
+
+            _buildEditableResumoRow(
+              label: '1. Receitas recebidas do FUNDEB', value: receitaRecebida,
+              onEdit: () {
+                Utils.mostrarDialogoEditarValor(
+                  context: context,
+                  titulo: 'Informe o Valor',
+                  labelCampo: 'Valor',
+                  valorInicial: receitaRecebida,
+                  aoSalvar: (novoValor) async {
+                    double valorNumerico = await Utils.vrStringToDouble2(
+                        novoValor);
+                    print('Update $TBTotais set receita=$valorNumerico');
+                    await ApiMySql.executaSql(
+                        'Update $TBTotais set receita=$valorNumerico');
+                    _carregarDados(); // Recarrega todos os dados para atualizar os totais
+                  },
+                );
+              },
+            ),
+
+            _buildEditableResumoRow(
+              label: '1.1. Complementação da UNIÃO - FUNDEB - VAAF - 10%',
+              value: vrVaaf,
+              onEdit: () {
+                Utils.mostrarDialogoEditarValor(
+                  context: context,
+                  titulo: 'Informe o Valor',
+                  labelCampo: 'Valor',
+                  valorInicial: vrVaaf,
+                  aoSalvar: (novoValor) async {
+                    double valorNumerico = await Utils.vrStringToDouble2(
+                        novoValor);
+                    await ApiMySql.executaSql(
+                        'Update $TBTotais set vaaf=$valorNumerico');
+                    _carregarDados(); // Recarrega todos os dados para atualizar os totais
+                  },
+                );
+              },
+            ),
+
             _buildEditableResumoRow(
               label: '1.2. Complementação da UNIÃO - FUNDEB - VAAT - 10,5%',
               value: vrInput,
@@ -323,18 +452,44 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
                   titulo: 'Informe o Valor',
                   labelCampo: 'Valor',
                   valorInicial: vrInput,
-                  aoSalvar: (novoValor) async{
-                    double valorNumerico = Utils.vrStringToDouble(novoValor);
-                    await ApiMySql.executaSql('Update $TBTotais set fundeb_10_5=$valorNumerico');
+                  aoSalvar: (novoValor) async {
+                    double valorNumerico = await Utils.vrStringToDouble2(
+                        novoValor);
+                    await ApiMySql.executaSql(
+                        'Update $TBTotais set fundeb_10_5=$valorNumerico');
                     _carregarDados(); // Recarrega todos os dados para atualizar os totais
                   },
                 );
               },
             ),
-            _buildResumoRow('1.3. Complementação da UNIÃO - FUNDEB - VAAR - 2,5%', '320000'),
-            _buildResumoRow('Receita Total - FUNDEB', receitaTotalFundeb, isTotal: true),
-            _buildResumoRow('2. Receitas recursos próprios 5%', totais[0]['decendio_5']),
-            _buildResumoRow('3. Receitas recursos próprios 25%', totais[0]['imposto_25']),
+
+            _buildEditableResumoRow(
+              label: '1.3. Complementação da UNIÃO - FUNDEB - VAAR - 2,5%',
+              value: vrVaar,
+              onEdit: () {
+                Utils.mostrarDialogoEditarValor(
+                  context: context,
+                  titulo: 'Informe o Valor',
+                  labelCampo: 'Valor',
+                  valorInicial: vrVaar,
+                  aoSalvar: (novoValor) async {
+                    double valorNumerico = await Utils.vrStringToDouble2(
+                        novoValor);
+                    await ApiMySql.executaSql(
+                        'Update $TBTotais set vaar=$valorNumerico');
+                    _carregarDados(); // Recarrega todos os dados para atualizar os totais
+                  },
+                );
+              },
+            ),
+
+
+            _buildResumoRow(
+                'Receita Total - FUNDEB', receitaTotalFundeb, isTotal: true),
+            _buildResumoRow(
+                '2. Receitas recursos próprios 5%', totais[0]['decendio_5']),
+            _buildResumoRow(
+                '3. Receitas recursos próprios 25%', totais[0]['imposto_25']),
             _buildResumoRow('Receita Total', receitaTotal, isTotal: true),
           ],
         ),
@@ -345,11 +500,22 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
   Widget _buildResumoHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(color: Colors.blue.shade50, border: Border(bottom: BorderSide(color: Colors.blue.shade200))),
+      decoration: BoxDecoration(color: Colors.blue.shade50,
+          border: Border(bottom: BorderSide(color: Colors.blue.shade200))),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Texto(tit: 'Receita/Complementação', negrito: true, cor: Colors.blue.shade800, alin: TextAlign.left))),
-          Expanded(flex: 1, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Texto(tit: 'Valor', negrito: true, cor: Colors.blue.shade800, alin: TextAlign.right))),
+          Expanded(flex: 3,
+              child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Texto(tit: 'Receita/Complementação',
+                      negrito: true,
+                      cor: Colors.blue.shade800,
+                      alin: TextAlign.left))),
+          Expanded(flex: 1,
+              child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Texto(tit: 'Valor',
+                      negrito: true,
+                      cor: Colors.blue.shade800,
+                      alin: TextAlign.right))),
         ],
       ),
     );
@@ -358,20 +524,32 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
   Widget _buildResumoRow(String title, String value, {bool isTotal = false}) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: isTotal ? Colors.blue.shade100 : Colors.grey.shade200))),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(
+          color: isTotal ? Colors.blue.shade100 : Colors.grey.shade200))),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Texto(tit: title, negrito: isTotal, cor: isTotal ? Colors.blue.shade900 : Colors.black87, alin: TextAlign.left)),
-          Expanded(flex: 1, child: Texto(tit: Utils.formatVr.format(double.tryParse(value) ?? 0.0), negrito: isTotal, cor: isTotal ? Colors.blue.shade900 : Colors.black, alin: TextAlign.right)),
+          Expanded(flex: 3,
+              child: Texto(tit: title,
+                  negrito: isTotal,
+                  cor: isTotal ? Colors.blue.shade900 : Colors.black87,
+                  alin: TextAlign.left)),
+          Expanded(flex: 1,
+              child: Texto(
+                  tit: Utils.formatVr.format(double.tryParse(value) ?? 0.0),
+                  negrito: isTotal,
+                  cor: isTotal ? Colors.blue.shade900 : Colors.black,
+                  alin: TextAlign.right)),
         ],
       ),
     );
   }
 
-  Widget _buildEditableResumoRow({required String label, required String value, required VoidCallback onEdit}) {
+  Widget _buildEditableResumoRow(
+      {required String label, required String value, required VoidCallback onEdit}) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
+      decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
       child: Row(
         children: [
           Expanded(flex: 3, child: Texto(tit: label, alin: TextAlign.left)),
@@ -381,11 +559,14 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
               onTap: onEdit,
               child: Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(4)),
+                decoration: BoxDecoration(color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(4)),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Flexible(child: Texto(tit: value, alin: TextAlign.right,)),
+                    Flexible(
+                        child: Texto(tit: Utils.formatVr.format(double.tryParse(
+                            value) ?? 0.0), alin: TextAlign.right,)),
                     const Icon(Icons.edit, size: 14, color: Colors.black54),
                   ],
                 ),
@@ -409,14 +590,19 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoRecursosScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1000), // Largura máxima para todo o conteúdo
+            constraints: const BoxConstraints(maxWidth: 1000),
+            // Largura máxima para todo o conteúdo
             child: Column(
               children: [
                 _resumo(),
                 const SizedBox(height: 32),
-                _buildTabela('Tabela 02 - Projeção do mínimo de 5% para investimento em MDE', decenios, true),
+                _buildTabela(
+                    'Tabela 02 - Projeção do mínimo de 5% para investimento em MDE',
+                    decenios, true),
                 const SizedBox(height: 32),
-                _buildTabela('Tabela 03 - Projeção do mínimo de 25% para investimento em MDE', impostos, false),
+                _buildTabela(
+                    'Tabela 03 - Projeção do mínimo de 25% para investimento em MDE',
+                    impostos, false),
               ],
             ),
           ),

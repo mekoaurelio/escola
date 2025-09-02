@@ -127,10 +127,10 @@ TableCalculationResult calculateTableAndDispersions({
   required double percEntreColunas,
 }) {
   // --- 1. Validação de Entradas ---
-  print(niveis);
-  print(valoresIniciaisNiveis);
-  print(cargaHoraria);
-  print(percEntreColunas);
+  //print(niveis);
+  //print(valoresIniciaisNiveis);
+  //print(cargaHoraria);
+  //print(percEntreColunas);
   if (niveis.length != valoresIniciaisNiveis.length) {
     throw ArgumentError(
         'A lista de níveis (${niveis.length}) e de valores iniciais (${valoresIniciaisNiveis.length}) devem ter o mesmo tamanho.');

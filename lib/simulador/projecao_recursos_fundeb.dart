@@ -51,7 +51,7 @@ class _FUNDEBCalculatorScreenState extends State<FUNDEBCalculatorScreen> {
   Future<void> _carregarDadosBanco() async {
     try {
       // Supondo que a tabela só tem uma linha com id=1
-      final dados = await ApiMySql.get(TBVaaf, null, null);
+      final dados = await ApiMySql.get(TBVaaf, null, null).timeout(const Duration(seconds: 30));
       if (mounted) {
         setState(() {
           tabela = dados.isNotEmpty ? dados.first : {};
@@ -173,8 +173,8 @@ class _FUNDEBCalculatorScreenState extends State<FUNDEBCalculatorScreen> {
       /// Atualizar no banco de dados
       await ApiMySql.executaSql('update $TBVaaf set $campo=$valor');
       /// Salva os totais
-      var _result=await ApiMySql.executaSql('update $TBTotais set matricula=$totalMatriculas, receita=$totalReceitas');
-      Utils.verificaErro(_result);
+      var _result=await ApiMySql.executaSql('update $TBTotais set matricula=$totalMatriculas, receita=$totalReceitas').timeout(const Duration(seconds: 30));
+      //Utils.verificaErro(_result);
       /// Atualizar localmente
       setState(() {
         tabela?[campo] = valor;

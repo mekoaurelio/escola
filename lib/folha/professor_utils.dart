@@ -34,7 +34,9 @@ class ProfessorUtils {
   }
 
 
-  static Future<double> totalDeVencimentosProposta(String nivel, int coluna, var professores) async {
+  static Future<double> totalDeVencimentosProposta(String n, int coluna, var professores) async {
+   //print('totalDeVencimentosProposta $nivel');
+   String nivel=n.replaceAll('NIVEL', '').trim();
     try {
       final totais = await ApiMySql.get(TBTotais, null, null);
       double perAumentoInfantil = double.tryParse(totais[0]['perc_aumento_infantil'].toString()) ?? 0.0;
@@ -127,6 +129,7 @@ class ProfessorUtils {
          child: Texto(tit:'Nível',negrito: true,cor:Colors.blue,
          ),
        ),
+       //monta o cabeçalho baseado na carga horária
        for (int i = 1; i <= cargaHoraria; i++)
          Container(
            width: tamContainer,

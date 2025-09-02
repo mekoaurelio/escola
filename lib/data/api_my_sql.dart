@@ -113,37 +113,22 @@ WHERE id_user = $idUser;
   }
 
   static Future<List<dynamic>> getTotolSalPorHora(String tFolha,String tSimula,String tVantagem) async {
-    var sql = 'SELECT a.horas,s.descricao,SUM(a.vencimento) as total_vencimento,s.id,';
+    var sql = 'SELECT a.horas,s.descricao,SUM(a.vencimento) as total_vencimento,s.id,s.classes,s.progressao,';
     sql+='COUNT(*) as quantidade_registros,COALESCE(SUM(v.valor), 0) as total_vantagens';
     sql+=" FROM $tFolha a LEFT JOIN $tSimula s ON REPLACE(a.horas, 'hs', '') = s.horas";
     sql+= ' LEFT JOIN $tVantagem v ON a.matricula = v.folha_id';
     sql+=' WHERE a.vencimento IS NOT NULL GROUP BY a.horas, s.descricao ORDER BY a.horas;';
-    print(sql);
+  //  print(sql);
     return await executaSql(sql);
   }
-  /*
 
 
-*****************************************
-
-SELECT
-    a.horas,
-    s.descricao,
-    SUM(a.vencimento) as total_vencimento,
-    COUNT(DISTINCT a.matricula) as quantidade_funcionarios,
-    COUNT(*) as quantidade_registros,
-    COALESCE(SUM(v.valor), 0) as total_vantagens,
-    COUNT(v.folha_id) as quantidade_vantagens
-FROM cia_2505 a
-LEFT JOIN cia_simula_cab2505 s
-    ON REPLACE(a.horas, 'hs', '') = s.horas
-LEFT JOIN cia_vantagens2505 v
-    ON a.matricula = v.folha_id
-WHERE a.vencimento IS NOT NULL
-GROUP BY a.horas, s.descricao
-ORDER BY a.horas;
-   */
-
+  static Future<List<dynamic>> getProgressaoDoProfessor(String hora) async {
+    var hr=hora.replaceAll('hs', '');
+    var sql="Select * progressao from $TBSimulaCab where horas=$hr";
+    print(sql);
+  return await executaSql(sql);
+  }
 
 
 
@@ -302,13 +287,17 @@ ORDER BY a.horas;
   }
   
   ///**************************************************************
-  
+
+  // select nome,unidade,nivel,horas,vencimento from cia_2505 ORDER BY horas,nivel
+
+  // select nome,unidade,nivel,horas,vencimento from cia_2505 where unidade<>'Professor' ORDER BY horas,nivel
+
   static getProfessor() async {
-    var sql1="SELECT  f.id AS folha_id,f.id_municipio,f.matricula,f.nome,f.cpf,f.unidade,f.local_lotacao,";
+    var sql1="SELECT  f.id AS folha_id,f.id_municipio,f.matricula,f.nome,f.cpf,f.unidade,f.local_lotacao,f.horas,s.id as id_simula,";
     sql1+="f.vencimento,f.cargo,f.nivel,DATE_FORMAT(f.admissao, '%d/%m/%Y') AS admissao,";
     sql1+="GROUP_CONCAT(CONCAT(dv.codigo, ':', dv.descricao, ':', dv.percentual, ':', ' R/\$ ', FORMAT(dv.valor, 2)) SEPARATOR ' | ') AS vantagens_detalhadas, SUM(dv.valor) AS soma_vantagens,";
     sql1+="(SELECT SUM(vencimento) FROM $TBFolha WHERE status = 'A') AS total_vencimentos_geral";
-    sql1+=" FROM $TBFolha f";
+    sql1+=" FROM $TBFolha f LEFT JOIN $TBSimulaCab s ON REPLACE(f.horas, 'hs', '') = s.horas";
     sql1+=" LEFT JOIN $TBVantagens dv ON f.matricula = dv.folha_id";
     sql1+=" WHERE f.status = 'A'";
     sql1+=" GROUP BY f.matricula ORDER BY f.matricula";
@@ -316,6 +305,16 @@ ORDER BY a.horas;
 
     return await executaSql(sql1);
   }
+/*
+  var sql = 'SELECT a.horas,s.descricao,SUM(a.vencimento) as total_vencimento,s.id,s.classes,s.progressao,';
+  sql+='COUNT(*) as quantidade_registros,COALESCE(SUM(v.valor), 0) as total_vantagens';
+  sql+=" FROM $tFolha a LEFT JOIN $tSimula s ON REPLACE(a.horas, 'hs', '') = s.horas";
+  sql+= ' LEFT JOIN $tVantagem v ON a.matricula = v.folha_id';
+  sql+=' WHERE a.vencimento IS NOT NULL GROUP BY a.horas, s.descricao ORDER BY a.horas;';
+
+ */
+
+
 
   
   /// ==========================================================
@@ -343,12 +342,10 @@ ORDER BY a.horas;
       if (tb == TBInfantil) {
         await ApiMySql.dadosInfantilProfessor(TBInfantil, 'Piso Incial 2025 INFANTIL');
       }
-      print('$tb=$TBProfessor');
       if (tb == TBProfessor) {
         await ApiMySql.dadosInfantilProfessor(TBProfessor, 'Piso Incial 2025');
       }
       if (tb == TBExercicio) {
-        print('VAI CRIAR EXERCIO');
         await ApiMySql.dadosIniciasExercicio(TBExercicio);
       }
       if (tb == TBReceitaFundebSimulador) {
@@ -375,6 +372,8 @@ ORDER BY a.horas;
     sql+='id int(11) NOT NULL,';
     sql+='horas int(11) NOT NULL,';
     sql+='descricao varchar(200) NOT NULL,';
+    sql+='classes int(11) NOT NULL,';
+    sql+='progressao decimal(5,2) NOT NULL,';
     sql+='created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP);';
     var result=await executaSql(sql);
     await criaIndiceEAutoIncremento(tb);
@@ -483,6 +482,8 @@ ORDER BY a.horas;
     sql+= 'imposto_projetado decimal(15,2) NOT NULL DEFAULT "0.00",';
     sql+= 'imposto_25 decimal(15,2) NOT NULL DEFAULT "0.00",';
     sql+= 'matricula decimal(15,2) NOT NULL DEFAULT "0.00",';
+    sql+= 'vaaf decimal(15,2) NOT NULL DEFAULT "0.00",';
+    sql+= 'vaar decimal(15,2) NOT NULL DEFAULT "0.00",';
     sql+= 'receita decimal(15,2) NOT NULL DEFAULT "0.00",';
     sql+= 'fundeb_10_5 decimal(15,2) NOT NULL DEFAULT "0.00",';
     sql+= 'qtde_classe int(11) NOT NULL,';
@@ -822,7 +823,7 @@ ORDER BY a.horas;
     sql += '$vr, ';
     sql += '$perc ';
     sql += ')';
-    print(sql);
+   // print(sql);
     return await executaSql(sql);
   }
 

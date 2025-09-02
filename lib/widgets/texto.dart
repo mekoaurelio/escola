@@ -14,6 +14,7 @@ class Texto extends StatelessWidget {
   final FontWeight? fontWeight;
   final IconData? prefixIcon;
   final Color? iconColor;
+  final MainAxisAlignment mainAxisAlignment;
 
   Texto({
     required this.tit,
@@ -32,6 +33,7 @@ class Texto extends StatelessWidget {
     this.fontWeight,
     this.prefixIcon,
     this.iconColor,
+    this.mainAxisAlignment = MainAxisAlignment.start,
   });
 
   @override
@@ -45,6 +47,7 @@ class Texto extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: mainAxisAlignment,
         children: [
           if (prefixIcon != null) ...[  // Verificação simplificada
             SizedBox(width: 15),

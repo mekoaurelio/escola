@@ -1,4 +1,7 @@
 // Classe de modelo para armazenar os dados calculados de forma clara e segura.
+import 'package:GEM/data/api_my_sql.dart';
+
+import '../services/table_name_service.dart';
 import '../services/utils.dart';
 
 class ImpactoFinanceiroData {
@@ -38,16 +41,21 @@ class ImpactoFinanceiroData {
     double totVencimentos = 0;
     double totVantagens = 0;
 
+   // var totFolha=await ApiMySql.executaSql('SELECT SUM(vencimento) FROM $TBFolha as totVencimentos');
+   // totVencimentos=totFolha[0]['totVencimentos'];
     for (var item in apiLista) {
-      String vantagensDetalhadas = item['vantagens_detalhadas'] ?? '';
-      final partes = vantagensDetalhadas.split(' | ');
 
-      if (partes.isNotEmpty) {
-        double vcto=Utils.getVencimento(partes);
-        totVencimentos += vcto ?? 0;
-      }
+      print(item['total_vencimento']);
+     // String vantagensDetalhadas = item['vantagens_detalhadas'] ?? '';
+     // final partes = vantagensDetalhadas.split(' | ');
+
+     // if (partes.isNotEmpty) {
+       // double vcto=Utils.getVencimento(partes);
+       // totVencimentos += vcto ?? 0;
+     // }
 
       // 2. Cálculo do total das vantagens
+      /*
       for (final parte in partes) {
         final detalhesVantagem = parte.split(':');
         if (detalhesVantagem.length > 3 && detalhesVantagem[0]!='21003' ) {
@@ -59,11 +67,15 @@ class ImpactoFinanceiroData {
           totVantagens += double.tryParse(valorStr) ?? 0;
         }
       }
+
+       */
+
     }
 
     // Cálculos financeiros
     final double percentualVantagensCalc = (totVantagens > 0) ? (totVantagens/totVencimentos ) * 100 : 0.0;
     final double custoTotalLiquidoCalc = totVencimentos + totVantagens;
+
     final double encargosPrev14PercentCalc = custoTotalLiquidoCalc * 0.14;
     final double decimoTerceiroProporcionalCalc = encargosPrev14PercentCalc / 12;
     final double feriasProporcionalCalc = (1/3)*encargosPrev14PercentCalc;
@@ -76,10 +88,10 @@ class ImpactoFinanceiroData {
     final double impactoMDE = impactoFundeb * 0.7; // Exemplo
 
     return ImpactoFinanceiroData(
-      totalVencimentos: totVencimentos,
-      totalVantagens: totVantagens,
-      percentualVantagens: percentualVantagensCalc,
-      custoTotalLiquido: custoTotalLiquidoCalc,
+      totalVencimentos: totVencimentos,//item1
+      totalVantagens: totVantagens,//item2
+      percentualVantagens: percentualVantagensCalc,//item3
+      custoTotalLiquido: custoTotalLiquidoCalc,//item4
       encargosPrev14Percent: encargosPrev14PercentCalc,
       decimoTerceiroProporcional: decimoTerceiroProporcionalCalc,
       feriasProporcional: feriasProporcionalCalc,

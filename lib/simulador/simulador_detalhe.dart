@@ -50,12 +50,12 @@ class SimuladorDetalhe extends StatelessWidget {
               formValues['percentual']='0';
             if(formValues['valor']=='')
               formValues['valor']='0';
-            await ApiMySql.insertDynamic(formValues, table);
+            await ApiMySql.insertDynamic(formValues, table).timeout(const Duration(seconds: 30));
           } else {
             await ApiMySql.updateDynamic(table,formValues,idValue: data!['id']);
           }
           // Atualiza a lista e volta
-          final listaAtualizada = await ApiMySql.get(table, null,null);
+          final listaAtualizada = await ApiMySql.get(table, null,null).timeout(const Duration(seconds: 30));
           Get.back(result: listaAtualizada);
         },
         fieldsData: fields,

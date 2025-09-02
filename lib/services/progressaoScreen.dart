@@ -5,7 +5,6 @@ import '../data/api_my_sql.dart';
 import '../simulador/simulador_alt.dart';
 import '../widgets/line.dart';
 import '../widgets/painel.dart';
-import 'package:GEM/services/table_name_service.dart';
 import 'package:GEM/services/GlobalFilterController.dart';
 import 'utils.dart';
 
@@ -50,17 +49,17 @@ class _ProgressaoScreenState extends State<ProgressaoScreen> {
     if (mounted) {
       setState(() => loading = true);
     }
-    final f = await ApiMySql.get(TBProfessor, null, 'ordem');
-    final i = await ApiMySql.get(TBInfantil, null, 'ordem');
-    final g = await ApiMySql.get(TBReceitaFundebSimulador, null, 'ordem');
-    final h = await ApiMySql.get(TBExercicio, null, 'ordem');
+    final f = await ApiMySql.get(TBProfessor, null, 'ordem').timeout(const Duration(seconds: 30));
+    final i = await ApiMySql.get(TBInfantil, null, 'ordem').timeout(const Duration(seconds: 30));
+    final g = await ApiMySql.get(TBReceitaFundebSimulador, null, 'ordem').timeout(const Duration(seconds: 30));
+    final h = await ApiMySql.get(TBExercicio, null, 'ordem').timeout(const Duration(seconds: 30));
 
     fundebBase = double.tryParse(
       g.firstWhere((e) => e['ordem'] == '1', orElse: () => {'valor': 0},
           )['valor']
           .toString(),
     );
-    final totais = await ApiMySql.get(TBTotais, null, null);
+    final totais = await ApiMySql.get(TBTotais, null, null).timeout(const Duration(seconds: 30));
     if (mounted) {
       setState(() {
         perAumentoInfantil = double.parse(totais[0]['perc_aumento_infantil']);
@@ -260,9 +259,7 @@ class _Section extends StatelessWidget {
 
   updateValor(var computed, var ordem) async {
 
-    await ApiMySql.executaSql(
-      'UPDATE $table set valor=$computed where ordem=$ordem',
-    );
+    await ApiMySql.executaSql('UPDATE $table set valor=$computed where ordem=$ordem',);
   }
 
   updatePerc(var computed, var campo) async {

@@ -58,8 +58,8 @@ class _ExcelReaderPageState extends State<ExcelReaderPage> {
   /// Cria a estrutura de todas as tabelas                     =
   /// ==========================================================
   void _criaEsturaDasTabelas()async {
-
     setState(() {
+      _isLoading=true;
       _statusMessage = 'Criando tabelas';
     });
     final builder = DatabaseStructureBuilder(
@@ -67,11 +67,14 @@ class _ExcelReaderPageState extends State<ExcelReaderPage> {
       ano: _currentAno,
       bimestre: _currentBimestre,
     );
-    setState(() {
-      _statusMessage = 'Tabelas Criadas';
-    });
+
     // 3. Executa a construção
     final BuildResult result = await builder.build();
+    setState(() {
+      _statusMessage = 'Tabelas Criadas';
+      _isLoading=false;
+    });
+    Utils.snak('Parabéns!', 'Estrutura Criada com Sucesso', false, Colors.green);
   }
   /// ==========================================================
   /// Executa importação                                       =

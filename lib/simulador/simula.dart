@@ -25,13 +25,10 @@ class _SimulaState extends State<Simula> {
   bool _isLoading = true;
   bool _hasError = false;
   String _errorMessage = '';
-  double _totalAdulto = 0;
   double _atsAdulto = 0;
   var percAumento = '0';
   double totalGeralProfessor = 0;
   double totalPropostaProfessor = 0;
-  String _dispersaoHorizontal = '0.00%'; // Valor inicial como string formatada
-  String _dispersaoTotal = '0.00%';
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
   List<String> novosNiveis=[];
   List<String> niveisUnicos=[];
@@ -67,16 +64,12 @@ class _SimulaState extends State<Simula> {
     try {
       ///PEGA OS TOTAIS DE  PROFESSORES POR HORA
       var getProfessores = await ApiMySql.getTotolSalPorHora(TBFolha,TBSimulaCab,TBVantagens).timeout(const Duration(seconds: 30));
-      //print(getProfessores);
 
       if(getProfessores[0]['error']!=null){
-        Utils.snak('Atenção', 'Erro pegar total por hora', false, Colors.red);
+        Utils.snak('Atenção', 'Você ainda não informou os dados( 20horas,30horas...etc) no SIMULADOR', false, Colors.red);
         return;
       }
-      ///PEGA OS PERCENTUAIS DE AUMENTO
-      final totais = await ApiMySql.get(TBTotais, null, null);
-      percAumento = totais[0]['perc_aumento_infantil'].toString();
-      var cargaHorario=totais[0]['qtde_classe'].toString();
+
 
       professores.clear();
       totalGeralProfessor=0;
@@ -84,19 +77,20 @@ class _SimulaState extends State<Simula> {
 
       for(int i = 0 ; i<getProfessores.length ; i++) {
         if(getProfessores[i]['descricao']!=null) {
+          percAumento=getProfessores[i]['progressao'];
 
           totalGeralProfessor+=double.parse(getProfessores[i]['total_vencimento']);
           totalPropostaProfessor+= totalGeralProfessor + (totalGeralProfessor * (double.parse(percAumento) / 100));
 
-          var getNiveis=await ApiMySql.getItensFromForm(TBSimulaForm,getProfessores[i]['id'],null);
+          var getNiveis=await ApiMySql.getItensFromForm(TBSimulaForm,getProfessores[i]['id'],null).timeout(const Duration(seconds: 30));
           novosNiveis = getNiveis.map((item) => item['label'].toString()).toList();
           valorNivel = getNiveis.map((item) => item['valor'].toString()).toList();
 
           final result = calculateTableAndDispersions(
             niveis: novosNiveis,
             valoresIniciaisNiveis:valorNivel ,
-            cargaHoraria: int.parse(cargaHorario),
-            percEntreColunas: double.parse(percAumento),
+            cargaHoraria: int.parse(getProfessores[i]['classes']),
+            percEntreColunas: double.parse(getProfessores[i]['progressao']),
           );
 
           professores.add({
@@ -107,18 +101,16 @@ class _SimulaState extends State<Simula> {
 
             'dispersaoHorizontal': result.dispersaoHorizontal.replaceAll(',', '.'),
             'dispersaoTotal': result.dispersaoTotal.replaceAll(',', '.'),
+            'classes':int.parse(getProfessores[i]['classes']),
+            'progressao':double.parse(getProfessores[i]['progressao']),
+            'id':int.parse(getProfessores[i]['id']),
           });
         }
       }
 
-
       setState(() {
         _isLoading = false;
         _hasError = false;
-        //var dh=result.dispersaoHorizontal.replaceAll(',', '.');
-        //_dispersaoHorizontal = dh;
-        //var dt=result.dispersaoTotal.replaceAll(',', '.');
-        //_dispersaoTotal = dt;
       });
 
     } on TimeoutException {
@@ -196,174 +188,6 @@ class _SimulaState extends State<Simula> {
     );
   }
 
-  Widget _buildProfessorTable() {
-    final encargos = _totalAdulto * 0.14;
-    final proposta = _totalAdulto + (_totalAdulto * (double.parse(percAumento) / 100));
-    final dif = proposta - _totalAdulto;
-    ///APTS
-    final proAPTS = _atsAdulto + (_atsAdulto * (double.parse(percAumento) / 100));
-    final difAPTS = proAPTS - _atsAdulto;
-
-    ///VATAGENS PECUNIÁRIAS
-    final vatagensPecuniarias = _totalAdulto * 0.1;
-    final proVatagensPecuniarias =
-        vatagensPecuniarias + (vatagensPecuniarias * (double.parse(percAumento) / 100));
-    final difVatagensPecuniarias = proVatagensPecuniarias - vatagensPecuniarias;
-
-    ///ENCARGOS
-    final proEncargos = encargos + (encargos * (double.parse(percAumento) / 100));
-    final difEncargos = proEncargos - encargos;
-
-    ///TOTAL REMUNERAÇÃO
-    final _proTot = proposta + proAPTS + proEncargos + proVatagensPecuniarias; // Corrigido o cálculo
-    final difTot = dif + difAPTS + difEncargos + difVatagensPecuniarias;
-    totalGeralProfessor = _totalAdulto + _atsAdulto + encargos + (_totalAdulto * 0.1);
-    //totalPropostaProfessor = _proTot;
-    return Column(
-      children: [
-        Table(
-          columnWidths: const {
-            0: FlexColumnWidth(2.5),
-            1: FlexColumnWidth(1.5),
-            2: FlexColumnWidth(1.5),
-            3: FlexColumnWidth(1.5),
-          },
-          border: TableBorder.all(color: Colors.grey[300]!),
-          children: [
-            ///CABEÇALHO
-            TableRow(
-              decoration: BoxDecoration(color: Colors.grey[200]),
-              children: [
-                lin('Vantagens', true, Alignment.centerLeft),
-                lin('Atual', true, Alignment.center),
-                lin('Proposta', true, Alignment.center),
-                lin('Variação', true, Alignment.center),
-              ],
-            ),
-
-            ///VECTO BÁSICO
-            TableRow(
-              children: [
-                lin('Vencimento Básico', false, Alignment.centerLeft),
-                lin(
-                  Utils.formatVr.format(_totalAdulto),
-                  false,
-                  Alignment.centerRight,
-                ),
-                lin(
-                  Utils.formatVr.format(proposta),
-                  false,
-                  Alignment.centerRight,
-                ),
-                lin(Utils.formatVr.format(dif), false, Alignment.centerRight),
-              ],
-            ),
-
-            ///ADTS
-            TableRow(
-              children: [
-                lin('Adicional Tempo Serviço', false, Alignment.centerLeft),
-                lin(
-                  Utils.formatVr.format(_atsAdulto),
-                  false,
-                  Alignment.centerRight,
-                ),
-                lin(
-                  Utils.formatVr.format(proAPTS),
-                  false,
-                  Alignment.centerRight,
-                ),
-                lin(
-                  Utils.formatVr.format(difAPTS),
-                  false,
-                  Alignment.centerRight,
-                ),
-              ],
-            ),
-
-            ///VANTAGENS
-            TableRow(
-              children: [
-                lin('Vantagens Pecuniárias', false, Alignment.centerLeft),
-                lin(
-                  Utils.formatVr.format(vatagensPecuniarias),
-                  false,
-                  Alignment.centerRight,
-                ),
-                lin(
-                  Utils.formatVr.format(proVatagensPecuniarias),
-                  false,
-                  Alignment.centerRight,
-                ),
-                lin(
-                  Utils.formatVr.format(difVatagensPecuniarias),
-                  false,
-                  Alignment.centerRight,
-                ),
-              ],
-            ),
-
-            ///ENCARGOS SOCIAIS (14%)
-            TableRow(
-              children: [
-                lin('Encargos Sociais (14%)', false, Alignment.centerLeft),
-                lin(
-                  Utils.formatVr.format(encargos),
-                  false,
-                  Alignment.centerRight,
-                ),
-                lin(
-                  Utils.formatVr.format(proEncargos),
-                  true,
-                  Alignment.centerRight,
-                ),
-                lin(
-                  Utils.formatVr.format(difEncargos),
-                  true,
-                  Alignment.centerRight,
-                ),
-              ],
-            ),
-
-            ///TOTAL REMUNERAÇÃO
-            TableRow(
-              decoration: BoxDecoration(color: Colors.grey[100]),
-              children: [
-                lin(
-                  'TOTAL REMUNERAÇÃO',
-                  true,
-                  Alignment.centerLeft,
-                  cor: Colors.blue.shade800,
-                ),
-                lin(
-                  Utils.formatVr.format(
-                    _totalAdulto + _atsAdulto + encargos + (_totalAdulto * 0.1),
-                  ),
-                  true,
-                  Alignment.centerRight,
-                  cor: Colors.blue.shade800,
-                ),
-                lin(
-                  Utils.formatVr.format(_proTot),
-                  true,
-                  Alignment.centerRight,
-                  cor: Colors.blue.shade800,
-                ),
-
-                ///Proposta
-                lin(
-                  Utils.formatVr.format(difTot),
-                  true,
-                  Alignment.centerRight,
-                  cor: Colors.blue.shade800,
-                ), //DIF
-              ],
-            ),
-          ],
-        ),
-      ],
-    );
-  }
 
   Widget _buildVariationCell({
     required double variationValue,
@@ -556,6 +380,9 @@ class _SimulaState extends State<Simula> {
     required int count,
     required String dispersaoHorizontal,
     required String dispersaoTotal,
+    required String classes,
+    required String progressao,
+    required int id,
     Widget? child,
   }) {
 
@@ -641,7 +468,7 @@ class _SimulaState extends State<Simula> {
                     ),
                   ],
                 ),
-                // Parte Direita: Contagem
+                // Parte Direita: quantidade de professores
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -673,41 +500,75 @@ class _SimulaState extends State<Simula> {
             Row(
               children: [
                 // Chip de Aumento
-                Expanded(
-                  flex: 2,
-                  child: _buildInfoChip(
-                    text: 'Aumento ${ percAumento}%',
-                    trailingIcon: Icons.edit,
-                    bgColor: Colors.grey[50]!,
-                    borderColor: Colors.grey[100]!,
-                    textColor: Colors.grey[800]!,
-                    iconColor: Colors.grey[600]!,
-                    onTap: () {
-                      Utils.mostrarDialogoEditarValor(
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d{0,3}(\.\d{0,2})?$'),
-                          ),
-                        ],
-                        context: context,
-                        titulo: 'teste de titulo',
-                        labelCampo: 'Percentual',
-                        valorInicial: percAumento,
-                        aoSalvar: (novoValor) async {
-                          await ApiMySql.executaSql('UPDATE $TBTotais set perc_aumento_adulto=$novoValor',
-                          );
-                          setState(() {
-                            percAumento = novoValor;
-                          });
-                        },
-                      );
-                    },
-                  ),
-                ),
+               Expanded(
+                   child:Container(
+                     width:300,
+                     child: Row(
+                       children: [
+                         Expanded(
+                           flex: 2,
+                           child: _buildSummaryItem(
+                             '$classes Classes',
+                             Icons.access_time,
+                             onTap: () {
+                               Utils.mostrarDialogoEditarValor(
+                                 inputFormatters: [
+                                   FilteringTextInputFormatter.allow(
+                                     RegExp(r'^\d{0,3}(\.\d{0,2})?$'),
+                                   ),
+                                 ],
+                                 context: context,
+                                 titulo: 'Classes - $label',
+                                 labelCampo: 'Percentual',
+                                 valorInicial: classes,
+                                 aoSalvar: (novoValor) async {
+                                   await ApiMySql.executaSql('UPDATE $TBSimulaCab set classes=$novoValor where id=$id',).timeout(const Duration(seconds: 30));
+                                   _loadData();
+                                   setState(() {
+                                    // percAumento = novoValor;
+                                   });
+                                 },
+                               );
+                             },
+                           ),
+                         ),
+                         SizedBox(width: 10,),
+                         Expanded(
+                           flex: 3,
+                           child:_buildSummaryItem(
+                             'Progressão ${ progressao}%',
+                             Icons.trending_up,
+                             onTap: () {
+                               Utils.mostrarDialogoEditarValor(
+                                 inputFormatters: [
+                                   FilteringTextInputFormatter.allow(
+                                     RegExp(r'^\d{0,3}(\.\d{0,2})?$'),
+                                   ),
+                                 ],
+                                 context: context,
+                                 titulo: 'Progressão',
+                                 labelCampo: 'Percentual',
+                                 valorInicial: progressao,
+                                 aoSalvar: (novoValor) async {
+                                   await ApiMySql.executaSql('UPDATE $TBSimulaCab set progressao=$novoValor where id=$id',).timeout(const Duration(seconds: 30));
+                                   _loadData();
+                                   setState(() {
+                                     //percAumento = novoValor;
+                                   });
+                                 },
+                               );
+                             },
+                           ),
+                         ),
+                       ],
+                     ),
+                   )
+               ),
+
                 const SizedBox(width: 8),
                 /// Chip de Dispersão Horizontal
                 Expanded(
-                  flex: 2,
+                  flex: 1,
                   child: _buildInfoChip(
                     text: 'Disp. Horizontal $dispersaoHorizontal%',
                     trailingIcon: Icons.info_outline,
@@ -728,7 +589,7 @@ class _SimulaState extends State<Simula> {
                 const SizedBox(width: 8),
                 /// Chip de Dispersão Vertical
                 Expanded(
-                  flex: 2,
+                  flex: 1,
                   child: _buildInfoChip(
                     text: 'Disp. Total $dispersaoTotal%',
                     trailingIcon: Icons.info_outline,
@@ -752,6 +613,33 @@ class _SimulaState extends State<Simula> {
 
             // O conteúdo expansível (tabela)
             if (child != null) ...[const SizedBox(height: 14), child],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryItem(String title, IconData icon, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.9,
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 24, color: primaryColor),
+            Texto(tit: title,cor: textColor.withOpacity(0.7),tam: 12,),
           ],
         ),
       ),
@@ -828,27 +716,16 @@ class _SimulaState extends State<Simula> {
                   final data = professores[index];
                   final totVecto=double.parse(data['totalVencimentos']);
                   final proposta = totVecto + (totVecto * (double.parse(percAumento) / 100));
-                 // final dif = proposta - totVecto;
 
                   ///APTS
-                 // final proAPTS = _atsAdulto + (_atsAdulto * (double.parse(percAumento) / 100));
-                //  final difAPTS = proAPTS - _atsAdulto;
 
                   ///VATAGENS PECUNIÁRIAS
                   final vatagensPecuniarias = double.parse(data['totalVantagens']);
                   final propostaVantagens = vatagensPecuniarias + (vatagensPecuniarias * (double.parse(percAumento) / 100));
-                 // final difVatagensPecuniarias = propostaVantagens - vatagensPecuniarias;
 
                   ///ENCARGOS
                   final encargos = totVecto * 0.14;
                   final proEncargos = encargos + (encargos * (double.parse(percAumento) / 100));
-                 // final difEncargos = proEncargos - encargos;
-
-                  ///TOTAL REMUNERAÇÃO
-                //  final _proTot = proposta + proAPTS + proEncargos + propostaVantagens; // Corrigido o cálculo
-                  //final difTot = dif + difAPTS + difEncargos + difVatagensPecuniarias;
-                  //totalGeralProfessor = _totalAdulto + _atsAdulto + encargos + (_totalAdulto * 0.1);
-                  //totalPropostaProfessor = _proTot;
 
                   final dadosExemplo = DadosFinanceiros(
                     vencimentoAtual: double.parse(data['totalVencimentos']) ?? 0.0,
@@ -873,8 +750,6 @@ class _SimulaState extends State<Simula> {
 
                   final String dispersaoHorizontal= data['dispersaoHorizontal'];
                   final String dispersaoTotal= data['dispersaoTotal'];
-                  print('dispersaoHorizontal $dispersaoHorizontal');
-                  print('dispersaoTotal $dispersaoTotal');
 
                   return Container(
                     width: 800, // Largura de cada card
@@ -887,6 +762,9 @@ class _SimulaState extends State<Simula> {
                       count: quantidade,
                       dispersaoHorizontal: dispersaoHorizontal,
                       dispersaoTotal: dispersaoTotal,
+                      classes: data['classes'].toString(),
+                      progressao: data['progressao'].toString(),
+                      id:data['id'],
                       child: FinancialDetailsTable(dados: dadosExemplo),
                     ),
                   );

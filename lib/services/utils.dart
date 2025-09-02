@@ -78,7 +78,7 @@ class Utils {
           // A query SQL agora é construída aqui
           String sql = 'UPDATE $tB SET $fieldToUpdate = "$valueToSave"';
           print(sql); // Ótimo para depuração
-          await ApiMySql.executaSql(sql);
+          await ApiMySql.executaSql(sql).timeout(const Duration(seconds: 30));
 
           // Chama o callback para atualizar a UI da tela principal
           onValueUpdated?.call();
@@ -438,6 +438,11 @@ class Utils {
   static vrStringToDouble(String valorInformado)async{
     String vrInformado=await saldoToSave(valorInformado);
     vrInformado=vrInformado.replaceAll('.', '');
+    return double.parse(vrInformado);
+  }
+
+  static vrStringToDouble2(String valorInformado)async{
+    String vrInformado=await saldoToSave(valorInformado);
     return double.parse(vrInformado);
   }
 

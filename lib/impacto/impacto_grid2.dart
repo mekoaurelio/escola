@@ -62,7 +62,8 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> {
 
   Future<void> _loadData() async {
     try {
-      final lista = await ApiMySql.getProfessor();
+      //final lista = await ApiMySql.getProfessor();
+      final lista = await ApiMySql.getTotolSalPorHora(TBFolha,TBSimulaCab,TBVantagens).timeout(const Duration(seconds: 30));
       final fundeb = await ApiMySql.get(TBReceitaFundebSimulador, null,null);
 
       /// A DESCRICAO DOS DADOS DO EXERCICIO
@@ -188,10 +189,10 @@ class _ImpactoGrid2State extends State<ImpactoGrid2> {
   Widget _buildDadosDaFolha(ImpactoFinanceiroData data) {
     final values = [
       // Texto(tit: '1-Receita de Impostos',exibirIcone: false,icone: Icons.ac_unit),
-      _currencyFormat.format(data.totalVencimentos),
-      _currencyFormat.format(data.totalVantagens),
-      '${data.percentualVantagens.toStringAsFixed(2)}%',
-      _currencyFormat.format(data.custoTotalLiquido),
+      _currencyFormat.format(data.totalVencimentos),//item1
+      _currencyFormat.format(data.totalVantagens),//item2
+      '${data.percentualVantagens.toStringAsFixed(2)}%',//item3
+      _currencyFormat.format(data.custoTotalLiquido),//item4
       '14%', // Valor fixo conforme o original
       _currencyFormat.format(data.encargosPrev14Percent),
       _currencyFormat.format(data.decimoTerceiroProporcional),
