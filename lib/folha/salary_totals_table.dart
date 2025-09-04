@@ -15,6 +15,7 @@ class SalaryTotalsTable extends StatelessWidget {
   final List<List<double>> calculatedTableValues;
   final Function(String, int) quantidadeDeProfessores;
   final List<dynamic> professores;
+  final double percAumento;
 
   const SalaryTotalsTable({
     Key? key,
@@ -22,11 +23,11 @@ class SalaryTotalsTable extends StatelessWidget {
     required this.textColor,
     required this.tipo,
     required this.cargaHoraria,
-    //required this.niveis,
     required this.calculatedTableValues,
     required this.quantidadeDeProfessores,
     required this.professores,
     required this.novosNiveis,
+    required this.percAumento,
   }) : super(key: key);
 
   @override
@@ -104,7 +105,7 @@ class SalaryTotalsTable extends StatelessWidget {
                                   if (quantidadeDeProfessores(novosNiveis[nivelIndex].toString(), coluna + 1) != 0)
                                     FutureBuilder<double>(
                                       future: ProfessorUtils.totalDeVencimentosProposta(
-                                        novosNiveis[nivelIndex].toString(), coluna + 1, professores,
+                                        novosNiveis[nivelIndex].toString(), coluna + 1, professores,percAumento
 
                                       ),
                                       builder: (context, snapshot) {
@@ -115,7 +116,7 @@ class SalaryTotalsTable extends StatelessWidget {
                                           return Texto(tit: 'Erro', tam: 11, cor: Colors.red);
                                         }
                                         return Texto(
-                                          tit: Utils.formatVr.format(snapshot.data ?? 0.0), tam: 11, negrito: true, cor: primaryColor,);
+                                          tit: Utils.formatVr.format(snapshot.data ?? 0.0)+' ', tam: 11, negrito: true, cor: primaryColor,);
                                       },
                                     ),
                                 ],

@@ -33,28 +33,26 @@ class ProfessorUtils {
     return total;
   }
 
+  static Future<double> totalDeVencimentosProposta(String n, int coluna, var professores,double percAumento) async {
+   try {
+      //final totais = await ApiMySql.get(TBTotais, null, null);
+      //double perAumentoInfantil = double.tryParse(totais[0]['perc_aumento_infantil'].toString()) ?? 0.0;
 
-  static Future<double> totalDeVencimentosProposta(String n, int coluna, var professores) async {
-   //print('totalDeVencimentosProposta $nivel');
-   String nivel=n.replaceAll('NIVEL', '').trim();
-    try {
-      final totais = await ApiMySql.get(TBTotais, null, null);
-      double perAumentoInfantil = double.tryParse(totais[0]['perc_aumento_infantil'].toString()) ?? 0.0;
-
-     // String nivelFormatado = nivel.substring(1);
       String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
-      String chave = '$nivel$colunaFormatada';
+      String chave = '$n$colunaFormatada';
+      chave=chave.replaceAll('NIVEL', '').trim();
 
       double total = 0.0;
 
       for (var professor in professores) {
         if (professor['nivel'] == chave && professor['vencimento'] != null) {
           double vencimento = double.tryParse(professor['vencimento'].toString()) ?? 0.0;
+          //print('NO BANCO : ${professor['nivel']} CHAVE :$chave VENCTO : $vencimento ${professor['nome']}');
           total += vencimento;
         }
       }
       // Aplica o aumento percentual
-      total += total * perAumentoInfantil / 100;
+     // total += total * (percAumento/100);
 
       return total;
     } catch (e) {

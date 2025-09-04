@@ -70,7 +70,6 @@ class _SimulaState extends State<Simula> {
         return;
       }
 
-
       professores.clear();
       totalGeralProfessor=0;
       totalPropostaProfessor=0;
@@ -130,47 +129,6 @@ class _SimulaState extends State<Simula> {
       _hasError = true;
       _errorMessage = message;
     });
-  }
-
-  Widget _buildLoading() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 20),
-          Text(
-            _hasError ? 'Recarregando...' : 'Carregando dados...',
-            style: const TextStyle(fontSize: 16),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorView() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, color: Colors.red, size: 50),
-          const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              _errorMessage,
-              style: const TextStyle(fontSize: 18),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: _loadData,
-            child: const Text('Tentar novamente'),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget lin(
@@ -695,19 +653,22 @@ class _SimulaState extends State<Simula> {
     );
   }
 
-
+/*
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           :
-      SingleChildScrollView(
-        child:  Column(
+      Column(
           children: [
-            SizedBox(
-              height: 560, // Dê uma altura fixa para a lista horizontal
-              child: ListView.builder(
+            Expanded(
+              //height: 560, // Dê uma altura fixa para a lista horizontal
+              child:
+
+              SizedBox(
+                height: 560,
+                child:  ListView.builder(
                 scrollDirection: Axis.horizontal,
                 // Adiciona um espaçamento nas bordas da lista
                 padding: const EdgeInsets.all(16.0),
@@ -770,11 +731,112 @@ class _SimulaState extends State<Simula> {
                   );
                 },
               ),
+
+              )
+
             ),
             _buildResumoTable(),
           ],
         )
-      )
+
     );
   }
+
+ */
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+        children: [
+          SizedBox(
+            height: 560,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.all(16.0),
+              itemCount: professores.length,
+              itemBuilder: (context, index) {
+                final data = professores[index];
+                final totVecto=double.parse(data['totalVencimentos']);
+                final proposta = totVecto + (totVecto * (double.parse(percAumento) / 100));
+
+                ///APTS
+
+                ///VATAGENS PECUNIÁRIAS
+                final vatagensPecuniarias = double.parse(data['totalVantagens']);
+                final propostaVantagens = vatagensPecuniarias + (vatagensPecuniarias * (double.parse(percAumento) / 100));
+
+                ///ENCARGOS
+                final encargos = totVecto * 0.14;
+                final proEncargos = encargos + (encargos * (double.parse(percAumento) / 100));
+
+                final dadosExemplo = DadosFinanceiros(
+                  vencimentoAtual: double.parse(data['totalVencimentos']) ?? 0.0,
+                  vencimentoProposta:proposta,
+
+                  adicionalAtual: 0.00,
+                  adicionalProposta: 0.00,
+
+                  vantagensAtual: vatagensPecuniarias,
+                  vantagensProposta: propostaVantagens,
+
+                  encargosAtual: encargos,
+                  encargosProposta: proEncargos,
+
+                  dispersaoHorizontal: double.parse(data['dispersaoHorizontal']) ?? 0.0,
+                  dispersaoTotal: double.parse(data['dispersaoTotal']) ?? 0.0,
+
+                );
+
+                final String descricao = data['descricao']?.toString() ?? data['horas']?.toString() ?? 'Não especificado';
+                final int quantidade = int.parse(data['quantidade']) ?? 0;
+
+                final String dispersaoHorizontal= data['dispersaoHorizontal'];
+                final String dispersaoTotal= data['dispersaoTotal'];
+                return Container(
+                  width: 800,
+                  margin: const EdgeInsets.only(right: 16.0),
+                  child: _buildSummaryCard(
+                    icon: Icons.school_rounded,
+                    iconColor: const Color(0xFF007BFF),
+                    backgroundColor: const Color(0xFFD6EAF8),
+                    label: descricao,
+                    count: quantidade,
+                    dispersaoHorizontal: dispersaoHorizontal,
+                    dispersaoTotal: dispersaoTotal,
+                    classes: data['classes'].toString(),
+                    progressao: data['progressao'].toString(),
+                    id:data['id'],
+                    child: FinancialDetailsTable(dados: dadosExemplo),
+                  ),
+                );
+              },
+            ),
+          ),
+          // Tabela de resumo com scroll próprio se necessário
+        //  _buildResumoTable()
+
+      SizedBox(
+        width: MediaQuery.of(context).size.width *0.99,
+        child: _buildResumoTable(),
+      )
+          /*
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: _buildResumoTable(),
+            ),
+          ),
+
+           */
+        ],
+      ),
+    );
+  }
+
+
+
+
 }//868

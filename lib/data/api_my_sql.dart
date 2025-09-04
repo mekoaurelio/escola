@@ -103,7 +103,7 @@ WHERE id_user = $idUser;
 
   static Future<List<dynamic>> getItensFromForm(String table, dynamic id, String? orderBy) async {
     var sql = 'select * from $table';
-    sql += ' WHERE id_form=$id'; // Corrigido de AND para WHERE
+    sql += ' WHERE id_form=$id';
 
     if (orderBy != null) {
       sql += ' order by $orderBy';
@@ -126,7 +126,6 @@ WHERE id_user = $idUser;
   static Future<List<dynamic>> getProgressaoDoProfessor(String hora) async {
     var hr=hora.replaceAll('hs', '');
     var sql="Select * progressao from $TBSimulaCab where horas=$hr";
-    print(sql);
   return await executaSql(sql);
   }
 
@@ -181,6 +180,14 @@ WHERE id_user = $idUser;
       return [];
     }
   }
+
+  static Future<List<dynamic>> getHoraNivel(String cab,String form) async {
+    var sql='SELECT c.*,f.id_form,f.nivel,f.label,f.tipo,f.valor,f.perc';
+    sql+=' FROM $cab c JOIN $form f ON c.id =f.id_form;';
+    print(sql);
+    return await executaSql(sql);
+  }
+
 
   static Future<List<dynamic>> getProPorHora(String hora,String tbFolha,String tbVantagem) async {
     var url = Uri.parse('https://www.xmktech.net/dados/get_prof_por_hora.php?nocache=${DateTime.now().millisecondsSinceEpoch}');
@@ -301,22 +308,11 @@ WHERE id_user = $idUser;
     sql1+=" LEFT JOIN $TBVantagens dv ON f.matricula = dv.folha_id";
     sql1+=" WHERE f.status = 'A'";
     sql1+=" GROUP BY f.matricula ORDER BY f.matricula";
-    print(sql1);
+   // print(sql1);
 
     return await executaSql(sql1);
   }
-/*
-  var sql = 'SELECT a.horas,s.descricao,SUM(a.vencimento) as total_vencimento,s.id,s.classes,s.progressao,';
-  sql+='COUNT(*) as quantidade_registros,COALESCE(SUM(v.valor), 0) as total_vantagens';
-  sql+=" FROM $tFolha a LEFT JOIN $tSimula s ON REPLACE(a.horas, 'hs', '') = s.horas";
-  sql+= ' LEFT JOIN $tVantagem v ON a.matricula = v.folha_id';
-  sql+=' WHERE a.vencimento IS NOT NULL GROUP BY a.horas, s.descricao ORDER BY a.horas;';
 
- */
-
-
-
-  
   /// ==========================================================
   /// Criação das tabelas                                      =
   /// ==========================================================
@@ -484,6 +480,9 @@ WHERE id_user = $idUser;
     sql+= 'matricula decimal(15,2) NOT NULL DEFAULT "0.00",';
     sql+= 'vaaf decimal(15,2) NOT NULL DEFAULT "0.00",';
     sql+= 'vaar decimal(15,2) NOT NULL DEFAULT "0.00",';
+    sql+= 'meses int NOT NULL DEFAULT "12",';
+    sql+= 'decimo_ter_ferias decimal(5,2) NOT NULL DEFAULT "0.30",';
+    sql+= 'encargos_sociais decimal(5,2) NOT NULL DEFAULT "22.00",';
     sql+= 'receita decimal(15,2) NOT NULL DEFAULT "0.00",';
     sql+= 'fundeb_10_5 decimal(15,2) NOT NULL DEFAULT "0.00",';
     sql+= 'qtde_classe int(11) NOT NULL,';

@@ -72,7 +72,7 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
                     ),
                     child: ProfessorUtils().nivelClasse(widget.cargaHoraria,widget.primaryColor,false,90),
                   ),
-                  // Rows
+                  // Rows NIVEL a, NIVEL B....
                   for (int nivelIndex = 0; nivelIndex < widget.niveis.length; nivelIndex++)
                     Container(
                       decoration: BoxDecoration(
@@ -98,7 +98,8 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
                             ),
                           ),
 
-                            for (int coluna = 0; coluna < widget.calculatedTableValues[nivelIndex].length; coluna++)
+                          //CLASSES CLASSE 1,CLASSE2....
+                          for (int coluna = 0; coluna < widget.calculatedTableValues[nivelIndex].length; coluna++)
                             GestureDetector(
                               onTap: () {
                                 setState(() {
@@ -129,13 +130,6 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
 
                                     ),
                                     SizedBox(width: 4),
-                                    ///QUANTIDADE DE PROFESSORES POR NIVEL
-                                    ///
-
-                                   // nivelIndex > 0?
-                                    //achaNivel(widget.niveisP[nivelIndex-1], coluna + 1,nivelIndex):Container()
-
-                                   // achaNivel(widget.niveisP[nivelIndex-1], coluna + 1,nivelIndex),
 
                                   ],
                                 ),
@@ -151,25 +145,5 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
         ),
       ),
     );
-  }
-
-  Widget achaNivel(String nivel,var coluna, var nivelIndex) {
-    String n = nivel.substring(0, 1);
-    n = n.trim();
-    print('$nivel $nivelIndex $n');
-    if (nivelIndex > 0) {
-      return
-        Text(
-          '(${widget.quantidadeDeProfessores(n, coluna)}) $n$coluna',
-          style: TextStyle(
-            fontSize: 9,
-            color: Colors.black54,
-          ),
-        );
-    }else{
-      return Container();
-    }
-
-
   }
 }
