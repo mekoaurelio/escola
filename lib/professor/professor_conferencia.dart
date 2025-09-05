@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:GEM/services/GlobalFilterController.dart';
 import 'package:GEM/services/table_name_service.dart';
 import '../data/api_my_sql.dart';
@@ -8,6 +9,19 @@ import '../services/utils.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/line.dart';
 import '../widgets/paginationFooter.dart';
+
+import 'dart:typed_data';
+import 'dart:html' as html; // Para web
+import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
+
+// Dependências adicionadas para Excel
+import 'package:excel/excel.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io'; // Para File
+import 'package:universal_html/html.dart' as html; // Para web
 
 class ProfessorConferencia extends StatefulWidget {
   const ProfessorConferencia({super.key});
@@ -25,13 +39,15 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
   List<dynamic> getHoraNivel = [];
 
   int currentPage = 1;
-  int pageSize = 10;
+  int pageSize = 15;
   int hoverIndex = -1;
 
   bool isLoading = true;
 
   // debounce para pesquisa
   DateTime? _lastSearch;
+
+  String textExport='Exportar Planilha';
 
   @override
   void initState() {
@@ -59,7 +75,9 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
         getHoraNivel = horaNivel;
         listaCompleta = professores;
         lista = professores;
-        pageSize = professores.length;
+        // Removido: pageSize = professores.length;
+        // É melhor manter um pageSize fixo ou configurável para a paginação na UI
+        // Se você quiser mostrar todos por padrão, defina-o maior ou igual a lista.length
         isLoading = false;
       });
     } catch (e) {
@@ -211,6 +229,216 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
     );
   }
 
+  // ==== FUNÇÃO PARA GERAR DADOS EXCEL ====
+  List<List<dynamic>> generateExcelData() {
+    List<List<dynamic>> excelData = [];
+
+    // Adiciona o cabeçalho
+    excelData.add([
+      'Matrícula',
+      'Professor',
+      'Horas',
+      'Nível',
+      'Vencimento',
+      'APTS',
+      'Vantagens',
+      'Total',
+      'Proposta',
+    ]);
+
+    // Adiciona os dados de cada professor da lista completa
+    for (var item in lista) {
+      final vencimento = double.tryParse(item['vencimento'].toString()) ?? 0;
+      final horas = item['horas'];
+      final nivel = item['nivel'];
+      final vrP = salarioProposto(nivel, horas);
+      final sumVantagem = double.tryParse(item['soma_vantagens'].toString()) ?? 0;
+      final total = vencimento + sumVantagem;
+
+      excelData.add([
+        item['matricula'],
+        item['nome'],
+        horas,
+        nivel,
+        vencimento, // Armazena como double para o Excel, que formatará.
+        'ATPS',
+        sumVantagem, // Armazena como double.
+        total, // Armazena como double.
+        vrP, // Armazena como double.
+      ]);
+    }
+    return excelData;
+  }
+
+  // ==== FUNÇÃO PARA EXPORTAR PARA EXCEL ====
+  Future<void> exportToExcel() async {
+    setState(() => textExport='Exportando...');
+    try {
+      final excel = Excel.createExcel();
+      final sheet = excel['Professores']; // Cria uma aba com o nome 'Professores'
+
+      // Adiciona os dados gerados à planilha
+      for (var rowData in generateExcelData()) {
+        List<CellValue> rowCells = rowData.map((item) {
+          if (item is String) {
+            return TextCellValue(item);
+          } else if (item is num) { // int ou double
+            return DoubleCellValue(item.toDouble());
+          }
+          return TextCellValue(item?.toString() ?? '');
+        }).toList();
+
+        sheet.appendRow(rowCells);
+      }
+
+      for (int i = 0; i < sheet.maxColumns; i++) {
+        sheet.setColumnAutoFit(i);
+      }
+
+      final List<int>? excelBytes = excel.encode();
+      if (excelBytes == null) {
+        throw Exception("Falha ao codificar o arquivo Excel.");
+      }
+
+      final String filename = "professores_${DateTime.now().toIso8601String().substring(0, 10)}.xlsx";
+
+      if (kIsWeb) {
+        // Lógica para Flutter Web
+        final blob = html.Blob([Uint8List.fromList(excelBytes)]);
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        final anchor = html.AnchorElement(href: url)
+          ..setAttribute("download", filename)
+          ..click();
+        html.Url.revokeObjectUrl(url);
+        Utils.snak('Download', 'O download do arquivo foi iniciado.', true, Colors.green);
+        setState(() => textExport='Exportar Planilha');
+      } else {
+        // Lógica para plataformas nativas (Android, iOS, Desktop)
+        // Pedir permissão (principalmente Android)
+        if (Platform.isAndroid) {
+          var status = await Permission.storage.request();
+          if (!status.isGranted) {
+            Utils.snak('Permissão Negada', 'A permissão de armazenamento é necessária para salvar o arquivo.', false, Colors.red);
+            return;
+          }
+        }
+
+        Directory? directory;
+        if (Platform.isAndroid || Platform.isIOS) {
+          directory = await getExternalStorageDirectory(); // Pode ser getApplicationDocumentsDirectory()
+        } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+          directory = await getDownloadsDirectory();
+        }
+
+        if (directory == null) {
+          throw Exception("Não foi possível obter o diretório de armazenamento.");
+        }
+
+        final path = "${directory.path}/$filename";
+        final File file = File(path);
+        await file.writeAsBytes(excelBytes);
+        Utils.snak('Sucesso', 'Arquivo salvo em: $path', true, Colors.green);
+      }
+    } catch (e) {
+      Utils.snak('Erro na Exportação', 'Falha ao exportar para Excel: $e', false, Colors.red);
+      print('Erro de exportação: $e');
+    }
+  }
+
+
+  Future<void> exportToPdf(List<dynamic> lista, Function salarioProposto) async {
+    if (lista.isEmpty) {
+      Utils.snak('Atenção', 'Não há registros para gerar PDF.', false, Colors.red);
+      return;
+    }
+
+    final pdf = pw.Document();
+
+    final headers = [
+      'Matrícula',
+      'Professor',
+      'Horas',
+      'Nível',
+      'Vencimento',
+      'APTS',
+      'Vantagens',
+      'Total',
+      'Proposta',
+    ];
+
+    // Constrói as linhas da tabela
+    List<List<String>> rows = [];
+    for (var item in lista) {
+      final vencimento = double.tryParse(item['vencimento'].toString()) ?? 0;
+      final horas = item['horas'];
+      final nivel = item['nivel'];
+      final vrP = salarioProposto(nivel, horas);
+      final sumVantagem = double.tryParse(item['soma_vantagens'].toString()) ?? 0;
+      final total = vencimento + sumVantagem;
+
+      rows.add([
+        item['matricula'].toString(),
+        item['nome'].toString(),
+        horas.toString(),
+        nivel.toString(),
+        vencimento.toStringAsFixed(2),
+        'ATPS',
+        sumVantagem.toStringAsFixed(2),
+        total.toStringAsFixed(2),
+        vrP.toStringAsFixed(2),
+      ]);
+    }
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        build: (pw.Context context) => [
+          pw.Center(
+            child: pw.Text(
+              'Relatório de Professores',
+              style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+            ),
+          ),
+          pw.SizedBox(height: 20),
+          pw.Table.fromTextArray(
+            headers: headers,
+            data: rows,
+            headerStyle: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.white,
+            ),
+            headerDecoration: pw.BoxDecoration(color: PdfColors.blue),
+            cellAlignment: pw.Alignment.centerLeft,
+            cellPadding: const pw.EdgeInsets.all(5),
+            border: pw.TableBorder.all(width: 0.5, color: PdfColors.grey),
+          ),
+        ],
+      ),
+    );
+
+    final pdfBytes = await pdf.save();
+
+    final filename = 'professores_${DateTime.now().toIso8601String().substring(0, 10)}.pdf';
+
+    if (kIsWeb) {
+      // Abrir PDF em nova aba no Flutter Web
+      final blob = html.Blob([pdfBytes], 'application/pdf');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      html.window.open(url, '_blank');
+      html.Url.revokeObjectUrl(url);
+      Utils.snak('PDF Gerado', 'O PDF foi aberto em uma nova aba.', true, Colors.green);
+    } else {
+      // Para Mobile/Desktop
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdfBytes,
+        name: filename,
+      );
+      Utils.snak('PDF Gerado', 'Pré-visualização do PDF aberta.', true, Colors.green);
+    }
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     final totalPages = lista.isEmpty ? 0 : (lista.length / pageSize).ceil();
@@ -229,14 +457,50 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
             constraints: const BoxConstraints(maxWidth: maxTableWidth),
             child: Column(
               children: [
-                // pesquisa
-                CustomTextFiel(
-                  controller: controller,
-                  label: '',
-                  prefixIcon: Icons.search_outlined,
-                  obrigatorio: false,
-                  onChanged: onChange,
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomTextFiel(
+                        controller: controller,
+                        label: '',
+                        prefixIcon: Icons.search_outlined,
+                        obrigatorio: false,
+                        onChanged: onChange,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton.icon(
+                      onPressed: exportToExcel,
+                      icon: const Icon(Icons.download, color: Colors.white),
+                      label:  Text(textExport, style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green, // Cor para o botão de exportar
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 10),
+                    ElevatedButton.icon(
+                      onPressed: () => exportToPdf(lista, salarioProposto),
+                      icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+                      label: const Text('Exportar PDF', style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red, // Cor para PDF
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+
+
+                    const SizedBox(width: 10),
+                  ],
                 ),
+                const SizedBox(height: 20), // Espaço entre a pesquisa/botão e a tabela
                 Expanded(
                   child: Card(
                     color: Colors.white,

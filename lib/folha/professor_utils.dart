@@ -35,10 +35,7 @@ class ProfessorUtils {
 
   static Future<double> totalDeVencimentosProposta(String n, int coluna, var professores,double percAumento) async {
    try {
-      //final totais = await ApiMySql.get(TBTotais, null, null);
-      //double perAumentoInfantil = double.tryParse(totais[0]['perc_aumento_infantil'].toString()) ?? 0.0;
-
-      String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
+     String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
       String chave = '$n$colunaFormatada';
       chave=chave.replaceAll('NIVEL', '').trim();
 
@@ -78,12 +75,8 @@ class ProfessorUtils {
   }
 
   // Método auxiliar para calcular o total por nível
-  static Future<double> calculateTotalForLevel(String nivel, var professores, int cargaHoraria) async {
+  static Future<double> calculateTotalForLevel(String nivel, var professores, int cargaHoraria,double perProgressaoEntreClasse ) async {
     try {
-      // Cache dos totais (busca apenas uma vez)
-      final totais = await ApiMySql.get(TBTotais, null, null);
-      double perAumentoInfantil = double.parse(totais[0]['perc_aumento_infantil']);
-
       double total = 0.0;
 
       for (int coluna = 0; coluna < cargaHoraria; coluna++) {
@@ -93,11 +86,11 @@ class ProfessorUtils {
         for (var professor in professores) {
           if (professor['nivel'] == chave && professor['vencimento'] != null) {
             double vencimento = double.tryParse(professor['vencimento'].toString()) ?? 0.0;
-            double aumento =perAumentoInfantil;
+            double aumento =perProgressaoEntreClasse;
             total += vencimento * (1 + aumento / 100);
           }
         }
-       // print('TOTAL $total');
+
       }
 
       return total;

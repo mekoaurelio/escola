@@ -81,8 +81,7 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoDeRecursos> {
 
       setState(() {
         totais = tt;
-        decenios
-            .clear(); // Limpa antes de adicionar para evitar duplicatas em recargas
+        decenios.clear(); // Limpa antes de adicionar para evitar duplicatas em recargas
         impostos.clear();
         decenios.addAll(_mapearDados(dadosDecenios));
         impostos.addAll(_mapearDados(dadosImpostos));
@@ -94,16 +93,11 @@ class _ProjecaoRecursosScreenState extends State<ProjecaoDeRecursos> {
 
         var r = double.tryParse(totais[0]['receita']?.toString() ?? '0.0') ??
             0.0; //1
-        var vrI = double.tryParse(
-            totais[0]['fundeb_10_5']?.toString() ?? '0.0') ?? 0.0; //1.2
-        var d5 = double.tryParse(
-            totais[0]['decendio_5']?.toString() ?? '0.0') ?? 0.0;
-        var i25 = double.tryParse(
-            totais[0]['imposto_25']?.toString() ?? '0.0') ?? 0.0;
-        var vaaf = double.tryParse(totais[0]['vaaf']?.toString() ?? '0.0') ??
-            0.0;
-        var vaar = double.tryParse(totais[0]['vaar']?.toString() ?? '0.0') ??
-            0.0;
+        var vrI = double.tryParse(totais[0]['fundeb_10_5']?.toString() ?? '0.0') ?? 0.0; //1.2
+        var d5 = double.tryParse(totais[0]['decendio_5']?.toString() ?? '0.0') ?? 0.0;
+        var i25 = double.tryParse(totais[0]['imposto_25']?.toString() ?? '0.0') ?? 0.0;
+        var vaaf = double.tryParse(totais[0]['vaaf']?.toString() ?? '0.0') ?? 0.0;
+        var vaar = double.tryParse(totais[0]['vaar']?.toString() ?? '0.0') ?? 0.0;
 
 
         print('valores iniciais');

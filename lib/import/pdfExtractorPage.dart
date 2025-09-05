@@ -57,6 +57,7 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
 
   }
 
+
   Future<void> insereDadosIniciais(String tb)async{
     ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('Piso Incial', 0,10,0 )");
     ApiMySql.executaSql("insert INTO $tb (descricao,percentual,valor,ordem) values('Progressão entre Classes',010,0,1 )");
@@ -96,6 +97,8 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
     ApiMySql.insereSql("insert INTO $tb (ano,valor,percentual_crescimento) values(2024,10,0)");
     ApiMySql.insereSql("insert INTO $tb (ano,valor,percentual_crescimento) values(2025,10,0)");
   }
+
+
 
   Future<void> uploadFile(String fileName, Uint8List fileBytes) async {
     setState(() {
@@ -353,25 +356,6 @@ class _PdfExtractorPageState extends State<PdfExtractorPage> {
       }
       index++;
     }
-/*
-    setState(() => status = 'Inserindo Exercícios');
-    await insereExercicio(TBExercicio);
-
-    setState(() => status = 'Inserindo Infantil');
-    await insereDadosIniciais(TBInfantil);
-
-    setState(() => status = 'Inserindo Professor');
-    await insereDadosIniciais(TBProfessor);
-
-    setState(() => status = 'Inserindo Receita FUNDEB Simuulador');
-    await insereReceitaFundebSimulador(TBReceitaFundebSimulador);
-
-    await carregarFolha();
-    setState(() => status = 'Dados carregados!');
-    Utils.snak('Parabéns', 'Dados extraidos com sucesso', false, Colors.green);
-
- */
-
   }
 
   Future<void> carregarFolha() async {

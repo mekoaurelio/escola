@@ -9,7 +9,6 @@ import 'const/const.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'doc/document_screen.dart';
 import 'impacto/impacto.dart';
-import 'impacto/impacto_grid2.dart';
 import 'import/importar_dados.dart';
 import 'import/pdfExtractorPage.dart';
 import 'professor/professor_conferencia.dart';
@@ -92,7 +91,6 @@ class _StartState extends State<Start> {
         'drawerLabel': 'Simulador',
         'appBarTitle': 'Simulador de Progressão',
         'builder': () => ListaFormulariosScreen(),
-       // 'builder': () => ProgressaoScreen(),
       },
 
       {
@@ -384,7 +382,7 @@ class _StartState extends State<Start> {
             padding: const EdgeInsets.all(16),
             width: double.infinity,
             child: const Text(
-              'Copyright © 2025 XmkTech. V.014\nAll rights reserved (41-9-9558-2579)',
+              'Copyright © 2025 XmkTech. V.016\nAll rights reserved (41-9-9558-2579)',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),

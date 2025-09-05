@@ -6,11 +6,13 @@ enum TipoItem { cabecalho, progressao, encargos }
 class Formulario {
   int id;
   String titulo;
+  String horas;
   List<ItemFormulario> itens;
 
   Formulario({
     required this.id,
     required this.titulo,
+    required this.horas,
     required this.itens,
   });
 }

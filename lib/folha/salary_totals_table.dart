@@ -131,7 +131,7 @@ class SalaryTotalsTable extends StatelessWidget {
                               children: [
                                 Texto(tit: 'Total',tam: 11,cor:textColor.withOpacity(0.8)),
                                 FutureBuilder<double>(
-                                  future: ProfessorUtils.calculateTotalForLevel(novosNiveis[nivelIndex].toString(), professores, cargaHoraria),
+                                  future: ProfessorUtils.calculateTotalForLevel(novosNiveis[nivelIndex].toString(), professores, cargaHoraria,percAumento),
                                   builder: (context, snapshot) {
                                     if (snapshot.connectionState == ConnectionState.waiting) {
                                       return Texto(tit: 'Calculando...', tam: 11, cor: primaryColor);

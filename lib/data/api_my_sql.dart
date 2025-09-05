@@ -101,24 +101,24 @@ WHERE id_user = $idUser;
     return await executaSql(sql);
   }
 
-  static Future<List<dynamic>> getItensFromForm(String table, dynamic id, String? orderBy) async {
+  static Future<List<dynamic>> getItensFromForm(String table, dynamic id, String? campo) async {
     var sql = 'select * from $table';
-    sql += ' WHERE id_form=$id';
+    sql += ' WHERE $campo=$id';
 
-    if (orderBy != null) {
-      sql += ' order by $orderBy';
-    }
+  //  if (orderBy != null) {
+    //  sql += ' order by $orderBy';
+   // }
     // print(sql);
     return await executaSql(sql);
   }
 
   static Future<List<dynamic>> getTotolSalPorHora(String tFolha,String tSimula,String tVantagem) async {
-    var sql = 'SELECT a.horas,s.descricao,SUM(a.vencimento) as total_vencimento,s.id,s.classes,s.progressao,';
-    sql+='COUNT(*) as quantidade_registros,COALESCE(SUM(v.valor), 0) as total_vantagens';
-    sql+=" FROM $tFolha a LEFT JOIN $tSimula s ON REPLACE(a.horas, 'hs', '') = s.horas";
-    sql+= ' LEFT JOIN $tVantagem v ON a.matricula = v.folha_id';
-    sql+=' WHERE a.vencimento IS NOT NULL GROUP BY a.horas, s.descricao ORDER BY a.horas;';
-  //  print(sql);
+    var sql ='SELECT s.horas,s.descricao,SUM(a.vencimento) as total_vencimento,s.id,s.classes,';
+    sql+='s.progressao,COUNT(DISTINCT a.matricula) as quantidade_registros,COALESCE(SUM(v.total_vantagens), 0) as total_vantagens';
+    sql+=" FROM $tSimula s LEFT JOIN $tFolha a ON s.horas = REPLACE(a.horas, 'hs', '') AND a.vencimento IS NOT NULL";
+    sql+=' LEFT JOIN (SELECT folha_id, SUM(valor) as total_vantagens FROM $tVantagem';
+    sql+=' GROUP BY folha_id) v ON a.matricula = v.folha_id GROUP BY s.horas, s.descricao, s.id, s.classes, s.progressao ORDER BY s.horas;';
+    print(sql);
     return await executaSql(sql);
   }
 
@@ -486,7 +486,7 @@ WHERE id_user = $idUser;
     sql+= 'receita decimal(15,2) NOT NULL DEFAULT "0.00",';
     sql+= 'fundeb_10_5 decimal(15,2) NOT NULL DEFAULT "0.00",';
     sql+= 'qtde_classe int(11) NOT NULL,';
-    sql+= 'perc_aumento_infantil decimal(15,2) NOT NULL DEFAULT "0.00",';
+    sql+= 'total_receitas_fundeb decimal(15,2) NOT NULL DEFAULT "0.00",';
     sql+= 'perc_aumento_adulto decimal(15,2) NOT NULL DEFAULT "0.00")';
     await executaSql(sql);
     await criaIndiceEAutoIncremento(tb);
@@ -754,7 +754,7 @@ WHERE id_user = $idUser;
     if(!temDados) {
       var sql = 'INSERT INTO $tb';
       sql +=
-      '(decendio_projetado, decendio_5, imposto_projetado, imposto_25, matricula, receita, fundeb_10_5, qtde_classe, perc_aumento_infantil) VALUES';
+      '(decendio_projetado, decendio_5, imposto_projetado, imposto_25, matricula, receita, fundeb_10_5, qtde_classe, total_receitas_fundeb) VALUES';
       sql += '(0.00, 0.00, 0.00, 0.00, 0.00, 0.60, 0.00, 0.00, 0.00)';
       executaSql(sql);
     }

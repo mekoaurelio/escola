@@ -30,20 +30,26 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
     });
   }
 
-  void _criarNovoFormulario() {
+  void _criarNovoFormulario(var titulo, var horas,var id) {
     final tituloController = TextEditingController();
     final horasController = TextEditingController();
+    if(id!=null){
+      tituloController.text=titulo;
+      horasController.text=horas;
+    }
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Criar Novo Formulário'),
+        title:  Text(titulo ?? 'Criar Novo Formulário'),
         content: Column(
           children: [
+            //TITULO
             TextField(
               controller: tituloController,
               autofocus: true,
               decoration: const InputDecoration(hintText: 'Título do Formulário'),
             ),
+            //HORAS
             TextField(
               controller: horasController,
               autofocus: true,
@@ -52,25 +58,36 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
           ],
         ),
         actions: [
+          //BOTÃO CANCELAR
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancelar'),
           ),
+          //BOTÃO SALVAR
           ElevatedButton(
             onPressed: () async {
               if (tituloController.text.isNotEmpty && horasController.text.isNotEmpty) {
-                final novoFormulario = await _dbService.criarNovoFormulario(tituloController.text,horasController.text);
+                final tit=tituloController.text;
+                final hor=horasController.text;
+
+                if(id==null) {
+                  final novoFormulario = await _dbService.criarNovoFormulario(tituloController.text, horasController.text);
+                  await Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) =>
+                        FormularioBuilderScreen(formulario: novoFormulario),
+                  ));
+                }else{
+                  var result = await ApiMySql.executaSql('update $TBSimulaCab  set descricao="$tit", horas=$hor where id=$id');
+                }
+                //Fecha o dialog
                 Navigator.of(context).pop(); // Fecha o dialog
-                // Navega para a tela de construção e atualiza a lista quando voltar
-                await Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => FormularioBuilderScreen(formulario: novoFormulario),
-                ));
+
                 _reloadData();
               }else{
                 Utils.snak('Atenção', 'Preencha todos os Dados', false, Colors.red);
               }
             },
-            child: const Text('Criar e Abrir'),
+            child: const Text('Salvar'),
           ),
         ],
       ),
@@ -79,7 +96,6 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
 
   void _abrirFormulario(Formulario formulario) async {
     var _itens=await ApiMySql.getItensFromForm(TBSimulaForm,formulario.id,null);
-    print(_itens);
     for(int i = 0 ; i<_itens.length ; i++) {
       formulario.itens.add(ItemFormulario(
         id: int.parse(_itens[i]['id']),
@@ -133,14 +149,28 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: ListTile(
-                  title: Text(form.titulo),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                    onPressed: () async {
-                      await _dbService.deletarFormulario(form.id,context);
-                      _reloadData();
-                    },
+                  title: Text('${form.titulo}(${form.horas})'),
+                  trailing: SizedBox(
+                    width: 80,
+                      child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.grey),
+                        onPressed: () async {
+                          _criarNovoFormulario(form.titulo,form.horas,form.id);
+                          _reloadData();
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                        onPressed: () async {
+                          await _dbService.deletarFormulario(form.id,context);
+                          _reloadData();
+                        },
+                      ),
+                    ],
                   ),
+              ),
                   onTap: () => _abrirFormulario(form),
                 ),
               );
@@ -149,7 +179,9 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _criarNovoFormulario,
+          onPressed: () async {
+            _criarNovoFormulario(null,null,null);
+          },
         tooltip: 'Criar Novo Formulário',
         child: const Icon(Icons.add),
       ),

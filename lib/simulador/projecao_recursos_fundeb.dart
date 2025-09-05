@@ -9,27 +9,15 @@ import '../services/utils.dart';
 import '../widgets/line.dart';
 import '../widgets/texto.dart';
 
-class ProjecaoRecursosFundeb extends StatelessWidget {
+class ProjecaoRecursosFundeb extends StatefulWidget {
   const ProjecaoRecursosFundeb({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Calculadora FUNDEB',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const FUNDEBCalculatorScreen(),
-    );
-  }
+  State<ProjecaoRecursosFundeb> createState() => _FUNDEBCalculatorScreenState();
+
 }
 
-class FUNDEBCalculatorScreen extends StatefulWidget {
-  const FUNDEBCalculatorScreen({super.key});
-
-  @override
-  State<FUNDEBCalculatorScreen> createState() => _FUNDEBCalculatorScreenState();
-}
-
-class _FUNDEBCalculatorScreenState extends State<FUNDEBCalculatorScreen> {
+class _FUNDEBCalculatorScreenState extends State<ProjecaoRecursosFundeb> {
   final double ProjecaoRecursosFundebPr = 6290.1;
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
   Map<String, dynamic>? tabela;
@@ -174,7 +162,8 @@ class _FUNDEBCalculatorScreenState extends State<FUNDEBCalculatorScreen> {
       await ApiMySql.executaSql('update $TBVaaf set $campo=$valor');
       /// Salva os totais
       var _result=await ApiMySql.executaSql('update $TBTotais set matricula=$totalMatriculas, receita=$totalReceitas').timeout(const Duration(seconds: 30));
-      //Utils.verificaErro(_result);
+     /// Salva o total_receitas_fundeb, que será usado
+      await ApiMySql.executaSql('update $TBTotais set total_receitas_fundeb=$totalReceitas');
       /// Atualizar localmente
       setState(() {
         tabela?[campo] = valor;

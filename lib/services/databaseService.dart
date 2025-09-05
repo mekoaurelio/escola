@@ -22,6 +22,7 @@ class DatabaseService {
     for(int i = 0 ; i<_forms.length ; i++) {
       final novoFormulario = Formulario(
         id: int.parse(_forms[i]['id']),
+        horas: _forms[i]['horas'],
         titulo: _forms[i]['descricao'],
         itens: [], // Começa sem itens
       );
@@ -39,10 +40,10 @@ class DatabaseService {
         var tbCriada = await ApiMySql.CriaTabelaSimulaCab(tb);
       }
       var itens = await ApiMySql.executaSql('insert into $tb (descricao,horas) values ("$titulo","$horas")');
-      print(itens);
       var result = await ApiMySql.executaSql('select * from $tb where descricao="$titulo"');
       final novoFormulario = Formulario(
         id: int.parse(result[0]['id']),
+        horas: result[0]['horas'],
         titulo: titulo,
         itens: [], // Começa sem itens
       );
@@ -79,36 +80,8 @@ class DatabaseService {
       if(!temTabela){
         await ApiMySql.CriaTabelaSimulaForm(tb);
       }
-     // print('INSERT');
-      //await ApiMySql.InsertItens(formulario);
-      //await gravaNoBanco(formulario, 'I',tb,formulario.id);
     }
   }
-/*
-  Future<void> gravaNoBanco(Formulario formulario,var type,var tb,var id_form) async {
-
-    for(int i = 0 ; i<formulario.itens.length ; i++) {
-      var label=formulario.itens[i].label;
-      var perc=formulario.itens[i].percentual;
-      if(perc==null){
-        perc=0;
-      }
-      var tipo=formulario.itens[i].tipo;
-      var valor=formulario.itens[i].valor;
-      //id_form
-      if(type=='I'){
-        print('insert INTO $tb (label,tipo,valor,perc,id_form) Values ("$label","$tipo",$valor,$perc,$id_form)');
-        await ApiMySql.executaSql('insert INTO $tb (label,tipo,valor,perc,id_form) Values ("$label","$tipo",$valor,$perc,$id_form)');
-      }else{
-        print('update $tb set label="$label",tipo="$label",valor=$valor,perc=$perc');
-        await ApiMySql.executaSql('update $tb set label="$label",tipo="$label",valor=$valor,perc=$perc');
-      }
-    }
-
-
-  }
-
- */
 
   /// ==========================================================
   /// delete formulário                                        =

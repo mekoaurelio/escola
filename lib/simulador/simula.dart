@@ -9,7 +9,6 @@ import 'package:GEM/services/table_name_service.dart';
 import '../data/api_my_sql.dart';
 import '../services/calc_dispersao_valores.dart';
 import '../services/utils.dart';
-import '../widgets/line.dart';
 import '../widgets/texto.dart';
 import 'dadosFinanceiros.dart';
 import 'financialDetailsTable.dart';
@@ -401,50 +400,10 @@ class _SimulaState extends State<Simula> {
             // ==========================================================
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              // A MÁGICA ACONTECE AQUI
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Parte Esquerda: Ícone e Título
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: backgroundColor,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(icon, color: iconColor, size: 24),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 20,
-                        color: Colors.grey[700],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-                // Parte Direita: quantidade de professores
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    count.toString(),
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
+                IconeNomeDoProfessor(icon,label,iconColor),
+                quantidadeDeProfessores(count),
               ],
             ),
 
@@ -551,8 +510,7 @@ class _SimulaState extends State<Simula> {
                   child: _buildInfoChip(
                     text: 'Disp. Total $dispersaoTotal%',
                     trailingIcon: Icons.info_outline,
-                    tooltip:
-                    'Dispersão salarial entre níveis\nClick Aqui Para Saber Mais',
+                    tooltip: 'Dispersão salarial entre níveis\nClick Aqui Para Saber Mais',
                     bgColor:
                     double.parse(dispersaoTotal) > 95
                         ? Colors.red[100]!
@@ -575,6 +533,52 @@ class _SimulaState extends State<Simula> {
         ),
       ),
     );
+  }
+
+  Widget IconeNomeDoProfessor(IconData icon,String label,Color iconColor){
+    return  Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: iconColor, size: 24),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 20,
+            color: Colors.grey[700],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget quantidadeDeProfessores(int count){
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 8,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        count.toString(),
+        style: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+      ),
+    );
+
   }
 
   Widget _buildSummaryItem(String title, IconData icon, {VoidCallback? onTap}) {
@@ -653,96 +657,6 @@ class _SimulaState extends State<Simula> {
     );
   }
 
-/*
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          :
-      Column(
-          children: [
-            Expanded(
-              //height: 560, // Dê uma altura fixa para a lista horizontal
-              child:
-
-              SizedBox(
-                height: 560,
-                child:  ListView.builder(
-                scrollDirection: Axis.horizontal,
-                // Adiciona um espaçamento nas bordas da lista
-                padding: const EdgeInsets.all(16.0),
-                itemCount: professores.length,
-                itemBuilder: (context, index) {
-                  final data = professores[index];
-                  final totVecto=double.parse(data['totalVencimentos']);
-                  final proposta = totVecto + (totVecto * (double.parse(percAumento) / 100));
-
-                  ///APTS
-
-                  ///VATAGENS PECUNIÁRIAS
-                  final vatagensPecuniarias = double.parse(data['totalVantagens']);
-                  final propostaVantagens = vatagensPecuniarias + (vatagensPecuniarias * (double.parse(percAumento) / 100));
-
-                  ///ENCARGOS
-                  final encargos = totVecto * 0.14;
-                  final proEncargos = encargos + (encargos * (double.parse(percAumento) / 100));
-
-                  final dadosExemplo = DadosFinanceiros(
-                    vencimentoAtual: double.parse(data['totalVencimentos']) ?? 0.0,
-                    vencimentoProposta:proposta,
-
-                    adicionalAtual: 0.00,
-                    adicionalProposta: 0.00,
-
-                    vantagensAtual: vatagensPecuniarias,
-                    vantagensProposta: propostaVantagens,
-
-                    encargosAtual: encargos,
-                    encargosProposta: proEncargos,
-
-                    dispersaoHorizontal: double.parse(data['dispersaoHorizontal']) ?? 0.0,
-                    dispersaoTotal: double.parse(data['dispersaoTotal']) ?? 0.0,
-
-                  );
-
-                  final String descricao = data['descricao']?.toString() ?? data['horas']?.toString() ?? 'Não especificado';
-                  final int quantidade = int.parse(data['quantidade']) ?? 0;
-
-                  final String dispersaoHorizontal= data['dispersaoHorizontal'];
-                  final String dispersaoTotal= data['dispersaoTotal'];
-
-                  return Container(
-                    width: 800, // Largura de cada card
-                    margin: const EdgeInsets.only(right: 16.0), // Espaçamento entre os cards
-                    child: _buildSummaryCard(
-                      icon: Icons.school_rounded,
-                      iconColor: const Color(0xFF007BFF),
-                      backgroundColor: const Color(0xFFD6EAF8),
-                      label: descricao,
-                      count: quantidade,
-                      dispersaoHorizontal: dispersaoHorizontal,
-                      dispersaoTotal: dispersaoTotal,
-                      classes: data['classes'].toString(),
-                      progressao: data['progressao'].toString(),
-                      id:data['id'],
-                      child: FinancialDetailsTable(dados: dadosExemplo),
-                    ),
-                  );
-                },
-              ),
-
-              )
-
-            ),
-            _buildResumoTable(),
-          ],
-        )
-
-    );
-  }
-
- */
 
   @override
   Widget build(BuildContext context) {
@@ -753,90 +667,80 @@ class _SimulaState extends State<Simula> {
         children: [
           SizedBox(
             height: 560,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.all(16.0),
-              itemCount: professores.length,
-              itemBuilder: (context, index) {
-                final data = professores[index];
-                final totVecto=double.parse(data['totalVencimentos']);
-                final proposta = totVecto + (totVecto * (double.parse(percAumento) / 100));
-
-                ///APTS
-
-                ///VATAGENS PECUNIÁRIAS
-                final vatagensPecuniarias = double.parse(data['totalVantagens']);
-                final propostaVantagens = vatagensPecuniarias + (vatagensPecuniarias * (double.parse(percAumento) / 100));
-
-                ///ENCARGOS
-                final encargos = totVecto * 0.14;
-                final proEncargos = encargos + (encargos * (double.parse(percAumento) / 100));
-
-                final dadosExemplo = DadosFinanceiros(
-                  vencimentoAtual: double.parse(data['totalVencimentos']) ?? 0.0,
-                  vencimentoProposta:proposta,
-
-                  adicionalAtual: 0.00,
-                  adicionalProposta: 0.00,
-
-                  vantagensAtual: vatagensPecuniarias,
-                  vantagensProposta: propostaVantagens,
-
-                  encargosAtual: encargos,
-                  encargosProposta: proEncargos,
-
-                  dispersaoHorizontal: double.parse(data['dispersaoHorizontal']) ?? 0.0,
-                  dispersaoTotal: double.parse(data['dispersaoTotal']) ?? 0.0,
-
-                );
-
-                final String descricao = data['descricao']?.toString() ?? data['horas']?.toString() ?? 'Não especificado';
-                final int quantidade = int.parse(data['quantidade']) ?? 0;
-
-                final String dispersaoHorizontal= data['dispersaoHorizontal'];
-                final String dispersaoTotal= data['dispersaoTotal'];
-                return Container(
-                  width: 800,
-                  margin: const EdgeInsets.only(right: 16.0),
-                  child: _buildSummaryCard(
-                    icon: Icons.school_rounded,
-                    iconColor: const Color(0xFF007BFF),
-                    backgroundColor: const Color(0xFFD6EAF8),
-                    label: descricao,
-                    count: quantidade,
-                    dispersaoHorizontal: dispersaoHorizontal,
-                    dispersaoTotal: dispersaoTotal,
-                    classes: data['classes'].toString(),
-                    progressao: data['progressao'].toString(),
-                    id:data['id'],
-                    child: FinancialDetailsTable(dados: dadosExemplo),
-                  ),
-                );
-              },
-            ),
-          ),
-          // Tabela de resumo com scroll próprio se necessário
-        //  _buildResumoTable()
-
-      SizedBox(
-        width: MediaQuery.of(context).size.width *0.99,
-        child: _buildResumoTable(),
-      )
-          /*
-          Expanded(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: _buildResumoTable(),
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: List.generate(professores.length, (index) {
+                  final data = professores[index];
+                  final totVecto = double.parse(data['totalVencimentos']);
+                  final proposta = totVecto +
+                      (totVecto * (double.parse(percAumento) / 100));
+
+                  /// VANTAGENS PECUNIÁRIAS
+                  final vatagensPecuniarias =
+                  double.parse(data['totalVantagens']);
+                  final propostaVantagens = vatagensPecuniarias +
+                      (vatagensPecuniarias *
+                          (double.parse(percAumento) / 100));
+
+                  /// ENCARGOS
+                  final encargos = totVecto * 0.14;
+                  final proEncargos = encargos +
+                      (encargos * (double.parse(percAumento) / 100));
+
+                  final dadosExemplo = DadosFinanceiros(
+                    vencimentoAtual:
+                    double.tryParse(data['totalVencimentos']) ?? 0.0,
+                    vencimentoProposta: proposta,
+                    adicionalAtual: 0.00,
+                    adicionalProposta: 0.00,
+                    vantagensAtual: vatagensPecuniarias,
+                    vantagensProposta: propostaVantagens,
+                    encargosAtual: encargos,
+                    encargosProposta: proEncargos,
+                    dispersaoHorizontal:
+                    double.tryParse(data['dispersaoHorizontal']) ?? 0.0,
+                    dispersaoTotal:
+                    double.tryParse(data['dispersaoTotal']) ?? 0.0,
+                  );
+
+                  final String descricao =
+                      data['descricao']?.toString() ??
+                          data['horas']?.toString() ??
+                          'Não especificado';
+                  final int quantidade = int.tryParse(data['quantidade']) ?? 0;
+
+                  return Container(
+                    width: 800,
+                    margin: const EdgeInsets.only(right: 16.0),
+                    child: _buildSummaryCard(
+                      icon: Icons.school_rounded,
+                      iconColor: const Color(0xFF007BFF),
+                      backgroundColor: const Color(0xFFD6EAF8),
+                      label: descricao,
+                      count: quantidade,
+                      dispersaoHorizontal: data['dispersaoHorizontal'],
+                      dispersaoTotal: data['dispersaoTotal'],
+                      classes: data['classes'].toString(),
+                      progressao: data['progressao'].toString(),
+                      id: data['id'],
+                      child: FinancialDetailsTable(dados: dadosExemplo),
+                    ),
+                  );
+                }),
+              ),
             ),
           ),
 
-           */
+          /// Tabela de resumo
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.99,
+            child: _buildResumoTable(),
+          ),
         ],
       ),
     );
   }
-
-
-
 
 }//868
