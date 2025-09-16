@@ -10,7 +10,6 @@ class SalaryTotalsTable extends StatelessWidget {
   final Color textColor;
   final String tipo;
   final int cargaHoraria;
- // final List<Map<String, String>> niveis;
   final List<String> novosNiveis;
   final List<List<double>> calculatedTableValues;
   final Function(String, int) quantidadeDeProfessores;
@@ -99,15 +98,12 @@ class SalaryTotalsTable extends StatelessWidget {
                                 children: [
                                   //Quantidade de professores
                                   if (quantidadeDeProfessores(novosNiveis[nivelIndex].toString(), coluna + 1) != 0)
-                                    Texto(
-                                      tit: '${quantidadeDeProfessores(novosNiveis[nivelIndex].toString(), coluna + 1)} Profs.', tam: 11, cor: textColor.withOpacity(0.8),),
+                                    Texto(tit: '${quantidadeDeProfessores(novosNiveis[nivelIndex].toString(), coluna + 1)} Profs.', tam: 11, cor: textColor.withOpacity(0.8),),
 
                                   if (quantidadeDeProfessores(novosNiveis[nivelIndex].toString(), coluna + 1) != 0)
                                     FutureBuilder<double>(
                                       future: ProfessorUtils.totalDeVencimentosProposta(
-                                        novosNiveis[nivelIndex].toString(), coluna + 1, professores,percAumento
-
-                                      ),
+                                        novosNiveis[nivelIndex].toString(), coluna + 1, professores,calculatedTableValues),
                                       builder: (context, snapshot) {
                                         if (snapshot.connectionState == ConnectionState.waiting) {
                                           return Texto(tit: 'Calculando...', tam: 11, cor: primaryColor);

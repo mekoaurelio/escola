@@ -482,6 +482,7 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
                       ),
                     ),
 
+                    /*
                     const SizedBox(width: 10),
                     ElevatedButton.icon(
                       onPressed: () => exportToPdf(lista, salarioProposto),
@@ -496,6 +497,7 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
                       ),
                     ),
 
+                     */
 
                     const SizedBox(width: 10),
                   ],

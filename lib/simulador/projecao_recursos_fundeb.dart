@@ -333,53 +333,74 @@ class _FUNDEBCalculatorScreenState extends State<ProjecaoRecursosFundeb> {
           padding: const EdgeInsets.all(24.0),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: maxTableWidth),
-            // Usamos um Card como container geral da tabela para dar sombra e um visual limpo
-            child: Card(
-              color: Colors.white,
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              clipBehavior: Clip.antiAlias, // Essencial para cortar os cantos
-              child: Column( // A estrutura principal que separa cabeçalho, corpo e rodapé
-                children: [
-                  // ===================================
-                  // 1. CABEÇALHO (FIXO)
-                  // ===================================
-                  _buildStyledHeaderFooterRow(),
-
-                  // ===================================
-                  // 2. CORPO (ROLÁVEL)
-                  // ===================================
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        // Gera todas as linhas de dados
-                        children: List.generate(etapas.length, (index) => _buildDataRow(index)),
-                      ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.refresh, color: Colors.white),
+                  label: Text('Atualiza', style: TextStyle(color: Colors.black54)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-
-                  // ===================================
-                  // 3. RODAPÉ (FIXO)
-                  // ===================================
-                  Card(
+                  onPressed: () {
+                    _carregarDadosBanco();
+                  },
+                ),
+                SizedBox(width: 25,),
+                //const SizedBox(height: 16),
+                Expanded( // Adicionado Expanded aqui
+                  child: Card(
                     color: Colors.white,
                     elevation: 2,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text("TOTAL FUNDEB (20%)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          Text(totalMatriculas.toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          const Text("TOTAL DE RECEITAS:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue)),
-                          Text(Utils.formatVr.format(totalReceitas), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.blue.shade800)),
-                        ],
-                      ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        // ===================================
+                        // 1. CABEÇALHO (FIXO)
+                        // ===================================
+                        _buildStyledHeaderFooterRow(),
+
+                        // ===================================
+                        // 2. CORPO (ROLÁVEL)
+                        // ===================================
+                        Expanded( // Mantido o Expanded aqui
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: List.generate(etapas.length, (index) => _buildDataRow(index)),
+                            ),
+                          ),
+                        ),
+
+                        // ===================================
+                        // 3. RODAPÉ (FIXO)
+                        // ===================================
+                        Card(
+                          color: Colors.white,
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text("TOTAL FUNDEB (20%)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                Text(totalMatriculas.toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                const Text("TOTAL DE RECEITAS:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue)),
+                                Text(Utils.formatVr.format(totalReceitas), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.blue.shade800)),
+                              ],
+                            ),
+                          ),
+                        )
+                      ],
                     ),
-                  )
-                ],
-              ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

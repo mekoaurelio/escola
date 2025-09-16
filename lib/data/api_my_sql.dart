@@ -104,11 +104,11 @@ WHERE id_user = $idUser;
   static Future<List<dynamic>> getItensFromForm(String table, dynamic id, String? campo) async {
     var sql = 'select * from $table';
     sql += ' WHERE $campo=$id';
+    return await executaSql(sql);
+  }
 
-  //  if (orderBy != null) {
-    //  sql += ' order by $orderBy';
-   // }
-    // print(sql);
+  static Future<List<dynamic>> getItensFromForm2(String table) async {
+    var sql = 'select * from $table';
     return await executaSql(sql);
   }
 
@@ -185,6 +185,11 @@ WHERE id_user = $idUser;
     var sql='SELECT c.*,f.id_form,f.nivel,f.label,f.tipo,f.valor,f.perc';
     sql+=' FROM $cab c JOIN $form f ON c.id =f.id_form;';
     print(sql);
+    return await executaSql(sql);
+  }
+
+  static Future<List<dynamic>> getProfNivel() async {
+    var sql='SELECT nivel,vencimento from $TBFolha ';
     return await executaSql(sql);
   }
 

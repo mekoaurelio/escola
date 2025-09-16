@@ -18,10 +18,10 @@ const pathDados = 'https://www.xmktech.net/dados';
 String arqPhpGetImage = '$pathImage/get_image.php?filename=';
 
 //IMPACTO
-const d1 =  'Soma de todos os vencimentos';
-const d2 =  'Soma de todos oa vantagens';
+const d1 =  'Valor foi informado no menu : Projeção de Recursos\n Tabela 03 - TOTAL';
+const d2 =  'Valor foi informado no menu : Projeção de Recursos\n Tabela 02 - TOTAL';
 const d3 =  'Percentual do nro 2 em relação nro 1\n (nro2/nro1)*100';
-const d4 =  'Vantagens menos os vencimentos';
+const d4 =  'Valor foi informado no menu : Projeção dos Recursos do  FUNDEB\n Projeção Receitas - TOTAL';
 const d5 =  'Esse valor veio do simulado';
 const d6 =  'Percentual (nro5) sobre o nro 4';
 const d7 =  'Um doze ávos sobre o nro6';

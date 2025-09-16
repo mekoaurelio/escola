@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-
-import 'package:GEM/services/table_name_service.dart';
-import '../data/api_my_sql.dart';
 import '../widgets/texto.dart';
 
 class ProfessorUtils {
@@ -33,30 +30,59 @@ class ProfessorUtils {
     return total;
   }
 
-  static Future<double> totalDeVencimentosProposta(String n, int coluna, var professores,double percAumento) async {
+  static Future<double> totalDeVencimentosProposta(String n, int coluna, var professores,
+      List<List<double>> calculatedTableValues) async {
    try {
      String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
       String chave = '$n$colunaFormatada';
       chave=chave.replaceAll('NIVEL', '').trim();
-
       double total = 0.0;
 
       for (var professor in professores) {
         if (professor['nivel'] == chave && professor['vencimento'] != null) {
-          double vencimento = double.tryParse(professor['vencimento'].toString()) ?? 0.0;
-          //print('NO BANCO : ${professor['nivel']} CHAVE :$chave VENCTO : $vencimento ${professor['nome']}');
-          total += vencimento;
+          total += obterValorPorNivel(calculatedTableValues, chave);
         }
       }
-      // Aplica o aumento percentual
-     // total += total * (percAumento/100);
-
       return total;
     } catch (e) {
       print('Erro em totalDeVencimentosProposta: $e');
       return 0.0;
     }
   }
+
+  static double obterValorPorNivel(List<List<double>> matrizString, String nivel) {
+    try {
+      // Mapear as letras para índices da matriz
+      Map<String, int> mapeamentoLetras = {
+        'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9,
+        'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19,
+        'U': 20, 'V': 21, 'W': 22, 'X': 23, 'Y': 24, 'Z': 25
+      };
+
+      // Extrair a letra e o número do nível
+      String letra = nivel.substring(0, 1).toUpperCase();
+      String numeroStr = nivel.substring(1);
+
+      // Converter o número para índice (subtraindo 1 porque arrays começam em 0)
+      int indiceColuna = int.parse(numeroStr) - 1;
+
+      // Obter o índice da linha baseado na letra
+      int indiceLinha = mapeamentoLetras[letra] ?? 0;
+
+      // Verificar se os índices são válidos
+      if (indiceLinha >= matrizString.length || indiceColuna >= matrizString[indiceLinha].length) {
+        throw Exception('Nível "$nivel" fora dos limites da matriz');
+      }
+
+      // Retornar o valor correspondente
+      dynamic valor = matrizString[indiceLinha][indiceColuna];
+      return double.parse(valor.toString());
+    } catch (e) {
+      print('Erro ao obter valor para nível "$nivel": $e');
+      return 0.0;
+    }
+  }
+
   static int totalDeProfissionais(String nivel, int coluna, var professores) {
     // Formata o nível/classe no formato esperado (ex: "B01" para NB coluna 1)
     String nivelFormatado = nivel.substring(1); // Remove o "N" do início
@@ -90,9 +116,7 @@ class ProfessorUtils {
             total += vencimento * (1 + aumento / 100);
           }
         }
-
       }
-
       return total;
     } catch (e) {
       print('Erro em calculateTotalForLevel: $e');

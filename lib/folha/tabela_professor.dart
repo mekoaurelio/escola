@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -11,6 +13,7 @@ import '../services/calc_dispersao_valores.dart';
 import '../services/utils.dart'; // Assumindo que Utils.formatVr existe
 import '../widgets/texto.dart';
 import 'buildSummaryTable.dart';
+import 'professor_utils.dart';
 import 'salary_totals_table.dart';
 import 'tabela_salarial.dart';
 
@@ -34,7 +37,7 @@ class SimuladorTabelaProfessor extends StatefulWidget {
 
 class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   int cargaHoraria = 30;
-  double _percEntreColunas=0;
+  //double _percEntreColunas=0;
   var profs; // Dados brutos da API
   bool isLoading = true;
   // Variáveis para armazenar os resultados calculados
@@ -50,7 +53,6 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   var professores;
   int totProf=0;
   double perProgressaoEntreClasse=2;
-  //double perAumentoAdulto=0.00;
   double _custoMensal = 0.0;
   double totalFolha=0;
   String? _meses;
@@ -62,80 +64,6 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   List<String> valorNivel=[];
   List<String> niveisUnicos=[];
 
-  // Adicione este método para lidar com a seleção
-  void _handleCellSelection(int row, int column) async {
-    setState(() {
-      selectedRow = row;
-      selectedColumn = column;
-      selectedValue = '${niveisUnicos[row]}  ${column + 1}';
-    });
-
-    nivel = niveisUnicos[row];
-    coluna = (column + 1).toString();
-    if (coluna.length == 1) {
-      coluna = '0$coluna';
-    }
-    var n=nivel.substring(0,1);
-    String ni = n + coluna;
-    List<Map<String, String>> professoresFiltrados = [];
-    for (var item in professores) {
-      if (item['nivel'] == ni) {
-        professoresFiltrados.add({
-          'nome': item['nome']?.toString() ?? 'Nome não disponível',
-          'matricula': item['matricula']?.toString() ?? 'Matrícula não disponível'
-        });
-      }
-    }
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              const Icon(Icons.groups_rounded, color: Colors.blue),
-              const SizedBox(width: 10),
-              Text(
-                'Professores (${professoresFiltrados.length})',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (professoresFiltrados.isEmpty)
-                  const Text('Nenhum professor encontrado', style: TextStyle(color: Colors.grey))
-                else
-                  ...professoresFiltrados.map((prof) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Texto(tit: 'Matrícula: ${prof['matricula']}',tam: 12,cor:Colors.grey[600]!),
-                        Texto(tit: prof['nome']!,negrito: true,),
-                        const Divider(height: 16, thickness: 0.5),
-                      ],
-                    ),
-                  )).toList(),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fechar'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   int quantidadeDeProfessores(String nivel, int coluna) {
     String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
     String chave = '$nivel$colunaFormatada';
@@ -144,94 +72,118 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   }
 
   Future<void> _loadDataAndCalculate() async {
-    try{
-      //Pega os novos níveis
+    setState(() => isLoading = true); // Apenas no início
 
-      var getNiveis=await ApiMySql.getItensFromForm(TBSimulaForm,widget.idItens,'id_form').timeout(const Duration(seconds: 30));
-      if(getNiveis.isEmpty){
+    try {
+      // ======= Parte 1: Carregar dados =======
+      final getNiveis = await ApiMySql.getItensFromForm(TBSimulaForm, widget.idItens, 'id_form',).timeout(const Duration(seconds: 30));
+
+      if (getNiveis.isEmpty) {
         Utils.snak('Atenção', 'Não tem nenhum nível cadastrado para ${widget.descricao}', false, Colors.red);
-        setState(() => isLoading = false);
         return;
       }
-      if(getNiveis.contains('Erro')){
+      if (getNiveis.contains('Erro')) {
         Utils.snak('Atenção', 'Não foi possível conectar com o servidor. Tente novamente', false, Colors.red);
         return;
       }
-      novosNiveis = getNiveis.map((item) => item['label'].toString()).toList();
-      valorNivel = getNiveis.map((item) => item['valor'].toString()).toList();
 
-      var nu=await ApiMySql.getProfPorNivel(TBFolha,widget.hora).timeout(const Duration(seconds: 30));
-      niveisUnicos = nu.map((item) => item['nivel'].toString()).toList();
+      final novosNiveisTmp = getNiveis.map((item) => item['label'].toString()).toList();
+      final valorNivelTmp = getNiveis.map((item) => item['valor'].toString()).toList();
 
-      professores = await ApiMySql.getProPorHora(widget.hora,TBFolha,TBVantagens).timeout(const Duration(seconds: 30));
-      if(professores==null){
-        setState(() => isLoading = false);
+      final nu = await ApiMySql.getProfPorNivel(TBFolha, widget.hora,).timeout(const Duration(seconds: 30));
+
+      final niveisUnicosTmp = nu.map((item) => item['nivel'].toString()).toList();
+
+      final professoresTmp = await ApiMySql.getProPorHora(widget.hora, TBFolha, TBVantagens,).timeout(const Duration(seconds: 30));
+
+      if (professoresTmp == null || professoresTmp.isEmpty) {
         return;
       }
-      if(professores.isEmpty){
-        setState(() => isLoading = false);
-        return;
-      }
 
-      ///Pega os totais
-      final totais = await ApiMySql.get(TBTotais,null,null).timeout(const Duration(seconds: 30));
-      var getHoraProgressao=await ApiMySql.getItensFromForm(TBSimulaCab,widget.idItens,'id').timeout(const Duration(seconds: 30));
-      perProgressaoEntreClasse=double.parse(getHoraProgressao[0]['progressao']);
-      cargaHoraria=int.parse(getHoraProgressao[0]['classes']);
+      final totais = await ApiMySql.get(TBTotais, null, null).timeout(const Duration(seconds: 30));
+      final getHoraProgressao = await ApiMySql.getItensFromForm(TBSimulaCab, widget.idItens, 'id',).timeout(const Duration(seconds: 30));
 
-      /// Pré-processa a contagem de professores por nível
-      _professoresPorNivel = {};
-      for (var item in professores) {
+      final perProgressaoEntreClasseTmp = double.parse(getHoraProgressao[0]['progressao']);
+      final cargaHorariaTmp = int.parse(getHoraProgressao[0]['classes']);
+
+      // Pré-processa a contagem de professores por nível
+      final professoresPorNivelTmp = <String, int>{};
+      for (var item in professoresTmp) {
         final nivel = item['nivel']?.toString() ?? '';
-        _professoresPorNivel[nivel] = (_professoresPorNivel[nivel] ?? 0) + 1;
+        professoresPorNivelTmp[nivel] = (professoresPorNivelTmp[nivel] ?? 0) + 1;
       }
-      ///Pega a quantidade de professores
-      final tot = await Future.wait([Utils.calculateTotals(professores),]);
-      setState(() {
-        _custoMensal = tot[0]['total']!;
-        _meses = totais[0]['meses'].toString();
-        _decimo_ter_ferias = totais[0]['decimo_ter_ferias'].toString();
-        _encargos_sociais = totais[0]['encargos_sociais'].toString();
-        totProf=professores.length;
-        isLoading = true;
-      });
 
-      totalFolha=double.parse(professores[0]['total_vencimentos_geral']);
+      // Totais
+      final mesesTmp = totais[0]['meses'].toString();
+      final decimoTerFeriasTmp = totais[0]['decimo_ter_ferias'].toString();
+      final encargosSociaisTmp = totais[0]['encargos_sociais'].toString();
+      final totProfTmp = professoresTmp.length;
+      final totalFolhaTmp = double.parse(professoresTmp[0]['total_vencimentos_geral']);
+
+      // ======= Parte 2: Calcular tabela e dispersões =======
+      List<List<double>> calculatedTableValuesTmp = [];
+      String dispersaoHorizontalTmp = '0';
+      String dispersaoTotalTmp = '0';
+
+      try {
+
+        final result = calculateTableAndDispersions(
+          niveis: novosNiveisTmp,
+          valoresIniciaisNiveis: valorNivelTmp,
+          cargaHoraria: cargaHorariaTmp,
+          percEntreColunas: perProgressaoEntreClasseTmp,
+        );
+
+        calculatedTableValuesTmp = result.calculatedTableValues;
+
+        dispersaoHorizontalTmp = result.dispersaoHorizontal;
+        dispersaoTotalTmp = result.dispersaoTotal;
+      } catch (e) {
+        Utils.snak('Atenção', 'Erro ao calcular', false, Colors.red);
+        print('Erro ao calcular tabela/dispersão: $e');
+      }
+
+      // ======= Atualiza tudo de uma vez =======
+      double cm=await calculaCustoMensal(novosNiveisTmp,calculatedTableValuesTmp,professoresTmp);
+
+      setState(() {
+        novosNiveis = novosNiveisTmp;
+        valorNivel = valorNivelTmp;
+        niveisUnicos = niveisUnicosTmp;
+        professores = professoresTmp;
+        perProgressaoEntreClasse = perProgressaoEntreClasseTmp;
+        cargaHoraria = cargaHorariaTmp;
+        _professoresPorNivel = professoresPorNivelTmp;
+        _custoMensal = cm;
+        _meses = mesesTmp;
+        _decimo_ter_ferias = decimoTerFeriasTmp;
+        _encargos_sociais = encargosSociaisTmp;
+        totProf = totProfTmp;
+        totalFolha = totalFolhaTmp;
+        perProgressaoEntreClasse = perProgressaoEntreClasseTmp;
+        _calculatedTableValues = calculatedTableValuesTmp;
+        _dispersaoHorizontal = dispersaoHorizontalTmp;
+        _dispersaoTotal = dispersaoTotalTmp;
+        isLoading = false;
+      });
     } catch (e) {
       print('Erro ao carregar dados ou calcular: $e');
+      return;
     }
-    try {
-      double  valorBase = double.parse(valorNivel[0]);
-      valorBase=valorBase+(valorBase*perProgressaoEntreClasse/100);
-      _percEntreColunas = perProgressaoEntreClasse;
+  }
 
-      ///Percentual de cálculo entre as colunas
-      final result = calculateTableAndDispersions(
-        niveis: novosNiveis,
-        valoresIniciaisNiveis:valorNivel ,
-        cargaHoraria: cargaHoraria,
-        percEntreColunas: _percEntreColunas,
-      );
-
-      setState(() {
-        _calculatedTableValues = result.calculatedTableValues;
-        _dispersaoHorizontal = result.dispersaoHorizontal;
-        _dispersaoTotal = result.dispersaoTotal;
-      });
-
-      // Calcula a tabela e dispersões
-    } catch (e) {
-      Utils.snak('Atenção', 'Erro ao caulcular', false, Colors.red);
-      setState(() {
-        _calculatedTableValues = [];
-        _dispersaoHorizontal = '0';
-        _dispersaoTotal = '0';
-      });
-      print('Erro ao carregar dados ou calcular KKKKKKKKKKKKKKK: $e');
-
-    } finally {
-      setState(() => isLoading = false);
+  Future<double> calculaCustoMensal(final niveis,List<List<double>> calculatedTableValues, final professoresTmp)async{
+    double total=0;
+    for (int nivelIndex = 0; nivelIndex < niveis.length; nivelIndex++){
+      for (int coluna = 0; coluna < calculatedTableValues[nivelIndex].length; coluna++){
+        double x=await ProfessorUtils.totalDeVencimentosProposta(
+            niveis[nivelIndex].toString(), coluna + 1, professoresTmp,calculatedTableValues);
+        if(x>0) {
+          total+=x;
+        }
+      }
     }
+    return total;
   }
 
   @override
@@ -267,8 +219,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
     }
     return Scaffold(
       backgroundColor: Colors.white,
-      body:
-      professores==null?Center(
+      body: professores==null?Center(
           child: Utils.vazio('Nenhum dado Encontrado')
       ):
       SingleChildScrollView(
@@ -306,7 +257,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                 tipo: widget.hora,
                 cargaHoraria: cargaHoraria, // ou seu valor
                 novosNiveis: novosNiveis,
-                percAumento: _percEntreColunas,
+                percAumento: perProgressaoEntreClasse,
                 calculatedTableValues: _calculatedTableValues, // seus valores calculados
                 quantidadeDeProfessores: (nivel, coluna) {
                   return quantidadeDeProfessores(nivel, coluna);
@@ -323,10 +274,9 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                   remuneracaoTotal: 20993884.21,
                   encargosPercentual: double.parse(_encargos_sociais!),
                   totalEncargos: 6968798,
-                  totalComEncargos: 0697079709
+                  totalComEncargos: 0697079709,
+                professores: professores,
               )
-
-
             ],
           ),
         ),
@@ -367,7 +317,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                       ),
                       child: _buildSummaryItem(
                         'Progressão',
-                        '${_percEntreColunas.toStringAsFixed(2)}%',
+                        '${perProgressaoEntreClasse.toStringAsFixed(2)}%',
                         Icons.trending_up,
                         onTap: () => _editProgression(),
                       ),
@@ -452,22 +402,20 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       valorInicial: cargaHoraria.toString(),
       aoSalvar: (novoValor)async {
         var id=widget.idItens;
+        final result = calculateTableAndDispersions(
+          niveis: novosNiveis,
+          valoresIniciaisNiveis: valorNivel,
+          cargaHoraria: cargaHoraria,
+          percEntreColunas: double.parse(novoValor),
+        );
         await ApiMySql.executaSql('update $TBSimulaCab set classes=$novoValor where id=$id').timeout(const Duration(seconds: 30));
+        final cm=await calculaCustoMensal(novosNiveis,result.calculatedTableValues,professores);
         setState(() {
+          _custoMensal=cm;
           cargaHoraria = int.tryParse(novoValor)!;
-          final result = calculateTableAndDispersions(
-           niveis: novosNiveis,
-           valoresIniciaisNiveis: valorNivel,
-            cargaHoraria: cargaHoraria,
-            percEntreColunas: _percEntreColunas,
-          );
-
-          setState(() {
-            _calculatedTableValues = result.calculatedTableValues;//São os valores calculados
-            _dispersaoHorizontal = result.dispersaoHorizontal;
-            _dispersaoTotal = result.dispersaoTotal;
-
-          });
+          _calculatedTableValues = result.calculatedTableValues;//São os valores calculados
+          _dispersaoHorizontal = result.dispersaoHorizontal;
+          _dispersaoTotal = result.dispersaoTotal;
         });
       },
     );
@@ -478,7 +426,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       context: context,
       titulo: 'Editar Progressão',
       labelCampo: 'Percentual',
-      valorInicial: _percEntreColunas.toString(),
+      valorInicial: perProgressaoEntreClasse.toString(),
       inputFormatters: [
         CurrencyTextInputFormatter.currency(symbol: '%', locale: 'pt')
       ],
@@ -486,21 +434,19 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
         novoValor=novoValor.replaceAll('%', '');
         novoValor=novoValor.replaceAll(',', '.');
         novoValor=novoValor.trim();
+        final result = calculateTableAndDispersions(
+          niveis: novosNiveis,
+          valoresIniciaisNiveis: valorNivel,
+          cargaHoraria: cargaHoraria,
+          percEntreColunas: double.parse(novoValor),
+        );
+        final cm=await calculaCustoMensal(novosNiveis,result.calculatedTableValues,professores);
         setState(() {
-          _percEntreColunas = double.tryParse(novoValor)!;
-          final result = calculateTableAndDispersions(
-            niveis: novosNiveis,
-            valoresIniciaisNiveis: valorNivel,
-            cargaHoraria: cargaHoraria,
-            percEntreColunas: _percEntreColunas,
-          );
-
-          setState(() {
-            _calculatedTableValues = result.calculatedTableValues;
-            _dispersaoHorizontal = result.dispersaoHorizontal;
-            _dispersaoTotal = result.dispersaoTotal;
-
-          });
+          _custoMensal=cm;
+          perProgressaoEntreClasse = double.tryParse(novoValor)!;
+          _calculatedTableValues = result.calculatedTableValues;
+          _dispersaoHorizontal = result.dispersaoHorizontal;
+          _dispersaoTotal = result.dispersaoTotal;
         });
         ///atualiza a base de dados
        var vr=Utils.saldoToSave(novoValor);

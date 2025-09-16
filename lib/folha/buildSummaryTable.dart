@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
 import '../services/utils.dart';
+import 'professor_utils.dart';
 
 class SummaryTable extends StatefulWidget {
   final int totalProfissionais;
@@ -15,6 +16,7 @@ class SummaryTable extends StatefulWidget {
   final double encargosPercentual;
   final double totalEncargos;
   final double totalComEncargos;
+  final List<dynamic> professores;
 
   const SummaryTable({
     Key? key,
@@ -26,6 +28,7 @@ class SummaryTable extends StatefulWidget {
     required this.encargosPercentual,
     required this.totalEncargos,
     required this.totalComEncargos,
+    required this.professores,
   }) : super(key: key);
 
   @override
@@ -33,33 +36,35 @@ class SummaryTable extends StatefulWidget {
 }
 
 class _SummaryTableState extends State<SummaryTable> {
+
   late int _meses;
   late double _ferias;
   late double _encargosPercentual;
-  late double _custoMensal;
   late double _remuneracaoTotal;
   late double _totalEncargos;
   late double _totalComEncargos;
+
 
   @override
   void initState() {
     super.initState();
     updateValues(widget.meses,widget.ferias,widget.encargosPercentual,widget.custoMensal);
   }
-  
+
+
   void updateValues(int meses,double ferias,double encargos,double custoMensal){
+
     _remuneracaoTotal=0;
     _totalEncargos=0;
     _totalComEncargos=0;
-
     _meses = meses;
     _ferias = ferias;
     _encargosPercentual = encargos; //percentual dos encargos
-    _custoMensal =   custoMensal;
     _remuneracaoTotal =  custoMensal*(_meses+1+_ferias);
     _totalEncargos = (_remuneracaoTotal * _encargosPercentual)/100;
 
     _totalComEncargos = _remuneracaoTotal +_totalEncargos;
+
   }
 
   @override
@@ -116,14 +121,14 @@ class _SummaryTableState extends State<SummaryTable> {
               widget.totalProfissionais.toString(),
               isTotal: true,
             ),
-            _buildTableRow('Custo Mensal', Utils.formatVr.format(_custoMensal)),
+            _buildTableRow('Custo Mensal', Utils.formatVr.format(widget.custoMensal)),
             _buildEditableTableRow(
               'Meses',
               _meses.toString(),
               [FilteringTextInputFormatter.digitsOnly],
               onSave: (novoValor) {
                 ApiMySql.executaSql('UPDATE $TBTotais set meses=$novoValor');
-                updateValues(int.parse(novoValor),_ferias,_encargosPercentual,_custoMensal);
+                updateValues(int.parse(novoValor),_ferias,_encargosPercentual,widget.custoMensal);
                 setState(() {
                   _meses = int.tryParse(novoValor) ?? widget.meses;
                 });
@@ -139,7 +144,7 @@ class _SummaryTableState extends State<SummaryTable> {
                 ApiMySql.executaSql('UPDATE $TBTotais set decimo_ter_ferias=$novoValor');
                 setState(() {
                   _ferias = double.tryParse(novoValor) ?? widget.ferias;
-                  updateValues(_meses,double.parse(novoValor),_encargosPercentual,_custoMensal);
+                  updateValues(_meses,double.parse(novoValor),_encargosPercentual,widget.custoMensal);
                 });
               },
             ),
@@ -157,10 +162,10 @@ class _SummaryTableState extends State<SummaryTable> {
               [CurrencyTextInputFormatter.currency(symbol: '%', locale: 'pt')],
               onSave: (novoValor) {
                 final nv=Utils.saldoToSave(novoValor);
-                updateValues(_meses,_ferias,double.parse(nv),_custoMensal);
+                updateValues(_meses,_ferias,double.parse(nv),widget.custoMensal);
                 ApiMySql.executaSql('UPDATE $TBTotais set encargos_sociais=$nv');
                 setState(() {
-                  _encargosPercentual = double.tryParse(nv) ?? _custoMensal;
+                  _encargosPercentual = double.tryParse(nv) ?? widget.custoMensal;
                 });
               },
             ),

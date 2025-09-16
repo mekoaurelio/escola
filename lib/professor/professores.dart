@@ -375,8 +375,6 @@ class __ProfessorListItemState extends State<_ProfessorListItem> {
               ],
             ),
 
-
-
           ],
         ),
       ),

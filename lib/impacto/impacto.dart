@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'dart:typed_data';
 import 'dart:html' as html;
-import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -14,7 +13,10 @@ import 'package:excel/excel.dart';
 
 import '../const/const.dart';
 import '../data/api_my_sql.dart';
+import '../folha/professor_utils.dart';
+import '../services/calc_dispersao_valores.dart';
 import '../services/utils.dart';
+import '../widgets/custom_text_field.dart';
 import '../widgets/texto.dart';
 
 class Impacto extends StatefulWidget {
@@ -25,10 +27,13 @@ class Impacto extends StatefulWidget {
 
 }
 class _ImpactoScreenState extends State<Impacto> {
+  final progressaoController = TextEditingController();
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
   final _currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: '');
   bool _isloading=true;
+  //DADOS DA FOLHA
   double totalFolha=0;
+  double totalFolhaNovo=0;
   double totalVantagens=0;
   double percVantagem=0;
   double custoTotalLiquidoCalc=0;
@@ -38,12 +43,29 @@ class _ImpactoScreenState extends State<Impacto> {
   double totalFolhaMensalCalc=0;
   double totalFolhaAnualCalc=0;
 
+  double totalFolha2=0;
+  double totalVantagens2=0;
+  double percVantagem2=0;
+  double custoTotalLiquidoCalc2=0;
+  double encargosPrev14PercentCalc2=0;
+  double decimoTerceiroProporcionalCalc2=0;
+  double feriasProporcionalCalc2=0;
+  double totalFolhaMensalCalc2=0;
+  double totalFolhaAnualCalc2=0;
+
+  var professores;
+  List<String> novosNiveis=[];
+  List<String> valorNivel=[];
+
   //DADOS DO EXERCICIO
   double receitasDeImpostos=0;
   double receitaDeTransferencia=0;
   double receitaTotalFundeb=0;
   double perdaGanho=0;
   double totF=0;
+  double totF2=0;
+
+  String tit='Dados da Folha de Pagamento : usando 15 classes e 2.80 de progressão';
 
   @override
   void initState() {
@@ -61,6 +83,7 @@ class _ImpactoScreenState extends State<Impacto> {
 
   Future<void> _carregarDados() async {
     try {
+      await _progressao(0);
       var getTotal=await ApiMySql.executaSql('SELECT sum(vencimento) as totFolha from $TBFolha').timeout(const Duration(seconds: 30));
       var getVan=await ApiMySql.executaSql('SELECT sum(valor) as totVan from $TBVantagens').timeout(const Duration(seconds: 30));;
       var getImpostos=await ApiMySql.executaSql('select sum(vr12) as totImp from $TBImpostos').timeout(const Duration(seconds: 30));
@@ -69,30 +92,83 @@ class _ImpactoScreenState extends State<Impacto> {
       var getTotais=await ApiMySql.get(TBTotais,null,null).timeout(const Duration(seconds: 30));
 
       setState(() {
-        totalFolha=double.parse(getTotal[0]['totFolha']) ;
-        totalVantagens=double.parse(getVan[0]['totVan']) ;
-        percVantagem =(totalVantagens/totalFolha ) * 100;
-        custoTotalLiquidoCalc = totalFolha + totalVantagens;
-        encargosPrev14PercentCalc = custoTotalLiquidoCalc * 0.14;
-        feriasProporcionalCalc = encargosPrev14PercentCalc/3;
-        decimoTerceiroProporcionalCalc = (encargosPrev14PercentCalc+feriasProporcionalCalc) / 12;
-        totalFolhaMensalCalc = custoTotalLiquidoCalc + decimoTerceiroProporcionalCalc + feriasProporcionalCalc;
+        progressaoController.text='0';
+        //DADOS DA FOLHA
+        totalFolha=double.parse(getTotal[0]['totFolha']) ;//1
+        totalVantagens=double.parse(getVan[0]['totVan']) ;//2
+        percVantagem =(totalVantagens/totalFolha ) * 100;//3
+        String tmp=percVantagem.toStringAsFixed(2);
+        percVantagem=double.parse(tmp);
+        custoTotalLiquidoCalc = totalFolha + totalVantagens;//4
+        encargosPrev14PercentCalc = custoTotalLiquidoCalc * 0.14;//5
+        decimoTerceiroProporcionalCalc = (custoTotalLiquidoCalc+encargosPrev14PercentCalc) / 12;//6
+        feriasProporcionalCalc = decimoTerceiroProporcionalCalc/3;//7
+        totalFolhaMensalCalc = custoTotalLiquidoCalc + decimoTerceiroProporcionalCalc + feriasProporcionalCalc+encargosPrev14PercentCalc;
         totalFolhaAnualCalc = totalFolhaMensalCalc * 12;
+
+
+        //DADOS DA FOLHA PROGRESSAO
+        totalVantagens2=(totalFolhaNovo*percVantagem)/100 ;//2
+
         //DADOS DO EXERCICIO
         receitasDeImpostos=double.parse(getImpostos[0]['totImp']);
         receitaDeTransferencia=double.parse(getDecenio[0]['totImp']);
         receitaTotalFundeb=double.parse(getTotais[0]['total_receitas_fundeb']);
         totF=(totalFolhaAnualCalc/receitaTotalFundeb)*100;
+        totF2=(totalFolhaAnualCalc2/receitaTotalFundeb)*100;
         double tot=double.parse(getDecenio2[0]['totImp']);
         perdaGanho=receitaTotalFundeb-((tot/100)*20);
         _isloading=false;
       });
 
+      atualizaDadosDaProgressao();
+
     } catch (e) {
       setState(() => _isloading = false);
       print('Erro ao carregar dados: $e');
-      Utils.snak('Atenção', 'Erro ao carregar dados. Tente novamente', false, Colors.red);
+      Utils.snak('Atenção', 'Erro ao carregar dados. Use o botão Recarregar', false, Colors.red);
     }
+  }
+
+  Future<void> _progressao(double percentualDeProgressao) async{
+    setState(() => tit = 'Calculando aguarde....');
+    final cab=await ApiMySql.executaSql('select * from $TBSimulaCab');
+    double tot=0;
+    for (int i = 0; i < cab.length; i++){
+      professores = await ApiMySql.getProPorHora(cab[i]['horas'].toString(), TBFolha, TBVantagens,).timeout(const Duration(seconds: 30));
+      final getNiveis = await ApiMySql.getItensFromForm(TBSimulaForm, cab[i]['id'], 'id_form',).timeout(const Duration(seconds: 30));
+      novosNiveis = getNiveis.map((item) => item['label'].toString()).toList();
+      valorNivel = getNiveis.map((item) => item['valor'].toString()).toList();
+      double progre=0;
+      if(percentualDeProgressao>0) {
+        progre=percentualDeProgressao;
+      }else{
+        progre = double.parse(cab[i]['progressao']);
+      }
+      tot+=await calculaCustoMensal(progre);
+    }
+    totalFolhaNovo=tot;
+    String tmp =totalFolhaNovo.toStringAsFixed(2);
+    totalFolhaNovo=double.parse(tmp);
+
+    atualizaDadosDaProgressao();
+
+    setState(() => tit = 'Dados da Folha de Pagamento : usando 15 classes e 2.80 de progressão');
+  }
+
+  void atualizaDadosDaProgressao(){
+    //DADOS DA FOLHA PROGRESSAO
+    totalVantagens2=(totalFolhaNovo*percVantagem)/100 ;//2
+    percVantagem2 =(totalVantagens2/totalFolhaNovo ) * 100;//3
+    custoTotalLiquidoCalc2 = totalFolhaNovo + totalVantagens2;//4
+    encargosPrev14PercentCalc2 = custoTotalLiquidoCalc2 * 0.14;//5
+    decimoTerceiroProporcionalCalc2 = (custoTotalLiquidoCalc2+encargosPrev14PercentCalc2) / 12;//6
+    feriasProporcionalCalc2 = decimoTerceiroProporcionalCalc2/3;//7
+    totalFolhaMensalCalc2 = custoTotalLiquidoCalc2 + decimoTerceiroProporcionalCalc2 + feriasProporcionalCalc2+encargosPrev14PercentCalc2;
+    totalFolhaAnualCalc2 = totalFolhaMensalCalc2 * 12;
+    totF2=(totalFolhaAnualCalc2/receitaTotalFundeb)*100;
+
+    //totalVantagens
   }
 
   Widget _buildTabela(String title) {
@@ -117,6 +193,7 @@ class _ImpactoScreenState extends State<Impacto> {
               columnWidths: const {
                 0: FlexColumnWidth(4.5), // Vantagens
                 1: FlexColumnWidth(1.5), // Atual
+                2: FlexColumnWidth(1.5), // Atual
               },
               // Define a borda para todas as células da tabela
               border: TableBorder.all(
@@ -124,16 +201,16 @@ class _ImpactoScreenState extends State<Impacto> {
               width: 1,
             ),
               children: [
-              _buildDataRow('1. Valor da folha de vencimentos básicos - Mensal - R/\$', _currencyFormat.format(totalFolha)),
-              _buildDataRow('2. Valor das vantagens pecuniárias - Mensal - R/\$',  _currencyFormat.format(totalVantagens),cor: Colors.red,icon: Icons.help, tooTip: d2),
-              _buildDataRow('3. Percentual das vantagens pecuniárias sobre a folha de vencimento', '${percVantagem.toStringAsFixed(2)}%',icon: Icons.help, tooTip: d3  ),
-              _buildDataRow('4. Custo total da folha de pagamento líquida mensal', _currencyFormat.format(custoTotalLiquidoCalc),tam: 18,icon: Icons.help, tooTip: d4 ),
-              _buildDataRow('5. Encargos previdenciários', '14%',icon: Icons.help, tooTip: d5 ),
-              _buildDataRow('6. Encargos previdenciários (14%)', _currencyFormat.format(encargosPrev14PercentCalc),icon: Icons.help, tooTip: d6 ),
-              _buildDataRow('7. Valor do décimo terceiro 1/12', _currencyFormat.format(decimoTerceiroProporcionalCalc),icon: Icons.help, tooTip: d7),
-              _buildDataRow('8. Valor 1/3 férias (proporcional)', _currencyFormat.format(feriasProporcionalCalc),icon: Icons.help, tooTip: d8 ),
-              _buildDataRow('9. Total folha mensal', _currencyFormat.format(totalFolhaMensalCalc),icon: Icons.help, tooTip: d9 ),
-              _buildDataRow('10. Total folha bruta anual', _currencyFormat.format(totalFolhaAnualCalc),tam: 22,icon: Icons.help, tooTip: d10),
+              _buildDataRow('1. Valor da folha de vencimentos básicos - Mensal - R/\$', _currencyFormat.format(totalFolha),_currencyFormat.format(totalFolhaNovo),tooTip: 'Valor sem progressão\nValor bruto da folha',icon: Icons.help),
+              _buildDataRow('2. Valor das vantagens pecuniárias - Mensal - R/\$',  _currencyFormat.format(totalVantagens),cor: Colors.red,icon: Icons.help, tooTip: d2,_currencyFormat.format(totalVantagens2)),
+              _buildDataRow('3. Percentual das vantagens pecuniárias sobre a folha de vencimento', '${percVantagem.toStringAsFixed(2)}%',icon: Icons.help, tooTip: d3,'${_currencyFormat.format(percVantagem2)}%'),
+              _buildDataRow('4. Custo total da folha de pagamento líquida mensal', _currencyFormat.format(custoTotalLiquidoCalc),tam: 18,icon: Icons.help, tooTip: d4,_currencyFormat.format(custoTotalLiquidoCalc2)),
+              _buildDataRow('5. Encargos previdenciários', '14%',icon: Icons.help, tooTip: d5 ,'14%'),
+              _buildDataRow('6. Encargos previdenciários (14%)', _currencyFormat.format(encargosPrev14PercentCalc),icon: Icons.help, tooTip: d6 ,_currencyFormat.format(encargosPrev14PercentCalc2)),
+              _buildDataRow('7. Valor do décimo terceiro 1/12', _currencyFormat.format(decimoTerceiroProporcionalCalc),icon: Icons.help, tooTip: d7,_currencyFormat.format(decimoTerceiroProporcionalCalc2)),
+              _buildDataRow('8. Valor 1/3 férias (proporcional)', _currencyFormat.format(feriasProporcionalCalc),icon: Icons.help, tooTip: d8,_currencyFormat.format(feriasProporcionalCalc2)),
+              _buildDataRow('9. Total folha mensal', _currencyFormat.format(totalFolhaMensalCalc),icon: Icons.help, tooTip: d9,_currencyFormat.format(totalFolhaMensalCalc2) ),
+              _buildDataRow('10. Total folha bruta anual', _currencyFormat.format(totalFolhaAnualCalc),tam: 22,icon: Icons.help, tooTip: d10,_currencyFormat.format(totalFolhaAnualCalc2)),
 
             ],
             )
@@ -164,6 +241,7 @@ class _ImpactoScreenState extends State<Impacto> {
               columnWidths: const {
                 0: FlexColumnWidth(4.5), // Vantagens
                 1: FlexColumnWidth(1.5), // Atual
+                2: FlexColumnWidth(1.5), // Atual
               },
               // Define a borda para todas as células da tabela
               border: TableBorder.all(
@@ -171,15 +249,17 @@ class _ImpactoScreenState extends State<Impacto> {
                 width: 1,
               ),
               children: [
-                _buildDataRow('1. Receita de Impostos', _currencyFormat.format(receitasDeImpostos)),
-                _buildDataRow('2. Receitas de Transferências',  _currencyFormat.format(receitaDeTransferencia),tooTip: d2),
-                _buildDataRow('   Total Receita - (1 + 2)', _currencyFormat.format(receitasDeImpostos+receitaDeTransferencia), tooTip: d3  ),
-                _buildDataRow('3. Custo total da folha de pagamento líquida mensal', _currencyFormat.format(totalFolhaAnualCalc),tam: 18,icon: Icons.help, tooTip: d4 ),
-                _buildDataRow('4. Receitas Recebidas do FUNDEB - (FNDE)', _currencyFormat.format(receitaTotalFundeb),tam: 18,icon: Icons.help, tooTip: d4 ),
-                _buildDataRow('5. Pag dos Profincionais do Magistério (70%)', '${_currencyFormat.format(totF)}%' ,icon: Icons.help, tooTip: d6 ),
-                _buildDataRow('PERDA/GANHO', _currencyFormat.format(perdaGanho)),
-                _buildDataRow('6. Mínimo 70% - Folha dos profissionais do magistério (5/4)', '${_currencyFormat.format((receitaTotalFundeb/100)*totF)}%',icon: Icons.help, tooTip: d10),
-                _buildDataRow('. TOTAL - Consolidação de recursos para MDE - (4 + 6 + 7) ', _currencyFormat.format(receitasDeImpostos+receitaDeTransferencia+receitaTotalFundeb),icon: Icons.help, tooTip: d7,tam: 18),
+                _buildDataRow('1. Receita de Impostos (25%)', _currencyFormat.format(receitasDeImpostos),tooTip: d1,icon: Icons.help,_currencyFormat.format(receitasDeImpostos)),
+                _buildDataRow('2. Receitas de Transferências (5%)',  _currencyFormat.format(receitaDeTransferencia),tooTip: d2,icon: Icons.help,_currencyFormat.format(receitaDeTransferencia)),
+                _buildDataRow('   Total Receita - (1 + 2)', _currencyFormat.format(receitasDeImpostos+receitaDeTransferencia), tooTip: d3,_currencyFormat.format(receitasDeImpostos+receitaDeTransferencia) ),
+                _buildDataRow('3. Custo Total da Folha de Pagamento Anual', _currencyFormat.format(totalFolhaAnualCalc),tam: 18,_currencyFormat.format(totalFolhaAnualCalc2) ),
+                _buildDataRow('4. Receitas Recebidas do FUNDEB - (FNDE)', _currencyFormat.format(receitaTotalFundeb),tam: 18,icon: Icons.help, tooTip: d4 ,_currencyFormat.format(receitaTotalFundeb)),
+
+                _buildDataRow('5. Pag dos Profissionais do Magistério (70%)', '${_currencyFormat.format(totF)}%' ,icon: Icons.help, tooTip: d6 , '${_currencyFormat.format(totF2)}%'),
+
+                _buildDataRow('PERDA/GANHO', _currencyFormat.format(perdaGanho),_currencyFormat.format(perdaGanho)),
+             //   _buildDataRow('6. Mínimo 70% - Folha dos profissionais do magistério (5/4)', '${(receitaTotalFundeb/100)*totF}%',icon: Icons.help, tooTip: d10),
+                _buildDataRow('. TOTAL - Consolidação de recursos para MDE - (1 + 2 + 4) ', _currencyFormat.format(receitasDeImpostos+receitaDeTransferencia+receitaTotalFundeb),icon: Icons.help, tooTip: d7,tam: 18,_currencyFormat.format(receitasDeImpostos+receitaDeTransferencia+receitaTotalFundeb)),
               ],
             )
           ],
@@ -187,12 +267,13 @@ class _ImpactoScreenState extends State<Impacto> {
     );
   }
 
-  TableRow _buildDataRow(String label, String valor,{Color cor=Colors.black, double tam=15,IconData? icon,String? tooTip}) {
+  TableRow _buildDataRow(String label, String valor,String novoValor,{Color cor=Colors.black, double tam=15,IconData? icon,String? tooTip}) {
     const cellStyle = TextStyle(fontSize: 15, color: Colors.black87,);
     return TableRow(
       children: [
         _buildTableCell(label, style: cellStyle,icon: icon,tooTip: tooTip),
-        _buildTableCell(valor, style: cellStyle, alignment: MainAxisAlignment.end,cor: cor,tam: tam),
+        _buildTableCell(valor, style: cellStyle, alignment: MainAxisAlignment.end,cor: cor,tam: tam,),
+        _buildTableCell(novoValor, style: cellStyle, alignment: MainAxisAlignment.end,cor: cor,tam: tam),
       ],
     );
   }
@@ -223,11 +304,26 @@ class _ImpactoScreenState extends State<Impacto> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1000), // Largura máxima para todo o conteúdo
             child: Column(
-
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    //PROGRESSAO
+                    SizedBox(
+                      width: 200,
+                      child: CustomTextFiel(
+                        controller:progressaoController ,
+                        label:'Percentual de Progressão' ,
+                        hintText: 'code',
+                        suffixIcon: Icons.play_circle_fill,
+                        onToggleVisibility: () async {
+                          await _progressao(double.parse(progressaoController.text));
+                          setState(() {});
+                        },
+                      ),
+                    ),
+                    SizedBox(width: 10,),
+                    //PDF
                     ElevatedButton.icon(
                       icon: const Icon(Icons.download, color: Colors.white),
                       label:  Text('PDF', style: TextStyle(color: Colors.white)),
@@ -258,6 +354,7 @@ class _ImpactoScreenState extends State<Impacto> {
                       },
                     ),
                     SizedBox(width: 10,),
+                    //EXCEL
                     ElevatedButton.icon(
                       icon: const Icon(Icons.download, color: Colors.white),
                       label:  Text('Excel', style: TextStyle(color: Colors.white)),
@@ -288,10 +385,24 @@ class _ImpactoScreenState extends State<Impacto> {
                       },
                     ),
                     SizedBox(width: 10,),
+                    //Refresh
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      label:  Text('Atualiza', style: TextStyle(color: Colors.black54)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey, // Cor para o botão de exportar
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () {
+                        _carregarDados();
+                      },
+                    ),
                   ],
                 ),
-
-                _buildTabela('Dados Da Folha De Pagamento'),
+                _buildTabela(tit),
                 _buildDadosDoExercicio('Dados Do Execício'),
               ],
             ),
@@ -299,6 +410,31 @@ class _ImpactoScreenState extends State<Impacto> {
         ),
       ),
     );
+  }
+
+  Future<double> calculaCustoMensal(double perProgressao)async{
+    final result = calculateTableAndDispersions(
+      niveis: novosNiveis,
+      valoresIniciaisNiveis: valorNivel,
+      cargaHoraria: 15,
+      percEntreColunas: perProgressao,
+    );
+
+    final calculatedTableValues = result.calculatedTableValues;
+
+    double total=0;
+    for (int nivelIndex = 0; nivelIndex < novosNiveis.length; nivelIndex++){
+      for (int coluna = 0; coluna < calculatedTableValues[nivelIndex].length; coluna++){
+
+        double x=await ProfessorUtils.totalDeVencimentosProposta(
+            novosNiveis[nivelIndex].toString(), coluna + 1, professores,calculatedTableValues);
+        if(x>0) {
+          total+=x;
+        }
+      }
+    }
+    print('TOTAL DA FOLHA $total');
+    return total;
   }
 
   Future<void> generateImpactoPdf({
@@ -446,7 +582,6 @@ class _ImpactoScreenState extends State<Impacto> {
     }
   }
 
-
   Future<void> generateExcel({
     required double totalFolha,
     required double totalVantagens,
@@ -488,7 +623,7 @@ class _ImpactoScreenState extends State<Impacto> {
     addRow('1. Valor da folha de vencimentos básicos - Mensal', totalFolha);
     addRow('2. Valor das vantagens pecuniárias - Mensal', totalVantagens);
     addRow('3. Percentual das vantagens sobre a folha de vencimento', percVantagem);
-    addRow('4. Custo total da folha de pagamento líquida mensal', custoTotalLiquidoCalc);
+    addRow('4. Custo total da folha de pagamento', custoTotalLiquidoCalc);
     addRow('5. Encargos previdenciários (14%)', encargosPrev14PercentCalc);
     addRow('6. Valor do décimo terceiro proporcional', decimoTerceiroProporcionalCalc);
     addRow('7. Valor 1/3 férias (proporcional)', feriasProporcionalCalc);
@@ -505,8 +640,8 @@ class _ImpactoScreenState extends State<Impacto> {
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: headerRowIndex)).cellStyle = boldStyle;
     sheet.appendRow([]);
 
-    addRow('1. Receita de Impostos', receitasDeImpostos);
-    addRow('2. Receita de Transferências', receitaDeTransferencia);
+    addRow('1. Receita de Impostos 25%', receitasDeImpostos);
+    addRow('2. Receita de Transferências 5%', receitaDeTransferencia);
     addRow('3. Receita Total FUNDEB', receitaTotalFundeb);
     addRow('4. Percentual gastos com profissionais do magistério', totF);
     addRow('5. Perda/Ganho', perdaGanho);
@@ -523,8 +658,4 @@ class _ImpactoScreenState extends State<Impacto> {
       html.Url.revokeObjectUrl(url);
     }
   }
-
-
-
-
 }
