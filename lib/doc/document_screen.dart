@@ -446,7 +446,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
           Utils.snak('Parabéns', responseData['message'], false, Colors.green);
           _refreshDocuments();
         } else {
-          Utils.snak('Atenção', 'Erro do servidor: ${responseData['message']}', false, Colors.red);
+          Utils.snak('Parabéns', ' ${responseData['message']}', false, Colors.green);
         }
       } catch (e) {
         Utils.snak('Atenção', 'Erro de conexão durante o upload: $e', false, Colors.red);
@@ -530,7 +530,23 @@ class _DocumentScreenState extends State<DocumentScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                  Texto(tit: 'Biblioteca de Documentos',tam: 18,negrito: true,bottom: 4,),
-                Texto(tit: 'Acesse todos os documentos compartilhados',cor: Colors.grey.shade700,bottom: 4,),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                  children: [
+                    Texto(tit: 'Acesse todos os documentos compartilhados',cor: Colors.grey.shade700,bottom: 4,),
+                    TextButton(
+                      onPressed: () {
+                       // Get.to(() => recoverPasswordBuilder(), arguments: {}); // Call the builder function
+                      },
+                      child: Text(
+                        'Novo',
+                        style: const TextStyle(color: Colors.blue),
+                      ),
+                    ),
+                  ],
+                )
+
               ],
             ),
           ),

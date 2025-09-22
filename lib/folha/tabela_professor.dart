@@ -97,12 +97,14 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       final professoresTmp = await ApiMySql.getProPorHora(widget.hora, TBFolha, TBVantagens,).timeout(const Duration(seconds: 30));
 
       if (professoresTmp == null || professoresTmp.isEmpty) {
+        Utils.snak('Atenção', 'Não foi possível carregar os professores. Tente novamente', false, Colors.red);
         return;
       }
 
       final totais = await ApiMySql.get(TBTotais, null, null).timeout(const Duration(seconds: 30));
+      print('4444444');
       final getHoraProgressao = await ApiMySql.getItensFromForm(TBSimulaCab, widget.idItens, 'id',).timeout(const Duration(seconds: 30));
-
+      print('5555555');
       final perProgressaoEntreClasseTmp = double.parse(getHoraProgressao[0]['progressao']);
       final cargaHorariaTmp = int.parse(getHoraProgressao[0]['classes']);
 

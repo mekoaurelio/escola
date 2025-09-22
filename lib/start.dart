@@ -118,6 +118,7 @@ class _StartState extends State<Start> {
       },
 
       // === GRUPO: PROFESSORES ===
+      /*
       {
         'id': 'prof_lista_normal',
         'group': 'professores',
@@ -125,6 +126,8 @@ class _StartState extends State<Start> {
         'appBarTitle': 'Lista de Professores',
         'builder': () => Professores(),
       },
+
+       */
 
       /// ==========================================================
       /// Entradas dinâmicas para cada hora                        =

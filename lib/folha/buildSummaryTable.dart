@@ -135,7 +135,7 @@ class _SummaryTableState extends State<SummaryTable> {
               },
             ),
             _buildEditableTableRow(
-              '1/3 férias',
+              '1/3 férias + Décimo Terceiro Salario',
               _ferias.toString(),
               [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,4}')),],
 

@@ -95,7 +95,7 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
   }
 
   void _abrirFormulario(Formulario formulario) async {
-    var _itens=await ApiMySql.getItensFromForm(TBSimulaForm,formulario.id,null);
+    var _itens=await ApiMySql.getItensFromForm(TBSimulaForm,formulario.id,'id_form');
     for(int i = 0 ; i<_itens.length ; i++) {
       formulario.itens.add(ItemFormulario(
         id: int.parse(_itens[i]['id']),

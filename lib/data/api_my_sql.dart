@@ -104,6 +104,7 @@ WHERE id_user = $idUser;
   static Future<List<dynamic>> getItensFromForm(String table, dynamic id, String? campo) async {
     var sql = 'select * from $table';
     sql += ' WHERE $campo=$id';
+    print(sql);
     return await executaSql(sql);
   }
 
@@ -195,6 +196,7 @@ WHERE id_user = $idUser;
 
 
   static Future<List<dynamic>> getProPorHora(String hora,String tbFolha,String tbVantagem) async {
+    print('hora $hora folha $tbFolha vantagem $tbVantagem');
     var url = Uri.parse('https://www.xmktech.net/dados/get_prof_por_hora.php?nocache=${DateTime.now().millisecondsSinceEpoch}');
 
     // Corpo da requisição em formato JSON
@@ -213,12 +215,11 @@ WHERE id_user = $idUser;
         },
         body: body,
       );
-      if (response.statusCode == 200) {
 
+      if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         return data;
       } else {
-        // Erro retornado pelo PHP
         final errorData = json.decode(response.body);
         print('Erro do servidor (${response.statusCode}): ${errorData['error']}');
         return [];
