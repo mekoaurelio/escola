@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:GEM/services/table_name_service.dart';
 import 'package:flutter/material.dart';
 import 'package:GEM/services/GlobalFilterController.dart';
@@ -16,8 +18,11 @@ import '../data/api_my_sql.dart';
 import '../folha/professor_utils.dart';
 import '../services/calc_dispersao_valores.dart';
 import '../services/utils.dart';
+import '../services/valor_input_formatter.dart';
+import '../simulador/formulario/formularioBuilderScreen.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/texto.dart';
+import 'model_simula_form.dart';
 
 class Impacto extends StatefulWidget {
   const Impacto({super.key});
@@ -32,7 +37,7 @@ class _ImpactoScreenState extends State<Impacto> {
   final _currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: '');
   bool _isloading=true;
   //DADOS DA FOLHA
-  double totalFolha=0;
+  double totalFolhaDePagamento=0;
   double totalFolhaNovo=0;
   double totalVantagens=0;
   double percVantagem=0;
@@ -42,6 +47,7 @@ class _ImpactoScreenState extends State<Impacto> {
   double feriasProporcionalCalc=0;
   double totalFolhaMensalCalc=0;
   double totalFolhaAnualCalc=0;
+  double percAumento=0;
 
   double totalFolha2=0;
   double totalVantagens2=0;
@@ -65,15 +71,24 @@ class _ImpactoScreenState extends State<Impacto> {
   double totF=0;
   double totF2=0;
 
+  var cab;
+  List<dynamic> resultado=[];
+  List<dynamic> simulaForm=[];
+  List<ModelSimulaForm> simulaFormjsonList=[];
+
   String tit='Dados da Folha de Pagamento : usando 15 classes e 2.80 de progressão';
 
   @override
   void initState() {
     super.initState();
-    // Registra os listeners. Eles reagirão a mudanças SE a tela estiver visível.
+    start();
+  }
+
+  start()async{
     filterController.municipio.listen((_) => _loadDataBasedOnCurrentFilters());
     filterController.ano.listen((_) => _loadDataBasedOnCurrentFilters());
     filterController.bimestre.listen((_) => _loadDataBasedOnCurrentFilters());
+    await _carregarSoUmavez();
     _loadDataBasedOnCurrentFilters();
   }
 
@@ -81,47 +96,111 @@ class _ImpactoScreenState extends State<Impacto> {
     _carregarDados();
   }
 
+  Future<void> _carregarSoUmavez() async {
+    cab=await ApiMySql.executaSql('select * from $TBSimulaCab').timeout(const Duration(seconds: 30));
+    //progressao
+    //PEGA OS VALORES SIMULAFORM
+    var x=await ApiMySql.executaSql('select id,id_form,nivel,label,tipo,valor,valor_progressao,perc from $TBSimulaForm').timeout(const Duration(seconds: 30));
+    var str=fixJsonString(x.toString());
+    List<dynamic> jsonList = jsonDecode(str);
+
+    String sql = """
+SELECT 
+    (SELECT SUM(valor) FROM $TBVantagens) as totVan,
+    (SELECT SUM(vr12) FROM $TBImpostos) as totImp,
+    (SELECT SUM(vr12) FROM $TBDecenio) as totImp2,
+    (SELECT SUM(vr1) FROM $TBDecenio) as totImp3,
+    t.*FROM $TBTotais t
+""";
+    resultado = await ApiMySql.executaSql(sql);
+    setState(() {
+      simulaFormjsonList = jsonList.map((json) => ModelSimulaForm.fromJson(json)).toList();
+      percAumento=double.parse(resultado[0]['perc_aumento_adulto'])*100;
+      progressaoController.text=percAumento.toString();
+    });
+  }
+
+  String fixJsonString(String original) {
+    String fixed = original;
+
+    // PRIMEIRO: Corrigir as CHAVES (adicionar aspas nas chaves)
+    fixed = fixed
+        .replaceAll('{id:', '{"id":')
+        .replaceAll(', id_form:', ', "id_form":')
+        .replaceAll(', nivel:', ', "nivel":')
+        .replaceAll(', label:', ', "label":')
+        .replaceAll(', tipo:', ', "tipo":')
+        .replaceAll(', valor:', ', "valor":')
+        .replaceAll(', valor_progressao:', ', "valor_progressao":')
+        .replaceAll(', perc:', ', "perc":');
+        //.replaceAll(', created_at:', ', "created_at":');
+
+    // DEPOIS: Corrigir os VALORES de string
+    // Corrigir nivel (A, B, C, D)
+    fixed = fixed.replaceAllMapped(
+        RegExp(r'"nivel": (\w)'),
+            (match) => '"nivel": "${match.group(1)}"'
+    );
+
+    // Corrigir label (NIVEL A, NIVEL B, etc.)
+    fixed = fixed.replaceAllMapped(
+        RegExp(r'"label": ([^,]+),'),
+            (match) => '"label": "${match.group(1)}",'
+    );
+
+    // Corrigir tipo
+    fixed = fixed.replaceAll('TipoItem.progressao', '"TipoItem.progressao"');
+
+    // Corrigir created_at (datas)
+    fixed = fixed.replaceAllMapped(
+        RegExp(r'"created_at": ([^,]+),'),
+            (match) => '"created_at": "${match.group(1)}",'
+    );
+    fixed = fixed.replaceAllMapped(
+        RegExp(r'"created_at": ([^}]+)}'),
+            (match) => '"created_at": "${match.group(1)}"}'
+    );
+
+    return fixed;
+  }
+
   Future<void> _carregarDados() async {
     try {
-      await _progressao(0);
-      var getTotal=await ApiMySql.executaSql('SELECT sum(vencimento) as totFolha from $TBFolha').timeout(const Duration(seconds: 30));
-      var getVan=await ApiMySql.executaSql('SELECT sum(valor) as totVan from $TBVantagens').timeout(const Duration(seconds: 30));;
-      var getImpostos=await ApiMySql.executaSql('select sum(vr12) as totImp from $TBImpostos').timeout(const Duration(seconds: 30));
-      var getDecenio=await ApiMySql.executaSql('select sum(vr12) as totImp from $TBDecenio').timeout(const Duration(seconds: 30));
-      var getDecenio2=await ApiMySql.executaSql('select sum(vr1) as totImp from $TBDecenio').timeout(const Duration(seconds: 30));
-      var getTotais=await ApiMySql.get(TBTotais,null,null).timeout(const Duration(seconds: 30));
+      //PASSE UMA PROGRESSAO
+      await _progressao(2.80);
+
+      double totalFolha=await _totalFolha(2.80);
 
       setState(() {
-        progressaoController.text='0';
         //DADOS DA FOLHA
-        totalFolha=double.parse(getTotal[0]['totFolha']) ;//1
-        totalVantagens=double.parse(getVan[0]['totVan']) ;//2
-        percVantagem =(totalVantagens/totalFolha ) * 100;//3
+        totalFolhaDePagamento=totalFolha ;//1
+        totalVantagens=double.parse(resultado[0]['totVan']) ;//2
+        percVantagem =(totalVantagens/totalFolhaDePagamento ) * 100;//3
         String tmp=percVantagem.toStringAsFixed(2);
         percVantagem=double.parse(tmp);
-        custoTotalLiquidoCalc = totalFolha + totalVantagens;//4
+        custoTotalLiquidoCalc = totalFolhaDePagamento + totalVantagens;//4
         encargosPrev14PercentCalc = custoTotalLiquidoCalc * 0.14;//5
         decimoTerceiroProporcionalCalc = (custoTotalLiquidoCalc+encargosPrev14PercentCalc) / 12;//6
         feriasProporcionalCalc = decimoTerceiroProporcionalCalc/3;//7
         totalFolhaMensalCalc = custoTotalLiquidoCalc + decimoTerceiroProporcionalCalc + feriasProporcionalCalc+encargosPrev14PercentCalc;
         totalFolhaAnualCalc = totalFolhaMensalCalc * 12;
 
-
         //DADOS DA FOLHA PROGRESSAO
         totalVantagens2=(totalFolhaNovo*percVantagem)/100 ;//2
 
         //DADOS DO EXERCICIO
-        receitasDeImpostos=double.parse(getImpostos[0]['totImp']);
-        receitaDeTransferencia=double.parse(getDecenio[0]['totImp']);
-        receitaTotalFundeb=double.parse(getTotais[0]['total_receitas_fundeb']);
+        receitasDeImpostos=double.parse(resultado[0]['totImp']);
+        receitaDeTransferencia=double.parse(resultado[0]['totImp2']);
+        receitaTotalFundeb=double.parse(resultado[0]['total_receitas_fundeb']);
         totF=(totalFolhaAnualCalc/receitaTotalFundeb)*100;
         totF2=(totalFolhaAnualCalc2/receitaTotalFundeb)*100;
-        double tot=double.parse(getDecenio2[0]['totImp']);
+        double tot=double.parse(resultado[0]['totImp3']);
         perdaGanho=receitaTotalFundeb-((tot/100)*20);
         _isloading=false;
       });
 
       atualizaDadosDaProgressao();
+      setState(() => tit = 'Dados da Folha de Pagamento : usando 15 classes e 2.80 de progressão');
 
     } catch (e) {
       setState(() => _isloading = false);
@@ -130,15 +209,60 @@ class _ImpactoScreenState extends State<Impacto> {
     }
   }
 
+  _getNivelValor(String idN,String tipo){
+    List<ModelSimulaForm> filteredItems = simulaFormjsonList.where((item) => item.idForm.toString() == idN).toList();
+    novosNiveis.clear();
+    valorNivel.clear();
+    filteredItems.forEach((item) {
+      novosNiveis.add(item.label);
+      if(tipo=='PROGRESSAO'){
+        valorNivel.add(item.valorProgressao.toString());
+      }else{
+        valorNivel.add(item.valor.toString());
+      }
+    });
+  }
+
   Future<void> _progressao(double percentualDeProgressao) async{
     setState(() => tit = 'Calculando aguarde....');
-    final cab=await ApiMySql.executaSql('select * from $TBSimulaCab');
     double tot=0;
     for (int i = 0; i < cab.length; i++){
-      professores = await ApiMySql.getProPorHora(cab[i]['horas'].toString(), TBFolha, TBVantagens,).timeout(const Duration(seconds: 30));
+      //PEGA TODOS OS PROFESSORES
+
+      var h=cab[i]['horas']+'hs';
+      var sql = """SELECT DISTINCT f.id AS folha_id,
+    f.id_municipio,f.matricula,
+    f.nome,
+    f.cpf,
+    f.unidade,
+    f.local_lotacao,
+    f.vencimento,
+    f.horas,
+    f.cargo,
+    f.nivel,
+    DATE_FORMAT(f.admissao, '%d/%m/%Y') AS admissao,
+    GROUP_CONCAT(CONCAT(dv.codigo, ':', dv.descricao, ':', dv.percentual, ':', ' R\$ ', FORMAT(dv.valor, 2)) SEPARATOR ' | ') AS vantagens_detalhadas,
+    SUM(dv.valor) AS soma_vantagens,
+    SUM(dv.valor) AS soma_apts,
+    (SELECT SUM(vencimento) FROM $TBFolha WHERE status = 'A' AND horas = '$h') AS total_vencimentos_geral
+    FROM $TBFolha f
+    LEFT JOIN $TBVantagens dv ON f.matricula = dv.folha_id
+    WHERE f.status = 'A' AND f.horas = '$h'
+    GROUP BY f.matricula
+    ORDER BY f.matricula""";
+      professores = await ApiMySql.executaSql(sql);
+
+      //professores = await ApiMySql.getProPorHora(cab[i]['horas'].toString(), TBFolha, TBVantagens,).timeout(const Duration(seconds: 30));
+
+      _getNivelValor(cab[i]['id'],'PROGRESSAO');
+
+      /*
       final getNiveis = await ApiMySql.getItensFromForm(TBSimulaForm, cab[i]['id'], 'id_form',).timeout(const Duration(seconds: 30));
       novosNiveis = getNiveis.map((item) => item['label'].toString()).toList();
-      valorNivel = getNiveis.map((item) => item['valor'].toString()).toList();
+      valorNivel = getNiveis.map((item) => item['valor_progressao'].toString()).toList();
+
+       */
+
       double progre=0;
       if(percentualDeProgressao>0) {
         progre=percentualDeProgressao;
@@ -156,6 +280,49 @@ class _ImpactoScreenState extends State<Impacto> {
     setState(() => tit = 'Dados da Folha de Pagamento : usando 15 classes e 2.80 de progressão');
   }
 
+  Future<double> _totalFolha(double percentualDeProgressao) async{
+    setState(() => tit = 'Calculando aguarde....');
+    double tot=0;
+    for (int i = 0; i < cab.length; i++){
+      //PEGA TODOS OS PROFESSORES
+      professores = await ApiMySql.getProPorHora(cab[i]['horas'].toString(), TBFolha, TBVantagens,).timeout(const Duration(seconds: 30));
+      _getNivelValor(cab[i]['id'],'NORMAL');
+
+      //final getNiveis = await ApiMySql.getItensFromForm(TBSimulaForm, cab[i]['id'], 'id_form',).timeout(const Duration(seconds: 30));
+      //novosNiveis = getNiveis.map((item) => item['label'].toString()).toList();
+      //valorNivel = getNiveis.map((item) => item['valor'].toString()).toList();
+
+      double progre=0;
+      if(percentualDeProgressao>0) {
+        progre=percentualDeProgressao;
+      }else{
+        progre = double.parse(cab[i]['progressao']);
+      }
+      tot+=await calculaCustoMensal(progre);
+    }
+    return tot;
+  }
+
+  Future<void> _ajustaSalarioBase(var percentualDeProgressao) async{
+    var p=percentualDeProgressao.toString().replaceAll(',', '.');
+    double perc=double.parse(p)/100;
+    String sql='UPDATE $TBSimulaForm SET valor_progressao = ROUND(valor PLUS_OPERATOR (valor MULT_OPERATOR $perc))';
+
+   await  ApiMySql.executaSql(sql);
+
+    sql='UPDATE $TBTotais SET perc_aumento_adulto = $perc';
+    await  ApiMySql.executaSql(sql);
+
+    var x=await ApiMySql.executaSql('select id,id_form,nivel,label,tipo,valor,valor_progressao,perc from $TBSimulaForm').timeout(const Duration(seconds: 30));
+    var str=fixJsonString(x.toString());
+    List<dynamic> jsonList = jsonDecode(str);
+    simulaFormjsonList = jsonList.map((json) => ModelSimulaForm.fromJson(json)).toList();
+    progressaoController.text=percentualDeProgressao;
+
+    _carregarDados();
+  }
+
+
   void atualizaDadosDaProgressao(){
     //DADOS DA FOLHA PROGRESSAO
     totalVantagens2=(totalFolhaNovo*percVantagem)/100 ;//2
@@ -167,8 +334,6 @@ class _ImpactoScreenState extends State<Impacto> {
     totalFolhaMensalCalc2 = custoTotalLiquidoCalc2 + decimoTerceiroProporcionalCalc2 + feriasProporcionalCalc2+encargosPrev14PercentCalc2;
     totalFolhaAnualCalc2 = totalFolhaMensalCalc2 * 12;
     totF2=(totalFolhaAnualCalc2/receitaTotalFundeb)*100;
-
-    //totalVantagens
   }
 
   Widget _buildTabela(String title) {
@@ -201,7 +366,7 @@ class _ImpactoScreenState extends State<Impacto> {
               width: 1,
             ),
               children: [
-              _buildDataRow('1. Valor da folha de vencimentos básicos - Mensal - R/\$', _currencyFormat.format(totalFolha),_currencyFormat.format(totalFolhaNovo),tooTip: 'Valor sem progressão\nValor bruto da folha',icon: Icons.help),
+              _buildDataRow('1. Valor da folha de vencimentos básicos - Mensal - R/\$', _currencyFormat.format(totalFolhaDePagamento),_currencyFormat.format(totalFolhaNovo),tooTip: 'Valor sem progressão\nValor bruto da folha',icon: Icons.help),
               _buildDataRow('2. Valor das vantagens pecuniárias - Mensal - R/\$',  _currencyFormat.format(totalVantagens),cor: Colors.red,icon: Icons.help, tooTip: d2,_currencyFormat.format(totalVantagens2)),
               _buildDataRow('3. Percentual das vantagens pecuniárias sobre a folha de vencimento', '${percVantagem.toStringAsFixed(2)}%',icon: Icons.help, tooTip: d3,'${_currencyFormat.format(percVantagem2)}%'),
               _buildDataRow('4. Custo total da folha de pagamento líquida mensal', _currencyFormat.format(custoTotalLiquidoCalc),tam: 18,icon: Icons.help, tooTip: d4,_currencyFormat.format(custoTotalLiquidoCalc2)),
@@ -313,11 +478,15 @@ class _ImpactoScreenState extends State<Impacto> {
                       width: 200,
                       child: CustomTextFiel(
                         controller:progressaoController ,
-                        label:'Percentual de Progressão' ,
+                        label:'Percentual Linear em %' ,
                         hintText: 'code',
                         suffixIcon: Icons.play_circle_fill,
+                        inputFormatters: [
+                          ValorInputFormatter(),
+                        ],
+                        //ValorInputFormatter
                         onToggleVisibility: () async {
-                          await _progressao(double.parse(progressaoController.text));
+                          await _ajustaSalarioBase(progressaoController.text);
                           setState(() {});
                         },
                       ),
@@ -336,7 +505,7 @@ class _ImpactoScreenState extends State<Impacto> {
                       ),
                       onPressed: () {
                         generateImpactoPdf(
-                          totalFolha: totalFolha,
+                          totalFolha: totalFolhaDePagamento,
                           totalVantagens: totalVantagens,
                           percVantagem: percVantagem,
                           custoTotalLiquidoCalc: custoTotalLiquidoCalc,
@@ -367,7 +536,7 @@ class _ImpactoScreenState extends State<Impacto> {
                       ),
                       onPressed: () {
                         generateExcel(
-                          totalFolha: totalFolha,
+                          totalFolha: totalFolhaDePagamento,
                           totalVantagens: totalVantagens,
                           percVantagem: percVantagem,
                           custoTotalLiquidoCalc: custoTotalLiquidoCalc,
@@ -413,6 +582,7 @@ class _ImpactoScreenState extends State<Impacto> {
   }
 
   Future<double> calculaCustoMensal(double perProgressao)async{
+
     final result = calculateTableAndDispersions(
       niveis: novosNiveis,
       valoresIniciaisNiveis: valorNivel,
@@ -421,7 +591,6 @@ class _ImpactoScreenState extends State<Impacto> {
     );
 
     final calculatedTableValues = result.calculatedTableValues;
-
     double total=0;
     for (int nivelIndex = 0; nivelIndex < novosNiveis.length; nivelIndex++){
       for (int coluna = 0; coluna < calculatedTableValues[nivelIndex].length; coluna++){
@@ -433,9 +602,9 @@ class _ImpactoScreenState extends State<Impacto> {
         }
       }
     }
-    print('TOTAL DA FOLHA $total');
     return total;
   }
+
 
   Future<void> generateImpactoPdf({
     required double totalFolha,
@@ -543,7 +712,6 @@ class _ImpactoScreenState extends State<Impacto> {
             ],
           ),
         ],
-
         // Rodapé para todas as páginas
         footer: (context) => pw.Container(
           alignment: pw.Alignment.center,
@@ -562,8 +730,6 @@ class _ImpactoScreenState extends State<Impacto> {
             ],
           ),
         ),
-
-
       ),
     );
 
@@ -581,6 +747,8 @@ class _ImpactoScreenState extends State<Impacto> {
       await Printing.layoutPdf(onLayout: (_) async => pdfBytes);
     }
   }
+
+
 
   Future<void> generateExcel({
     required double totalFolha,

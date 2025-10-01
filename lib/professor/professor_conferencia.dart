@@ -9,6 +9,7 @@ import '../services/utils.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/line.dart';
 import '../widgets/paginationFooter.dart';
+import 'package:intl/intl.dart';
 
 import 'dart:typed_data';
 import 'dart:html' as html; // Para web
@@ -31,7 +32,8 @@ class ProfessorConferencia extends StatefulWidget {
 }
 
 class _ProfessorConferenciaState extends State<ProfessorConferencia> {
-  final TextEditingController controller = TextEditingController();
+  final TextEditingController _statusController = TextEditingController();
+  final TextEditingController _vencimentoController = TextEditingController();
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
 
   List<dynamic> listaCompleta = [];
@@ -75,9 +77,6 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
         getHoraNivel = horaNivel;
         listaCompleta = professores;
         lista = professores;
-        // Removido: pageSize = professores.length;
-        // É melhor manter um pageSize fixo ou configurável para a paginação na UI
-        // Se você quiser mostrar todos por padrão, defina-o maior ou igual a lista.length
         isLoading = false;
       });
     } catch (e) {
@@ -215,7 +214,7 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
               Line(tex: Utils.formatVr.format(total), tam: 100, alin: Alignment.centerRight, cor: cor, negrito: negrito),
               Line(tex: proposta, tam: 100, alin: Alignment.centerRight, cor: cor, negrito: true),
               IconButton(
-                onPressed: () => edite('Alterando', 'nivel', nivel, item['matricula']),
+                onPressed: () => edite('Alterando', vencimento, nivel, item['matricula']),
                 icon: const Icon(Icons.edit, size: 15, color: Colors.black54),
               ),
               IconButton(
@@ -461,7 +460,7 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
                   children: [
                     Expanded(
                       child: CustomTextFiel(
-                        controller: controller,
+                        controller: _statusController,
                         label: '',
                         prefixIcon: Icons.search_outlined,
                         obrigatorio: false,
@@ -550,7 +549,72 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
     }
   }
 
-  Future<void> edite(var title, var campo, vrInicial, var matricula) async {
+  Future<void> edite(var title, var vencimento,var  status, var matricula) async {
+    final formKey = GlobalKey<FormState>();
+    final _statusController = TextEditingController(text: status);
+    final _vencimentoController = TextEditingController(text: Utils.formatVr.format(vencimento));
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title:Text(title),
+              content: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      //STATUS
+                      TextFormField(
+                        controller: _statusController,
+                        decoration: const InputDecoration(labelText: 'Status'),
+                        validator: (value) => (value?.isEmpty ?? true) ? 'Campo obrigatório' : null,
+                      ),
+
+                        //VENCIMENTO
+                        TextFormField(
+                          controller: _vencimentoController,
+                          decoration: const InputDecoration(labelText: 'Vencimento'),
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            ValorInputFormatter(),
+                          ],
+                        ),
+
+
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+                ///Salvar
+                ElevatedButton(
+                  onPressed: () async{
+                    if (formKey.currentState!.validate()) {
+                      final nivel = _statusController.text;
+                      final valor = _vencimentoController.text==''?'0.0':Utils.saldoToSave(_vencimentoController.text);
+
+                     // print("Update $TBFolha set nivel='$nivel', vencimento=$valor WHERE matricula=$matricula");
+                      await ApiMySql.executaSql("Update $TBFolha set nivel='$nivel', vencimento=$valor WHERE matricula=$matricula");
+                      _loadData();
+
+                      }
+                      Navigator.of(context).pop();
+                    },
+                  child: const Text('Salvar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+/*
     await Utils.mostrarDialogoEditarValor(
       context: context,
       titulo: title,
@@ -562,7 +626,16 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
         _loadData();
       },
     );
+
+ */
+
+
+
+
+
   }
+
+
 
   void onChange(String text) {
     final now = DateTime.now();
@@ -584,4 +657,34 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
       currentPage = 1;
     });
   }
+}
+
+class ValorInputFormatter extends TextInputFormatter {
+@override
+TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  if (newValue.text.isEmpty) {
+    return newValue.copyWith(text: '');
+  }
+
+  // 1. Remove todos os caracteres não numéricos
+  final digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+  if (digitsOnly.isEmpty) {
+    return const TextEditingValue(
+      text: '',
+      selection: TextSelection.collapsed(offset: 0),
+    );
+  }
+
+  // 2. Converte a string de dígitos para um número (considerando os centavos)
+  final number = double.parse(digitsOnly) / 100;
+
+  // 3. Formata o número para o padrão pt_BR
+  final newString = NumberFormat("#,##0.00", "pt_BR").format(number);
+
+  // 4. Retorna o novo valor formatado, ajustando a posição do cursor
+  return TextEditingValue(
+    text: newString,
+    selection: TextSelection.collapsed(offset: newString.length),
+  );
+}
 }

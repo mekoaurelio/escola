@@ -160,6 +160,14 @@ class Utils {
     );
   }
 
+  static String removerAcentosUnicode(String texto) {
+    return texto
+        .replaceAllMapped(RegExp(r'[\u0300-\u036f]'), (match) => '') // Remove diacríticos
+        .replaceAll('Ç', 'C')
+        .replaceAll('ç', 'c');
+  }
+
+
 
   static limpaBanco()async{
 
@@ -293,8 +301,6 @@ class Utils {
       },
     );
   }
-
-
 
   static double somaVantagens(var partes){
     String valorStr='0';

@@ -156,6 +156,7 @@ TableCalculationResult calculateTableAndDispersions({
       if (colunaIndex == 0) {
         // A primeira coluna da linha sempre recebe o valor inicial.
         valorAtual = valorInicialDaLinha;
+
       } else {
         // As colunas seguintes são calculadas com base no valor anterior na mesma linha.
         final double valorAnterior = rowValues.last;

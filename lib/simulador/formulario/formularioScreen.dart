@@ -1,10 +1,8 @@
-// lib/screens/formulario_builder_screen.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../services/databaseService.dart';
 import 'formulario.dart';
-
 
 class FormularioBuilderScreen extends StatefulWidget {
   final Formulario formulario;
@@ -47,6 +45,7 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
     final labelController = TextEditingController(text: isEditing ? item.label : '');
     final percentController = TextEditingController(text: isEditing ? item.percentual?.toString() ?? '' : '');
     final valorController = TextEditingController(text: isEditing ? item.valor.toString() : '');
+    final valorProgressaoController = TextEditingController(text: isEditing ? item.valor_progressao.toString() : '');
     TipoItem tipoSelecionado = isEditing ? item.tipo : TipoItem.progressao;
 
     showDialog(
@@ -111,6 +110,7 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
                         final label = labelController.text;
                         final percent = double.tryParse(percentController.text);
                         final valor = double.tryParse(valorController.text) ?? 0.0;
+                        final valorProgressao = double.tryParse(valorProgressaoController.text) ?? 0.0;
 
                         if (isEditing) {
                           item.label = label;
@@ -119,12 +119,14 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
                           item.valor = valor;
                         } else {
 
-                          _formulario.itens.add(ItemFormulario(
-                            id: _dbService.getProximoItemId(),
-                            label: label,
-                            tipo: tipoSelecionado,
-                            percentual: percent,
-                            valor: valor,
+                          _formulario.itens.add(
+                              ItemFormulario(
+                                id: _dbService.getProximoItemId(),
+                                label: label,
+                                tipo: tipoSelecionado,
+                                percentual: percent,
+                                valor: valor,
+                                valor_progressao: valorProgressao,
                           ));
                         }
                       });

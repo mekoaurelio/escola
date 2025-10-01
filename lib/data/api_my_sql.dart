@@ -104,7 +104,6 @@ WHERE id_user = $idUser;
   static Future<List<dynamic>> getItensFromForm(String table, dynamic id, String? campo) async {
     var sql = 'select * from $table';
     sql += ' WHERE $campo=$id';
-    print(sql);
     return await executaSql(sql);
   }
 
@@ -119,7 +118,6 @@ WHERE id_user = $idUser;
     sql+=" FROM $tSimula s LEFT JOIN $tFolha a ON s.horas = REPLACE(a.horas, 'hs', '') AND a.vencimento IS NOT NULL";
     sql+=' LEFT JOIN (SELECT folha_id, SUM(valor) as total_vantagens FROM $tVantagem';
     sql+=' GROUP BY folha_id) v ON a.matricula = v.folha_id GROUP BY s.horas, s.descricao, s.id, s.classes, s.progressao ORDER BY s.horas;';
-    print(sql);
     return await executaSql(sql);
   }
 
@@ -135,6 +133,7 @@ WHERE id_user = $idUser;
   static Future<List<dynamic>> executaSql(String sql) async {
     try {
       final response = await http.get(Uri.parse('https://www.xmktech.net/dados/get.php?sql=${Uri.encodeComponent(sql)}'));
+     // print(response.body);
       if (response.statusCode == 200) {
         final result = json.decode(response.body.trim());
         return result is List ? result : [result].whereType<dynamic>().toList();
@@ -185,7 +184,6 @@ WHERE id_user = $idUser;
   static Future<List<dynamic>> getHoraNivel(String cab,String form) async {
     var sql='SELECT c.*,f.id_form,f.nivel,f.label,f.tipo,f.valor,f.perc';
     sql+=' FROM $cab c JOIN $form f ON c.id =f.id_form;';
-    print(sql);
     return await executaSql(sql);
   }
 
@@ -196,7 +194,6 @@ WHERE id_user = $idUser;
 
 
   static Future<List<dynamic>> getProPorHora(String hora,String tbFolha,String tbVantagem) async {
-    print('hora $hora folha $tbFolha vantagem $tbVantagem');
     var url = Uri.parse('https://www.xmktech.net/dados/get_prof_por_hora.php?nocache=${DateTime.now().millisecondsSinceEpoch}');
 
     // Corpo da requisição em formato JSON
@@ -363,6 +360,7 @@ WHERE id_user = $idUser;
     sql+='label varchar(200) NOT NULL,';
     sql+='tipo varchar(50) NOT NULL,';
     sql+='valor decimal(15,2) DEFAULT NULL,';
+    sql+='valor_progressao decimal(15,2) DEFAULT NULL,';
     sql+='perc decimal(10,2) DEFAULT NULL,';
     sql+='created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP);';
     await executaSql(sql);

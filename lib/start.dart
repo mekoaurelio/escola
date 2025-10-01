@@ -88,7 +88,7 @@ class _StartState extends State<Start> {
       {
         'id': 'simulador_progressao',
         'group': 'simulador',
-        'drawerLabel': 'Simulador',
+        'drawerLabel': 'Estrutura Carreira',
         'appBarTitle': 'Simulador de Progressão',
         'builder': () => ListaFormulariosScreen(),
       },
@@ -118,16 +118,6 @@ class _StartState extends State<Start> {
       },
 
       // === GRUPO: PROFESSORES ===
-      /*
-      {
-        'id': 'prof_lista_normal',
-        'group': 'professores',
-        'drawerLabel': 'Professores',
-        'appBarTitle': 'Lista de Professores',
-        'builder': () => Professores(),
-      },
-
-       */
 
       /// ==========================================================
       /// Entradas dinâmicas para cada hora                        =
@@ -369,7 +359,7 @@ class _StartState extends State<Start> {
 
                 if (widget.acessos != null)
                   if (widget.acessos[0]['simulador'] == '1')
-                    _buildExpansionTile('simulador', 'Simulador', Icons.swap_vertical_circle_rounded),
+                    _buildExpansionTile('simulador', 'Estrutura', Icons.swap_vertical_circle_rounded),
                 if (widget.acessos[0]['professores'] == '1')
                   _buildExpansionTile('professores', 'Professores', Icons.perm_contact_cal_sharp),
                 if (widget.acessos[0]['impacto'] == '1')
@@ -385,7 +375,7 @@ class _StartState extends State<Start> {
             padding: const EdgeInsets.all(16),
             width: double.infinity,
             child: const Text(
-              'Copyright © 2025 XmkTech. V.017\nAll rights reserved (41-9-9558-2579)',
+              'Copyright © 2025 XmkTech. V.021\nAll rights reserved (41-9-9558-2579)',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),

@@ -22,6 +22,7 @@ class ItemFormulario {
   String label;
   double? percentual; // Nulo para itens como o "Piso Inicial"
   double valor;
+  double valor_progressao;
   TipoItem tipo;
 
   ItemFormulario({
@@ -29,6 +30,7 @@ class ItemFormulario {
     required this.label,
     this.percentual,
     required this.valor,
+    required this.valor_progressao,
     required this.tipo,
   });
 }

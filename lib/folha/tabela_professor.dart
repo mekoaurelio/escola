@@ -89,6 +89,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
 
       final novosNiveisTmp = getNiveis.map((item) => item['label'].toString()).toList();
       final valorNivelTmp = getNiveis.map((item) => item['valor'].toString()).toList();
+      final valorNivelProgressaoTmp = getNiveis.map((item) => item['valor_progressao'].toString()).toList();
 
       final nu = await ApiMySql.getProfPorNivel(TBFolha, widget.hora,).timeout(const Duration(seconds: 30));
 
@@ -102,9 +103,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       }
 
       final totais = await ApiMySql.get(TBTotais, null, null).timeout(const Duration(seconds: 30));
-      print('4444444');
       final getHoraProgressao = await ApiMySql.getItensFromForm(TBSimulaCab, widget.idItens, 'id',).timeout(const Duration(seconds: 30));
-      print('5555555');
       final perProgressaoEntreClasseTmp = double.parse(getHoraProgressao[0]['progressao']);
       final cargaHorariaTmp = int.parse(getHoraProgressao[0]['classes']);
 
@@ -131,7 +130,9 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
 
         final result = calculateTableAndDispersions(
           niveis: novosNiveisTmp,
-          valoresIniciaisNiveis: valorNivelTmp,
+         // valoresIniciaisNiveis: valorNivelTmp,
+          valoresIniciaisNiveis: valorNivelProgressaoTmp,
+
           cargaHoraria: cargaHorariaTmp,
           percEntreColunas: perProgressaoEntreClasseTmp,
         );
@@ -146,11 +147,16 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       }
 
       // ======= Atualiza tudo de uma vez =======
+
       double cm=await calculaCustoMensal(novosNiveisTmp,calculatedTableValuesTmp,professoresTmp);
 
       setState(() {
         novosNiveis = novosNiveisTmp;
-        valorNivel = valorNivelTmp;
+        //valorNivel = valorNivelTmp;
+
+        valorNivel = valorNivelProgressaoTmp;
+
+
         niveisUnicos = niveisUnicosTmp;
         professores = professoresTmp;
         perProgressaoEntreClasse = perProgressaoEntreClasseTmp;
@@ -310,6 +316,8 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                         'Quantidade de Classes',
                         '$cargaHoraria classes',
                         Icons.access_time,
+                        Colors.white,
+                        primaryColor,
                         onTap: () => _editWorkingHours(),
                       ),
                     ),
@@ -321,6 +329,8 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                         'Progressão',
                         '${perProgressaoEntreClasse.toStringAsFixed(2)}%',
                         Icons.trending_up,
+                        Colors.white,
+                        primaryColor,
                         onTap: () => _editProgression(),
                       ),
                     ),
@@ -343,6 +353,8 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                         'Dispersão Horizontal',
                         '$_dispersaoHorizontal%',
                         Icons.compare_arrows,
+                          double.parse(Utils.saldoToSave(_dispersaoHorizontal))>30?Colors.red:Colors.white,
+                        double.parse(Utils.saldoToSave(_dispersaoHorizontal))>30?Colors.white:primaryColor,
                       ),
                     ),
                     ConstrainedBox(
@@ -353,6 +365,8 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                         'Dispersão Total',
                         '$_dispersaoTotal%',
                         Icons.bar_chart,
+                          double.parse(Utils.saldoToSave(_dispersaoTotal))>95?Colors.red:Colors.white,
+                        double.parse(Utils.saldoToSave(_dispersaoTotal))>95?Colors.white:primaryColor,
                       ),
                     ),
                   ],
@@ -365,14 +379,14 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
     );
   }
 
-  Widget _buildSummaryItem(String title, String value, IconData icon, {VoidCallback? onTap}) {
+  Widget _buildSummaryItem(String title, String value, IconData icon,Color cor,Color corTexto, {VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: MediaQuery.of(context).size.width * 0.4,
         padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cor,
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
@@ -386,9 +400,9 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
           children: [
             Icon(icon, size: 24, color: primaryColor),
             SizedBox(height: 8),
-            Texto(tit: title,cor: textColor.withOpacity(0.7),tam: 12,),
+            Texto(tit: title,cor: corTexto,tam: 12,),
             SizedBox(height: 4),
-            Texto(tit: value,cor:primaryColor ,tam: 16,negrito: true,),
+            Texto(tit: value,cor:corTexto ,tam: 16,negrito: true,),
           ],
         ),
       ),

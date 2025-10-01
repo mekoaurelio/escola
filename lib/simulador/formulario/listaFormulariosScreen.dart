@@ -95,14 +95,16 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
   }
 
   void _abrirFormulario(Formulario formulario) async {
-    var _itens=await ApiMySql.getItensFromForm(TBSimulaForm,formulario.id,'id_form');
+    var _itens=await ApiMySql.getItensFromForm(TBSimulaForm,formulario.id,'id_form').timeout(const Duration(seconds: 30));
     for(int i = 0 ; i<_itens.length ; i++) {
-      formulario.itens.add(ItemFormulario(
-        id: int.parse(_itens[i]['id']),
-        label: _itens[i]['label'],
-        tipo:  getTipoItem(_itens[i]['tipo']),
-        percentual: double.parse(_itens[i]['perc']?? '0.0'),
-        valor: double.parse(_itens[i]['valor']),
+      formulario.itens.add(
+          ItemFormulario(
+              id: int.parse(_itens[i]['id']),
+              label: _itens[i]['label'],
+              tipo:  getTipoItem(_itens[i]['tipo']),
+              percentual: double.parse(_itens[i]['perc']?? '0.0'),
+              valor: double.parse(_itens[i]['valor']),
+            valor_progressao:  double.parse(_itens[i]['valor_progressao']),
       ));
     }
     // Navega e espera o retorno para atualizar a lista
@@ -121,7 +123,7 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Simulador'),
+        title: const Text('Estrutura das Carreiras'),
         backgroundColor: Colors.blue,
       ),
       body: FutureBuilder<List<Formulario>>(
@@ -154,6 +156,7 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
                     width: 80,
                       child: Row(
                     children: [
+                      //EDITAR
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.grey),
                         onPressed: () async {
@@ -161,6 +164,7 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
                           _reloadData();
                         },
                       ),
+                      //EXCLUIR
                       IconButton(
                         icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                         onPressed: () async {

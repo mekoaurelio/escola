@@ -18,7 +18,7 @@ class DatabaseService {
   // Carrega todos os formulários salvos.
   Future<List<Formulario>> carregarTodosOsFormularios() async {
     _formulariosSalvos.clear();
-    var _forms=await ApiMySql.get(TBSimulaCab, null, null);
+    var _forms=await ApiMySql.get(TBSimulaCab, null, null).timeout(const Duration(seconds: 30));
     for(int i = 0 ; i<_forms.length ; i++) {
       final novoFormulario = Formulario(
         id: int.parse(_forms[i]['id']),
@@ -40,7 +40,7 @@ class DatabaseService {
         var tbCriada = await ApiMySql.CriaTabelaSimulaCab(tb);
       }
       var itens = await ApiMySql.executaSql('insert into $tb (descricao,horas) values ("$titulo","$horas")');
-      var result = await ApiMySql.executaSql('select * from $tb where descricao="$titulo"');
+      var result = await ApiMySql.executaSql('select * from $tb where descricao="$titulo"').timeout(const Duration(seconds: 30));
       final novoFormulario = Formulario(
         id: int.parse(result[0]['id']),
         horas: result[0]['horas'],
