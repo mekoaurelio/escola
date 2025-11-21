@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'package:GEM/services/GlobalFilterController.dart';
+import 'form/qr_code.dart';
 import 'import/importar_dados.dart';
 import 'import/pdfExtractorPage.dart';
 import 'services/table_name_service.dart';
@@ -81,8 +82,8 @@ class _TattooStudioAppState extends State<TattooStudioApp> {
         GlobalCupertinoLocalizations.delegate,  ],
 
       home: _initialScreen!,
-    //home:ListaFormulariosScreen(),
-    //  home: ExcelReaderPage()
+      //  home: QRCodeGenerator()
+
 
 
     );

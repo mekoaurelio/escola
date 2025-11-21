@@ -597,9 +597,9 @@ class _ProfessorConferenciaState extends State<ProfessorConferencia> {
                     if (formKey.currentState!.validate()) {
                       final nivel = _statusController.text;
                       final valor = _vencimentoController.text==''?'0.0':Utils.saldoToSave(_vencimentoController.text);
-
-                     // print("Update $TBFolha set nivel='$nivel', vencimento=$valor WHERE matricula=$matricula");
-                      await ApiMySql.executaSql("Update $TBFolha set nivel='$nivel', vencimento=$valor WHERE matricula=$matricula");
+                      //print('xxxxxx');
+                      //print("Update $TBFolha set nivel='$nivel', vencimento=$valor WHERE matricula='$matricula'");
+                      await ApiMySql.executaSql("Update $TBFolha set nivel='$nivel', vencimento=$valor WHERE matricula='$matricula'");
                       _loadData();
 
                       }

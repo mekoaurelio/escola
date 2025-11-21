@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 
 import 'package:GEM/services/table_name_service.dart';
@@ -16,12 +17,13 @@ import 'package:excel/excel.dart';
 import '../const/const.dart';
 import '../data/api_my_sql.dart';
 import '../folha/professor_utils.dart';
+import '../relatorios/relatorio.dart';
 import '../services/calc_dispersao_valores.dart';
 import '../services/utils.dart';
 import '../services/valor_input_formatter.dart';
-import '../simulador/formulario/formularioBuilderScreen.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/texto.dart';
+import 'model_salarios.dart';
 import 'model_simula_form.dart';
 
 class Impacto extends StatefulWidget {
@@ -59,7 +61,8 @@ class _ImpactoScreenState extends State<Impacto> {
   double totalFolhaMensalCalc2=0;
   double totalFolhaAnualCalc2=0;
 
-  var professores;
+  List<ModelSalario> professores=[];
+  var professores2;
   List<String> novosNiveis=[];
   List<String> valorNivel=[];
 
@@ -75,6 +78,7 @@ class _ImpactoScreenState extends State<Impacto> {
   List<dynamic> resultado=[];
   List<dynamic> simulaForm=[];
   List<ModelSimulaForm> simulaFormjsonList=[];
+  List<ModelSalario> salariosjsonList=[];
 
   String tit='Dados da Folha de Pagamento : usando 15 classes e 2.80 de progressão';
 
@@ -97,12 +101,32 @@ class _ImpactoScreenState extends State<Impacto> {
   }
 
   Future<void> _carregarSoUmavez() async {
+    print('carrga só uma vez');
     cab=await ApiMySql.executaSql('select * from $TBSimulaCab').timeout(const Duration(seconds: 30));
     //progressao
     //PEGA OS VALORES SIMULAFORM
     var x=await ApiMySql.executaSql('select id,id_form,nivel,label,tipo,valor,valor_progressao,perc from $TBSimulaForm').timeout(const Duration(seconds: 30));
     var str=fixJsonString(x.toString());
     List<dynamic> jsonList = jsonDecode(str);
+
+    var sqlS = """SELECT DISTINCT 
+   f.nome,
+    f.vencimento,
+    f.horas,
+    f.nivel,
+    GROUP_CONCAT(CONCAT(dv.codigo, ':', dv.descricao, ':', dv.percentual, ':', dv.valor) SEPARATOR ' | ') AS vantagens_detalhadas,
+    SUM(dv.valor) AS soma_vantagens,
+    SUM(dv.valor) AS soma_apts,
+    (SELECT SUM(vencimento) FROM $TBFolha WHERE status = 'A') AS total_vencimentos_geral
+    FROM $TBFolha f
+    LEFT JOIN $TBVantagens dv ON f.matricula = dv.folha_id
+    WHERE f.status = 'A' 
+    GROUP BY f.matricula
+    ORDER BY f.matricula""";
+
+    var getVr=await ApiMySql.executaSql(sqlS).timeout(const Duration(seconds: 30));
+    var strVr=fixSal(getVr.toString());
+    List<dynamic> jsonListVr = jsonDecode(strVr.toString());
 
     String sql = """
 SELECT 
@@ -115,9 +139,48 @@ SELECT
     resultado = await ApiMySql.executaSql(sql);
     setState(() {
       simulaFormjsonList = jsonList.map((json) => ModelSimulaForm.fromJson(json)).toList();
-      percAumento=double.parse(resultado[0]['perc_aumento_adulto'])*100;
+
+      salariosjsonList = jsonListVr.map((json) => ModelSalario.fromJson(json)).toList();
+      percAumento=double.parse(resultado[0]['perc_aumento_adulto']);
       progressaoController.text=percAumento.toString();
     });
+  }
+
+
+  String fixSal(String original){
+
+  String fixed = original.replaceAll('null', '0');
+
+  fixed = fixed
+      .replaceAll('{nome:', '{"nome":')
+      .replaceAll('vencimento:', '"vencimento":')
+      .replaceAll(', horas:', ', "horas":')
+      .replaceAll(', nivel:', ', "nivel":')
+      .replaceAll(', vantagens_detalhadas:', ', "vantagens_detalhadas":')
+      .replaceAll(', soma_vantagens:', ', "soma_vantagens":')
+      .replaceAll(', soma_apts:', ', "soma_apts":')
+      .replaceAll(', total_vencimentos_geral:', ', "total_vencimentos_geral":');
+
+  fixed = fixed.replaceAllMapped(
+      RegExp(r'"nome": ([^,]+),'),
+          (match) => '"nome": "${match.group(1)}",'
+  );
+
+  fixed = fixed.replaceAllMapped(
+      RegExp(r'"horas": ([^,]+),'),
+          (match) => '"horas": "${match.group(1)}",'
+  );
+
+  fixed = fixed.replaceAllMapped(
+      RegExp(r'"nivel": ([^,]+),'),
+          (match) => '"nivel": "${match.group(1)}",'
+  );
+
+  fixed = fixed.replaceAllMapped(
+      RegExp(r'"vantagens_detalhadas": ([^,]+),'),
+          (match) => '"vantagens_detalhadas": "${match.group(1)}",'
+  );
+  return fixed;
   }
 
   String fixJsonString(String original) {
@@ -133,10 +196,7 @@ SELECT
         .replaceAll(', valor:', ', "valor":')
         .replaceAll(', valor_progressao:', ', "valor_progressao":')
         .replaceAll(', perc:', ', "perc":');
-        //.replaceAll(', created_at:', ', "created_at":');
 
-    // DEPOIS: Corrigir os VALORES de string
-    // Corrigir nivel (A, B, C, D)
     fixed = fixed.replaceAllMapped(
         RegExp(r'"nivel": (\w)'),
             (match) => '"nivel": "${match.group(1)}"'
@@ -223,46 +283,21 @@ SELECT
     });
   }
 
+  _getSalarios(String horas){
+
+    List<ModelSalario> filteredItems = salariosjsonList.where((item) => item.horas.toString().trim() == horas).toList();
+    professores=filteredItems;
+  }
+
   Future<void> _progressao(double percentualDeProgressao) async{
     setState(() => tit = 'Calculando aguarde....');
     double tot=0;
     for (int i = 0; i < cab.length; i++){
       //PEGA TODOS OS PROFESSORES
-
-      var h=cab[i]['horas']+'hs';
-      var sql = """SELECT DISTINCT f.id AS folha_id,
-    f.id_municipio,f.matricula,
-    f.nome,
-    f.cpf,
-    f.unidade,
-    f.local_lotacao,
-    f.vencimento,
-    f.horas,
-    f.cargo,
-    f.nivel,
-    DATE_FORMAT(f.admissao, '%d/%m/%Y') AS admissao,
-    GROUP_CONCAT(CONCAT(dv.codigo, ':', dv.descricao, ':', dv.percentual, ':', ' R\$ ', FORMAT(dv.valor, 2)) SEPARATOR ' | ') AS vantagens_detalhadas,
-    SUM(dv.valor) AS soma_vantagens,
-    SUM(dv.valor) AS soma_apts,
-    (SELECT SUM(vencimento) FROM $TBFolha WHERE status = 'A' AND horas = '$h') AS total_vencimentos_geral
-    FROM $TBFolha f
-    LEFT JOIN $TBVantagens dv ON f.matricula = dv.folha_id
-    WHERE f.status = 'A' AND f.horas = '$h'
-    GROUP BY f.matricula
-    ORDER BY f.matricula""";
-      professores = await ApiMySql.executaSql(sql);
-
-      //professores = await ApiMySql.getProPorHora(cab[i]['horas'].toString(), TBFolha, TBVantagens,).timeout(const Duration(seconds: 30));
-
+      //var h=cab[i]['horas']+'hs';
+      var h=cab[i]['horas'];
+      _getSalarios(h);
       _getNivelValor(cab[i]['id'],'PROGRESSAO');
-
-      /*
-      final getNiveis = await ApiMySql.getItensFromForm(TBSimulaForm, cab[i]['id'], 'id_form',).timeout(const Duration(seconds: 30));
-      novosNiveis = getNiveis.map((item) => item['label'].toString()).toList();
-      valorNivel = getNiveis.map((item) => item['valor_progressao'].toString()).toList();
-
-       */
-
       double progre=0;
       if(percentualDeProgressao>0) {
         progre=percentualDeProgressao;
@@ -285,12 +320,10 @@ SELECT
     double tot=0;
     for (int i = 0; i < cab.length; i++){
       //PEGA TODOS OS PROFESSORES
-      professores = await ApiMySql.getProPorHora(cab[i]['horas'].toString(), TBFolha, TBVantagens,).timeout(const Duration(seconds: 30));
+      //var h=cab[i]['horas']+'hs';
+      var h=cab[i]['horas'];
+      _getSalarios(h);
       _getNivelValor(cab[i]['id'],'NORMAL');
-
-      //final getNiveis = await ApiMySql.getItensFromForm(TBSimulaForm, cab[i]['id'], 'id_form',).timeout(const Duration(seconds: 30));
-      //novosNiveis = getNiveis.map((item) => item['label'].toString()).toList();
-      //valorNivel = getNiveis.map((item) => item['valor'].toString()).toList();
 
       double progre=0;
       if(percentualDeProgressao>0) {
@@ -310,18 +343,20 @@ SELECT
 
    await  ApiMySql.executaSql(sql);
 
-    sql='UPDATE $TBTotais SET perc_aumento_adulto = $perc';
+    sql='UPDATE $TBTotais SET perc_aumento_adulto = $p';
     await  ApiMySql.executaSql(sql);
 
     var x=await ApiMySql.executaSql('select id,id_form,nivel,label,tipo,valor,valor_progressao,perc from $TBSimulaForm').timeout(const Duration(seconds: 30));
     var str=fixJsonString(x.toString());
     List<dynamic> jsonList = jsonDecode(str);
+    print('XXXXXXXXXXXXX');
     simulaFormjsonList = jsonList.map((json) => ModelSimulaForm.fromJson(json)).toList();
+    print('MANOEL');
+    print(simulaFormjsonList);
     progressaoController.text=percentualDeProgressao;
 
     _carregarDados();
   }
-
 
   void atualizaDadosDaProgressao(){
     //DADOS DA FOLHA PROGRESSAO
@@ -376,7 +411,6 @@ SELECT
               _buildDataRow('8. Valor 1/3 férias (proporcional)', _currencyFormat.format(feriasProporcionalCalc),icon: Icons.help, tooTip: d8,_currencyFormat.format(feriasProporcionalCalc2)),
               _buildDataRow('9. Total folha mensal', _currencyFormat.format(totalFolhaMensalCalc),icon: Icons.help, tooTip: d9,_currencyFormat.format(totalFolhaMensalCalc2) ),
               _buildDataRow('10. Total folha bruta anual', _currencyFormat.format(totalFolhaAnualCalc),tam: 22,icon: Icons.help, tooTip: d10,_currencyFormat.format(totalFolhaAnualCalc2)),
-
             ],
             )
           ],
@@ -423,7 +457,6 @@ SELECT
                 _buildDataRow('5. Pag dos Profissionais do Magistério (70%)', '${_currencyFormat.format(totF)}%' ,icon: Icons.help, tooTip: d6 , '${_currencyFormat.format(totF2)}%'),
 
                 _buildDataRow('PERDA/GANHO', _currencyFormat.format(perdaGanho),_currencyFormat.format(perdaGanho)),
-             //   _buildDataRow('6. Mínimo 70% - Folha dos profissionais do magistério (5/4)', '${(receitaTotalFundeb/100)*totF}%',icon: Icons.help, tooTip: d10),
                 _buildDataRow('. TOTAL - Consolidação de recursos para MDE - (1 + 2 + 4) ', _currencyFormat.format(receitasDeImpostos+receitaDeTransferencia+receitaTotalFundeb),icon: Icons.help, tooTip: d7,tam: 18,_currencyFormat.format(receitasDeImpostos+receitaDeTransferencia+receitaTotalFundeb)),
               ],
             )
@@ -503,6 +536,7 @@ SELECT
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
+
                       onPressed: () {
                         generateImpactoPdf(
                           totalFolha: totalFolhaDePagamento,
@@ -554,6 +588,51 @@ SELECT
                       },
                     ),
                     SizedBox(width: 10,),
+                    //RELATORIO
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.list_alt_outlined, color: Colors.white),
+                      label:  Text('REL', style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green, // Cor para o botão de exportar
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+
+                      onPressed: () async{
+                       // await gerarPdf();
+                        Get.to(() => Relatorio(
+                          totalFolhaDePagamento:totalFolhaDePagamento,
+                           totalFolhaNovo:totalFolhaNovo,
+                           totalVantagens:totalVantagens,
+                           totalVantagens2:totalVantagens2,
+                           percVantagem:percVantagem,
+                           percVantagem2:percVantagem2,
+                           custoTotalLiquidoCalc:custoTotalLiquidoCalc,
+                           custoTotalLiquidoCalc2:custoTotalLiquidoCalc2,
+                           encargosPrev14PercentCalc:encargosPrev14PercentCalc,
+                           encargosPrev14PercentCalc2:encargosPrev14PercentCalc2,
+                           decimoTerceiroProporcionalCalc:decimoTerceiroProporcionalCalc,
+                           decimoTerceiroProporcionalCalc2:decimoTerceiroProporcionalCalc2,
+                           feriasProporcionalCalc:feriasProporcionalCalc,
+                           feriasProporcionalCalc2:feriasProporcionalCalc2,
+                           totalFolhaMensalCalc:totalFolhaMensalCalc,
+                           totalFolhaMensalCalc2:totalFolhaMensalCalc2,
+                           totalFolhaAnualCalc:totalFolhaAnualCalc,
+                           totalFolhaAnualCalc2:totalFolhaAnualCalc2,
+
+                          receitasDeImpostos:receitasDeImpostos,
+                          receitaDeTransferencia:receitaDeTransferencia,
+                          receitaTotalFundeb:receitaTotalFundeb,
+                          totF:totF,
+                          totF2:totF2,
+                          perdaGanho:perdaGanho,
+                          simulaFormjsonList:simulaFormjsonList,
+
+                        ), arguments: {});
+                      },
+                    ),
                     //Refresh
                     ElevatedButton.icon(
                       icon: const Icon(Icons.refresh, color: Colors.white),
@@ -594,17 +673,18 @@ SELECT
     double total=0;
     for (int nivelIndex = 0; nivelIndex < novosNiveis.length; nivelIndex++){
       for (int coluna = 0; coluna < calculatedTableValues[nivelIndex].length; coluna++){
-
-        double x=await ProfessorUtils.totalDeVencimentosProposta(
-            novosNiveis[nivelIndex].toString(), coluna + 1, professores,calculatedTableValues);
+          double x = await ProfessorUtils.totalDeVencimentosPropostaNova(
+              novosNiveis[nivelIndex].toString(), coluna + 1, professores,
+              calculatedTableValues);
         if(x>0) {
           total+=x;
         }
       }
     }
+   // print('VALOR MENSAL $total');
+   // print('===============================================');
     return total;
   }
-
 
   Future<void> generateImpactoPdf({
     required double totalFolha,
@@ -626,7 +706,7 @@ SELECT
     final currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
     // Helper para linha de tabela
-    pw.TableRow buildRow(String label, String valor,
+    pw.TableRow buildRow(String label, String valor,String valor2,
         {bool bold = false, PdfColor color = PdfColors.black}) {
       return pw.TableRow(
         children: [
@@ -644,6 +724,18 @@ SELECT
             padding: const pw.EdgeInsets.all(6),
             child: pw.Text(
               valor,
+              textAlign: pw.TextAlign.right,
+              style: pw.TextStyle(
+                fontSize: 12,
+                fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+                color: color,
+              ),
+            ),
+          ),
+          pw.Padding(
+            padding: const pw.EdgeInsets.all(6),
+            child: pw.Text(
+              valor2,
               textAlign: pw.TextAlign.right,
               style: pw.TextStyle(
                 fontSize: 12,
@@ -675,18 +767,21 @@ SELECT
             border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
             columnWidths: {
               0: const pw.FlexColumnWidth(3),
-              1: const pw.FlexColumnWidth(1),
+              1: const pw.FlexColumnWidth(1.5),
+              2: const pw.FlexColumnWidth(1.5),
             },
             children: [
-              buildRow("1. Valor da folha de vencimentos básicos - Mensal", currencyFormat.format(totalFolha)),
-              buildRow("2. Valor das vantagens pecuniárias - Mensal", currencyFormat.format(totalVantagens), color: PdfColors.red),
-              buildRow("3. Percentual das vantagens sobre a folha", "${percVantagem.toStringAsFixed(2)}%"),
-              buildRow("4. Custo total da folha líquida mensal", currencyFormat.format(custoTotalLiquidoCalc), bold: true),
-              buildRow("5. Encargos previdenciários (14%)", currencyFormat.format(encargosPrev14PercentCalc)),
-              buildRow("6. Décimo terceiro proporcional", currencyFormat.format(decimoTerceiroProporcionalCalc)),
-              buildRow("7. Férias proporcionais (1/3)", currencyFormat.format(feriasProporcionalCalc)),
-              buildRow("8. Total folha mensal", currencyFormat.format(totalFolhaMensalCalc), bold: true),
-              buildRow("9. Total folha bruta anual", currencyFormat.format(totalFolhaAnualCalc), bold: true),
+              buildRow("Descrição", 'Valor Atual','Proposta'),
+              buildRow("1. Valor da folha de vencimentos básicos - Mensal", currencyFormat.format(totalFolha),currencyFormat.format(totalFolha)),
+              buildRow("2. Valor das vantagens pecuniárias - Mensal", currencyFormat.format(totalVantagens),currencyFormat.format(totalFolha), color: PdfColors.red),
+              buildRow("3. Percentual das vantagens sobre a folha", "${percVantagem.toStringAsFixed(2)}%","${percVantagem.toStringAsFixed(2)}%"),
+              buildRow("4. Custo total da folha líquida mensal", currencyFormat.format(custoTotalLiquidoCalc),currencyFormat.format(custoTotalLiquidoCalc), bold: true),
+              buildRow("5. Encargos previdenciários (14%)", currencyFormat.format(encargosPrev14PercentCalc),currencyFormat.format(encargosPrev14PercentCalc)),
+              buildRow("6. Décimo terceiro proporcional", currencyFormat.format(decimoTerceiroProporcionalCalc),currencyFormat.format(decimoTerceiroProporcionalCalc)),
+              buildRow("7. Férias proporcionais (1/3)", currencyFormat.format(feriasProporcionalCalc),currencyFormat.format(feriasProporcionalCalc)),
+              buildRow("8. Total folha mensal", currencyFormat.format(totalFolhaMensalCalc),currencyFormat.format(totalFolhaMensalCalc), bold: true),
+              buildRow("9. Total folha bruta anual", currencyFormat.format(totalFolhaAnualCalc),currencyFormat.format(totalFolhaAnualCalc), bold: true),
+             // buildRow("", "",''),
             ],
           ),
 
@@ -699,16 +794,17 @@ SELECT
             border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
             columnWidths: {
               0: const pw.FlexColumnWidth(3),
-              1: const pw.FlexColumnWidth(1),
+              1: const pw.FlexColumnWidth(1.5),
+              2: const pw.FlexColumnWidth(1.5),
             },
             children: [
-              buildRow("1. Receita de Impostos", currencyFormat.format(receitasDeImpostos)),
-              buildRow("2. Receitas de Transferências", currencyFormat.format(receitaDeTransferencia)),
-              buildRow("   Total Receita (1 + 2)", currencyFormat.format(receitasDeImpostos + receitaDeTransferencia)),
-              buildRow("3. Custo total da folha anual", currencyFormat.format(totalFolhaAnualCalc)),
-              buildRow("4. Receitas FUNDEB", currencyFormat.format(receitaTotalFundeb), bold: true),
-              buildRow("5. Profissionais do Magistério (70%)", "${totF.toStringAsFixed(2)}%"),
-              buildRow("6. Perda/Ganho", currencyFormat.format(perdaGanho)),
+              buildRow("1. Receita de Impostos", currencyFormat.format(receitasDeImpostos),currencyFormat.format(receitasDeImpostos)),
+              buildRow("2. Receitas de Transferências", currencyFormat.format(receitaDeTransferencia),currencyFormat.format(receitaDeTransferencia)),
+              buildRow("   Total Receita (1 + 2)", currencyFormat.format(receitasDeImpostos + receitaDeTransferencia),currencyFormat.format(receitasDeImpostos + receitaDeTransferencia)),
+              buildRow("3. Custo total da folha anual", currencyFormat.format(totalFolhaAnualCalc),currencyFormat.format(totalFolhaAnualCalc)),
+              buildRow("4. Receitas FUNDEB", currencyFormat.format(receitaTotalFundeb),currencyFormat.format(receitaTotalFundeb), bold: true),
+              buildRow("5. Profissionais do Magistério (70%)", "${totF.toStringAsFixed(2)}%","${totF.toStringAsFixed(2)}%"),
+              buildRow("6. Perda/Ganho", currencyFormat.format(perdaGanho),currencyFormat.format(perdaGanho)),
             ],
           ),
         ],
@@ -749,7 +845,6 @@ SELECT
   }
 
 
-
   Future<void> generateExcel({
     required double totalFolha,
     required double totalVantagens,
@@ -767,7 +862,7 @@ SELECT
     required double perdaGanho,
   }) async {
     final excel = Excel.createExcel();
-    final sheet = excel['Relatório'];
+    final sheet = excel['Proposta para Folha'];
 
     // Estilo negrito
     final boldStyle = CellStyle(
@@ -776,31 +871,30 @@ SELECT
     );
 
     // Helper para adicionar linhas (aceita String e double)
-    void addRow(String label, [double? value]) {
-      sheet.appendRow([
-        TextCellValue(label),
-        if (value != null) DoubleCellValue(value),
-      ]);
+    void addRow(String label, var value,var value2) {
+      //sheet.appendRow([TextCellValue(label),TextCellValue(value.toString(),TextCellValue(value2.toString()]);
+
     }
 
     // Cabeçalho 1
     sheet.appendRow([TextCellValue('Dados da Folha de Pagamento')]);
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0)).cellStyle = boldStyle;
     sheet.appendRow([]);
+    addRow("", '','');
 
-    addRow('1. Valor da folha de vencimentos básicos - Mensal', totalFolha);
-    addRow('2. Valor das vantagens pecuniárias - Mensal', totalVantagens);
-    addRow('3. Percentual das vantagens sobre a folha de vencimento', percVantagem);
-    addRow('4. Custo total da folha de pagamento', custoTotalLiquidoCalc);
-    addRow('5. Encargos previdenciários (14%)', encargosPrev14PercentCalc);
-    addRow('6. Valor do décimo terceiro proporcional', decimoTerceiroProporcionalCalc);
-    addRow('7. Valor 1/3 férias (proporcional)', feriasProporcionalCalc);
-    addRow('8. Total folha mensal', totalFolhaMensalCalc);
-    addRow('9. Total folha bruta anual', totalFolhaAnualCalc);
+    addRow("Descrição", 'Valor Atual','Proposta');
+    addRow('1. Valor da folha de vencimentos básicos - Mensal', totalFolha,totalFolha);
+    addRow('2. Valor das vantagens pecuniárias - Mensal', totalVantagens,totalVantagens);
+    addRow('3. Percentual das vantagens sobre a folha de vencimento', percVantagem,percVantagem);
+    addRow('4. Custo total da folha de pagamento', custoTotalLiquidoCalc,custoTotalLiquidoCalc);
+    addRow('5. Encargos previdenciários (14%)', encargosPrev14PercentCalc,encargosPrev14PercentCalc);
+    addRow('6. Valor do décimo terceiro proporcional', decimoTerceiroProporcionalCalc,decimoTerceiroProporcionalCalc);
+    addRow('7. Valor 1/3 férias (proporcional)', feriasProporcionalCalc,feriasProporcionalCalc);
+    addRow('8. Total folha mensal', totalFolhaMensalCalc,totalFolhaMensalCalc);
+    addRow('9. Total folha bruta anual', totalFolhaAnualCalc,totalFolhaAnualCalc);
 
     // Linha em branco extra
-    sheet.appendRow([]);
-    sheet.appendRow([]);
+    addRow("", '','');
 
     // Cabeçalho 2
     final headerRowIndex = sheet.maxRows;
@@ -808,11 +902,11 @@ SELECT
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: headerRowIndex)).cellStyle = boldStyle;
     sheet.appendRow([]);
 
-    addRow('1. Receita de Impostos 25%', receitasDeImpostos);
-    addRow('2. Receita de Transferências 5%', receitaDeTransferencia);
-    addRow('3. Receita Total FUNDEB', receitaTotalFundeb);
-    addRow('4. Percentual gastos com profissionais do magistério', totF);
-    addRow('5. Perda/Ganho', perdaGanho);
+    addRow('1. Receita de Impostos 25%', receitasDeImpostos,receitasDeImpostos);
+    addRow('2. Receita de Transferências 5%', receitaDeTransferencia,receitaDeTransferencia);
+    addRow('3. Receita Total FUNDEB', receitaTotalFundeb,receitaTotalFundeb);
+    addRow('4. Percentual gastos com profissionais do magistério', totF,totF);
+    addRow('5. Perda/Ganho', perdaGanho,perdaGanho);
 
     // Converte para bytes
     final List<int>? bytes = excel.encode();

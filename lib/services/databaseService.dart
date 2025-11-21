@@ -11,7 +11,6 @@ import 'utils.dart';
 class DatabaseService {
   // Simula uma tabela de formulários no banco de dados
   final List<Formulario> _formulariosSalvos = [];
-  int _nextFormId = 1;
   int _nextItemId = 1;
   final GlobalFilterController _filterController = Get.find<GlobalFilterController>();
 
@@ -39,8 +38,13 @@ class DatabaseService {
       if (!temTabela) {
         var tbCriada = await ApiMySql.CriaTabelaSimulaCab(tb);
       }
+      print('insert into $tb (descricao,horas,classes,progressao,) values ("$titulo","$horas"),15,1.0');
       var itens = await ApiMySql.executaSql('insert into $tb (descricao,horas) values ("$titulo","$horas")');
       var result = await ApiMySql.executaSql('select * from $tb where descricao="$titulo"').timeout(const Duration(seconds: 30));
+      print('KKKKKKKKK');
+      print(result);
+
+      print('----------');
       final novoFormulario = Formulario(
         id: int.parse(result[0]['id']),
         horas: result[0]['horas'],

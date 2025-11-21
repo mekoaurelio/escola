@@ -68,6 +68,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
     String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
     String chave = '$nivel$colunaFormatada';
     chave=chave.replaceAll('NIVEL', '').trim();
+    //bool existe = professores.any((professor) => professor['nivel'] == chave);
     return _professoresPorNivel[chave] ?? 0;
   }
 
@@ -77,7 +78,6 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
     try {
       // ======= Parte 1: Carregar dados =======
       final getNiveis = await ApiMySql.getItensFromForm(TBSimulaForm, widget.idItens, 'id_form',).timeout(const Duration(seconds: 30));
-
       if (getNiveis.isEmpty) {
         Utils.snak('Atenção', 'Não tem nenhum nível cadastrado para ${widget.descricao}', false, Colors.red);
         return;
@@ -88,13 +88,9 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       }
 
       final novosNiveisTmp = getNiveis.map((item) => item['label'].toString()).toList();
-      final valorNivelTmp = getNiveis.map((item) => item['valor'].toString()).toList();
       final valorNivelProgressaoTmp = getNiveis.map((item) => item['valor_progressao'].toString()).toList();
-
       final nu = await ApiMySql.getProfPorNivel(TBFolha, widget.hora,).timeout(const Duration(seconds: 30));
-
       final niveisUnicosTmp = nu.map((item) => item['nivel'].toString()).toList();
-
       final professoresTmp = await ApiMySql.getProPorHora(widget.hora, TBFolha, TBVantagens,).timeout(const Duration(seconds: 30));
 
       if (professoresTmp == null || professoresTmp.isEmpty) {
@@ -104,6 +100,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
 
       final totais = await ApiMySql.get(TBTotais, null, null).timeout(const Duration(seconds: 30));
       final getHoraProgressao = await ApiMySql.getItensFromForm(TBSimulaCab, widget.idItens, 'id',).timeout(const Duration(seconds: 30));
+
       final perProgressaoEntreClasseTmp = double.parse(getHoraProgressao[0]['progressao']);
       final cargaHorariaTmp = int.parse(getHoraProgressao[0]['classes']);
 
@@ -113,7 +110,6 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
         final nivel = item['nivel']?.toString() ?? '';
         professoresPorNivelTmp[nivel] = (professoresPorNivelTmp[nivel] ?? 0) + 1;
       }
-
       // Totais
       final mesesTmp = totais[0]['meses'].toString();
       final decimoTerFeriasTmp = totais[0]['decimo_ter_ferias'].toString();
@@ -156,7 +152,6 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
 
         valorNivel = valorNivelProgressaoTmp;
 
-
         niveisUnicos = niveisUnicosTmp;
         professores = professoresTmp;
         perProgressaoEntreClasse = perProgressaoEntreClasseTmp;
@@ -191,6 +186,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
         }
       }
     }
+    print('VALOR MENSAL 40 horas $total');
     return total;
   }
 
@@ -249,8 +245,8 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                 niveisP: niveisUnicos,
                 descricao: widget.descricao,
                 calculatedTableValues: _calculatedTableValues, // Seus valores calculados
-                quantidadeDeProfessores: (nivel, coluna) {
-                  return quantidadeDeProfessores(nivel, coluna);
+                quantidadeDeProfessores: (nivel1, coluna) {
+                  return quantidadeDeProfessores(nivel1, coluna);
                 },
                 onCellSelected: (row, column) {
                   //_handleCellSelection(row, column);
@@ -270,6 +266,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                 quantidadeDeProfessores: (nivel, coluna) {
                   return quantidadeDeProfessores(nivel, coluna);
                 },
+
                 professores: professores, // sua lista de professores
               ),
               SizedBox(height: 24),
@@ -413,8 +410,8 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
     Utils.mostrarDialogoEditarValor(
       context: context,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      titulo: 'Editar Carga Horária',
-      labelCampo: 'Horas',
+      titulo: 'Editar Classes',
+      labelCampo: 'Classes',
       valorInicial: cargaHoraria.toString(),
       aoSalvar: (novoValor)async {
         var id=widget.idItens;

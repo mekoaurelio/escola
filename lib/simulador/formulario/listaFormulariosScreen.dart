@@ -96,17 +96,22 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
 
   void _abrirFormulario(Formulario formulario) async {
     var _itens=await ApiMySql.getItensFromForm(TBSimulaForm,formulario.id,'id_form').timeout(const Duration(seconds: 30));
+    formulario.itens.clear();
     for(int i = 0 ; i<_itens.length ; i++) {
+
       formulario.itens.add(
           ItemFormulario(
-              id: int.parse(_itens[i]['id']),
-              label: _itens[i]['label'],
-              tipo:  getTipoItem(_itens[i]['tipo']),
-              percentual: double.parse(_itens[i]['perc']?? '0.0'),
-              valor: double.parse(_itens[i]['valor']),
+            id: int.parse(_itens[i]['id']),
+            label: _itens[i]['label'],
+            nivel: _itens[i]['nivel'],
+            tipo:  getTipoItem(_itens[i]['tipo']),
+            percentual: double.parse(_itens[i]['perc']?? '0.0'),
+            valor: double.parse(_itens[i]['valor']),
             valor_progressao:  double.parse(_itens[i]['valor_progressao']),
+            posicao: i,
       ));
     }
+
     // Navega e espera o retorno para atualizar a lista
     await Navigator.of(context).push(MaterialPageRoute(
       builder: (context) => FormularioBuilderScreen(formulario: formulario),

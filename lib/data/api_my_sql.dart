@@ -11,6 +11,9 @@ import '../simulador/formulario/formulario.dart';
 
 class ApiMySql {
 
+  static String urlProducao='https://gem.net.br/dados/';
+  static String urlTeste='https://www.xmktech.net/dados/';
+
   static Future<List<dynamic>> getHoras() async{
     var sql = "SELECT GROUP_CONCAT(DISTINCT horas ORDER BY horas SEPARATOR ',') AS horas_distintas";
     sql+=" FROM $TBFolha WHERE horas IS NOT NULL AND horas !='';";
@@ -77,7 +80,7 @@ WHERE id_user = $idUser;
 
   static Future<String> fetchPdfText() async {
     var path='$pathDados{extra.php}';
-    final resp = await http.get(Uri.parse('https://www.xmktech.net/dados/extra.php'));
+    final resp = await http.get(Uri.parse('${urlProducao}extra.php'));
     if (resp.statusCode != 200) {
       throw Exception('Falha ao chamar API: ${resp.statusCode}');
     }
@@ -132,10 +135,20 @@ WHERE id_user = $idUser;
 
   static Future<List<dynamic>> executaSql(String sql) async {
     try {
-      final response = await http.get(Uri.parse('https://www.xmktech.net/dados/get.php?sql=${Uri.encodeComponent(sql)}'));
-     // print(response.body);
+     // final response = await http.get(Uri.parse("${urlProducao}get.php?sql=${Uri.encodeComponent(sql)}&tipo='PRODUCAO'"));
+
+      final response = await http.get(
+          Uri.parse('${urlProducao}get.php')
+              .replace(queryParameters: {
+            'sql': sql,  // ✅ Apenas nome da tabela
+            'tipo': 'PRODUCAO',    // ✅ Sem aspas extras
+          })
+      );
+
       if (response.statusCode == 200) {
+
         final result = json.decode(response.body.trim());
+        //print(result);
         return result is List ? result : [result].whereType<dynamic>().toList();
       }
       return [];
@@ -144,9 +157,9 @@ WHERE id_user = $idUser;
       return [];
     }
   }
-  
+  /*
   static Future<List<dynamic>> getProfessores(String hora,String tbFolha,String tbVantagem) async {
-    var url = Uri.parse('https://www.xmktech.net/dados/get_prof_infan.php?nocache=${DateTime.now().millisecondsSinceEpoch}');
+    var url = Uri.parse('${urlProducao}get_prof_infan.php?nocache=${DateTime.now().millisecondsSinceEpoch}');
 
     // Corpo da requisição em formato JSON
     final body = json.encode({
@@ -181,6 +194,8 @@ WHERE id_user = $idUser;
     }
   }
 
+   */
+
   static Future<List<dynamic>> getHoraNivel(String cab,String form) async {
     var sql='SELECT c.*,f.id_form,f.nivel,f.label,f.tipo,f.valor,f.perc';
     sql+=' FROM $cab c JOIN $form f ON c.id =f.id_form;';
@@ -194,7 +209,7 @@ WHERE id_user = $idUser;
 
 
   static Future<List<dynamic>> getProPorHora(String hora,String tbFolha,String tbVantagem) async {
-    var url = Uri.parse('https://www.xmktech.net/dados/get_prof_por_hora.php?nocache=${DateTime.now().millisecondsSinceEpoch}');
+    var url = Uri.parse('${urlProducao}get_prof_por_hora.php?nocache=${DateTime.now().millisecondsSinceEpoch}&tipo="PRODUCAO"');
 
     // Corpo da requisição em formato JSON
     final body = json.encode({
@@ -202,6 +217,7 @@ WHERE id_user = $idUser;
       'hora': hora, // Os parâmetros que o PHP precisa
       'tbfolha': tbFolha,
       'tbvantagem': tbVantagem,
+      'tipo': 'PRODUCAO',
     });
 
     try {
@@ -231,13 +247,14 @@ WHERE id_user = $idUser;
   }
 
   static Future<List<dynamic>> getProfPorNivel(String tbFolha,String hora) async {
-    var url = Uri.parse('https://www.xmktech.net/dados/get_prof_por_nivel.php?nocache=${DateTime.now().millisecondsSinceEpoch}');
+    var url = Uri.parse('${urlProducao}get_prof_por_nivel.php?nocache=${DateTime.now().millisecondsSinceEpoch}&tipo="PRODUCAO"');
 
     // Corpo da requisição em formato JSON
     final body = json.encode({
       'action': 'getProfessor', // O nome da ação que o PHP vai identificar
       'tbfolha': tbFolha,
       'hora': hora,
+      'tipo': 'PRODUCAO',
     });
 
     try {
@@ -357,8 +374,8 @@ WHERE id_user = $idUser;
     var sql='CREATE TABLE IF NOT EXISTS $tb (';
     sql+='id int(11) NOT NULL,';
     sql+='id_form int(11) NOT NULL,';
-    sql+='label varchar(200) NOT NULL,';
-    sql+='tipo varchar(50) NOT NULL,';
+    sql+='label varchar(200) DEFAULT NULL,';
+    sql+='tipo varchar(50) DEFAULT NULL,';
     sql+='valor decimal(15,2) DEFAULT NULL,';
     sql+='valor_progressao decimal(15,2) DEFAULT NULL,';
     sql+='perc decimal(10,2) DEFAULT NULL,';
@@ -372,8 +389,8 @@ WHERE id_user = $idUser;
     sql+='id int(11) NOT NULL,';
     sql+='horas int(11) NOT NULL,';
     sql+='descricao varchar(200) NOT NULL,';
-    sql+='classes int(11) NOT NULL,';
-    sql+='progressao decimal(5,2) NOT NULL,';
+    sql+='classes int(11) DEFAULT NULL,';
+    sql+='progressao decimal(5,2) DEFAULT NULL,';
     sql+='created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP);';
     var result=await executaSql(sql);
     await criaIndiceEAutoIncremento(tb);
@@ -537,7 +554,8 @@ WHERE id_user = $idUser;
     sql+= 'vr18 decimal(10,3) NOT NULL DEFAULT "0.00",';
     sql+= 'vr19 decimal(10,3) NOT NULL DEFAULT "0.00",';
     sql+= 'vr20 decimal(10,3) NOT NULL DEFAULT "0.00",';
-    sql+= 'vr21 decimal(10,3) NOT NULL DEFAULT "0.00")';
+    sql+= 'vr21 decimal(10,3) NOT NULL DEFAULT "0.00",';
+    sql+= 'valor_calculo decimal(10,3) NOT NULL DEFAULT "0.00")';
     await executaSql(sql);
     await criaIndiceEAutoIncremento(tb);
   }

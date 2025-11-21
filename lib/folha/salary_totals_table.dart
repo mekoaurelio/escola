@@ -83,12 +83,14 @@ class SalaryTotalsTable extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
+                          //DESCRIÇÃO DO NIVEL
                           Container(
                             width: 80,
                             padding: EdgeInsets.symmetric(vertical: 12),
                             alignment: Alignment.center,
                             child: Texto(tit: novosNiveis[nivelIndex].toString(),negrito: true,cor:textColor ,),
                           ),
+                          //LISTA DE TODOS OS NIVEIS
                           for (int coluna = 0; coluna < calculatedTableValues[nivelIndex].length; coluna++)
                             Container(
                               width: 100,
@@ -96,7 +98,6 @@ class SalaryTotalsTable extends StatelessWidget {
                               alignment: Alignment.center,
                               child: Column(
                                 children: [
-                                  //Quantidade de professores
                                   if (quantidadeDeProfessores(novosNiveis[nivelIndex].toString(), coluna + 1) != 0)
                                     Texto(tit: '${quantidadeDeProfessores(novosNiveis[nivelIndex].toString(), coluna + 1)} Profs.', tam: 11, cor: textColor.withOpacity(0.8),),
 

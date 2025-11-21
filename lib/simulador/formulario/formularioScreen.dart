@@ -123,10 +123,12 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
                               ItemFormulario(
                                 id: _dbService.getProximoItemId(),
                                 label: label,
+                                nivel: label,
                                 tipo: tipoSelecionado,
                                 percentual: percent,
                                 valor: valor,
                                 valor_progressao: valorProgressao,
+                                posicao:_formulario.itens.length+1,
                           ));
                         }
                       });

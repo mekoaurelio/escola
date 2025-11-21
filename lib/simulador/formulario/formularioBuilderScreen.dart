@@ -32,10 +32,10 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
   void initState() {
     super.initState();
     _formulario = widget.formulario;
-
   }
 
-  void _gerenciarItem([ItemFormulario? item]) {
+  void _gerenciarItem(int posicao,[ItemFormulario? item]) {
+    print('POSICAO $posicao');
     vrParaCalculo=0;
     vrParaCalculo2=0;
 
@@ -57,7 +57,7 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
         text: isEditing && item.valor_progressao != 0 ? valorFormatter.format(item.valor_progressao) : '');
 
     TipoItem tipoSelecionado = isEditing ? item.tipo : TipoItem.progressao;
-
+    bool temItem=item!=null;
     showDialog(
       context: context,
       builder: (context) {
@@ -110,6 +110,22 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
                         ),
 
                         //VALOR
+
+                      if(temItem)
+                      if(item.posicao==0)
+                        TextFormField(
+                          controller: valorController,
+                          decoration: const InputDecoration(labelText: 'Valor (R\$)'),
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          validator: (value) => (value?.isEmpty ?? true) ? 'Campo obrigatório' : null,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            ValorInputFormatter(),
+                          ],
+                        ),
+                      if(!temItem )
+                        Container(),
+                        /*
                         TextFormField(
                           controller: valorController,
                           decoration: const InputDecoration(labelText: 'Valor (R\$)'),
@@ -121,10 +137,12 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
                           ],
                         ),
 
+                         */
+
                       //VALOR PROGRESSAO
                       TextFormField(
                         controller: valorProgressaoController,
-                        decoration: const InputDecoration(labelText: 'Valor Progressão (R\$)'),
+                        decoration: const InputDecoration(labelText: 'Progressão (R\$)'),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         validator: (value) => (value?.isEmpty ?? true) ? 'Campo obrigatório' : null,
                         inputFormatters: [
@@ -143,21 +161,41 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
                   onPressed: () async{
                     if (formKey.currentState!.validate()) {
                       final label = labelController.text;
+                      final nivel = labelController.text;
                       final percent = percentController.text==' '?'0.0':percentController.text.replaceAll(',', '.');
                       final valor = valorController.text==''?'0.0':Utils.saldoToSave(valorController.text);
                       final valor_progressao = valorController.text==''?'0.0':Utils.saldoToSave(valorProgressaoController.text);
-
+                      double vrF=0.0;
+                      if(double.parse(percent)>0){
+                        double? ultimoValor = _formulario.itens[posicao-1].valor;
+                        vrF=((ultimoValor*double.parse(percent))/100)+ultimoValor;
+                      }else{
+                        if(temItem) {
+                          vrF = double.parse(valor);
+                        }else{
+                          vrF=0;
+                        }
+                      }
 
                       var idForm=_formulario.id;
                       if(isEditing){
                         var idI=item.id;
-                        await ApiMySql.executaSql('update $TBSimulaForm set label="$label",tipo="$tipoSelecionado",valor=$valor,valor_progressao=$valor_progressao,perc=$percent where id=$idI');
+                        if(vrF>0){
+                          await ApiMySql.executaSql('update $TBSimulaForm set label="$label",tipo="$tipoSelecionado",valor=$vrF,valor_progressao=$valor_progressao,perc=$percent,nivel="$nivel" where id=$idI');
+                        }else{
+                          await ApiMySql.executaSql('update $TBSimulaForm set label="$label",tipo="$tipoSelecionado",valor=$valor,valor_progressao=$valor_progressao,perc=$percent,nivel="$nivel" where id=$idI');
+                        }
+
                       }else{
                         final temTabela=await ApiMySql.tabelaExiste(TBSimulaForm);
                         if(!temTabela){
                           await ApiMySql.CriaTabelaSimulaForm(TBSimulaForm);
                         }
-                        await ApiMySql.executaSql('insert INTO $TBSimulaForm (label,tipo,valor,id_form,perc,valor_progressao) Values ("$label","$tipoSelecionado",$valor,$idForm,$percent,$valor_progressao)');
+                        if(vrF>0) {
+                          await ApiMySql.executaSql('insert INTO $TBSimulaForm (label,tipo,valor,id_form,perc,valor_progressao,nivel) Values ("$label","$tipoSelecionado",$vrF,$idForm,$percent,$valor_progressao,"$nivel")');
+                        }else{
+                          await ApiMySql.executaSql('insert INTO $TBSimulaForm (label,tipo,valor,id_form,perc,valor_progressao,nivel) Values ("$label","$tipoSelecionado",$valor,$idForm,$percent,$valor_progressao,"$nivel")');
+                        }
                       }
 
                       setState(() {
@@ -166,16 +204,18 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
                           item.label = label;
                           item.tipo = tipoSelecionado;
                           item.percentual = double.parse(percent);
-                          item.valor = double.parse(valor);
+                          item.valor = vrF;
                           item.valor_progressao=double.parse(valor_progressao);
                         } else {
                           _formulario.itens.add(ItemFormulario(
                             id: _dbService.getProximoItemId(),
                             label: label,
+                            nivel: label,
                             tipo: tipoSelecionado,
-                            percentual: double.parse(valor),
-                            valor: double.parse(valor),
+                            percentual: double.parse(percent),
+                            valor: vrF,
                             valor_progressao: double.parse(valor_progressao),
+                            posicao: posicao++
                           ));
                         }
                       });
@@ -192,11 +232,16 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
     );
   }
 
+  double? getPenultimoValor(Formulario formulario) {
+    if (formulario.itens.length < 2) return null;
+    return formulario.itens[formulario.itens.length - 2].valor;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Editando: ${_formulario.titulo}'),
+        title: Text('Editando : ${_formulario.titulo}'),
 
       ),
       body: Center(
@@ -213,7 +258,7 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 24.0),
                   child: Column(
-                    children: _formulario.itens.map((item) => _buildItemRow(item,index++)).toList(),
+                    children: _formulario.itens.map((item) => _buildItemRow(item,index)).toList(),
                   ),
                 ),
               ),
@@ -222,7 +267,7 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _gerenciarItem(null),
+        onPressed: () => _gerenciarItem(_formulario.itens.length,null),
         tooltip: 'Adicionar Novo Item',
         child: const Icon(Icons.add),
       ),
@@ -230,7 +275,6 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
   }
 
   Widget _buildItemRow(ItemFormulario item,int index) {
-    // ... (O método _buildItemRow pode ser copiado da resposta anterior, ele já está bem dinâmico)
     // Pequena modificação para permitir editar qualquer item
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -249,7 +293,7 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
             Expanded(
               flex: 2,
               child: Text(
-                index==0?'':
+                item.percentual==0?'':
                 _percentFormat.format(item.percentual! / 100),
                 textAlign: TextAlign.end,
                 style: const TextStyle(fontSize: 16, color: Colors.black54),
@@ -263,7 +307,8 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
               child: Text(
                 index==0?
                 _currencyFormat.format(item.valor):
-                _currencyFormat.format( ( valor(_formulario.itens.elementAt(index-1).valor,item.percentual!))),
+                _currencyFormat.format( _formulario.itens.elementAt(index-1).valor),
+                // _currencyFormat.format( ( valor(_formulario.itens.elementAt(index-1).valor,item.percentual!))),
 
                 textAlign: TextAlign.end,
                 style: TextStyle(
@@ -292,7 +337,7 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
           //EDITAR ******
           IconButton(
             icon: const Icon(Icons.edit, size: 18, color: Colors.grey),
-            onPressed: () => _gerenciarItem(item),
+            onPressed: () => _gerenciarItem(item.posicao,item),
           ),
           //EXCLUIR ****
           IconButton(

@@ -35,6 +35,8 @@ class Utils {
         return  'Cianorte';
         case 'ind_':
           return  'Indaial';
+      case 'rne_':
+        return  'Rio Negro';
     }
   }
 

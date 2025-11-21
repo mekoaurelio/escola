@@ -6,6 +6,8 @@ import 'package:get/get.dart';
 import 'package:GEM/services/table_name_service.dart';
 import '../data/api_my_sql.dart';
 import '../services/utils.dart';
+import '../services/valor_input_formatter.dart';
+import '../widgets/custom_text_field.dart';
 import '../widgets/line.dart';
 import '../widgets/texto.dart';
 
@@ -18,10 +20,10 @@ class ProjecaoRecursosFundeb extends StatefulWidget {
 }
 
 class _FUNDEBCalculatorScreenState extends State<ProjecaoRecursosFundeb> {
-  final double ProjecaoRecursosFundebPr = 6290.1;
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
   Map<String, dynamic>? tabela;
   bool isLoading = true;
+  final TextEditingController _ProjecaoRecursosFundebPr = TextEditingController();
 
   @override
   void initState() {
@@ -42,6 +44,7 @@ class _FUNDEBCalculatorScreenState extends State<ProjecaoRecursosFundeb> {
       final dados = await ApiMySql.get(TBVaaf, null, null).timeout(const Duration(seconds: 30));
       if (mounted) {
         setState(() {
+          _ProjecaoRecursosFundebPr.text= Utils.formatVr.format(double.parse(dados[0]['valor_calculo'])).toString();
           tabela = dados.isNotEmpty ? dados.first : {};
           isLoading = false;
         });
@@ -186,9 +189,20 @@ class _FUNDEBCalculatorScreenState extends State<ProjecaoRecursosFundeb> {
       final index = etapas.indexOf(item);
       final matricula = _obterMatricula(index);
       final fator = item['fator'];
-      final ProjecaoRecursosFundebPonderado = matricula*fator * ProjecaoRecursosFundebPr;
+      final vr=Utils.saldoToSave(_ProjecaoRecursosFundebPr.text);
+      double valor=double.parse(vr);
+      //valor=valor/100;
+      final ProjecaoRecursosFundebPonderado = matricula*fator * valor;
       return sum + ProjecaoRecursosFundebPonderado;
     });
+  }
+
+  Future<void> _gravaFatorCalculo(var vr)async{
+    print('valor original $vr');
+    var novoValor=await Utils.vrStringToDouble2(vr);
+    print('ao gravar $novoValor');
+    await ApiMySql.executaSql('update $TBVaaf set valor_calculo=$novoValor');
+    await _carregarDadosBanco();
   }
 
   /// GERA UMA LINHA ESTILIZADA PARA O CABEÇALHO E RODAPÉ.
@@ -239,7 +253,10 @@ class _FUNDEBCalculatorScreenState extends State<ProjecaoRecursosFundeb> {
     final etapa = etapas[index];
     final matricula = _obterMatricula(index);
     final fator = etapa['fator'];
-    final vaafPonderado = fator * ProjecaoRecursosFundebPr;
+    final vr=Utils.saldoToSave(_ProjecaoRecursosFundebPr.text);
+    double valor=double.parse(vr);
+   // valor=valor/100;
+    final vaafPonderado = fator * valor;
     final receita = matricula * vaafPonderado;
 
     return Container(
@@ -336,20 +353,45 @@ class _FUNDEBCalculatorScreenState extends State<ProjecaoRecursosFundeb> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.refresh, color: Colors.white),
-                  label: Text('Atualiza', style: TextStyle(color: Colors.black54)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    SizedBox(
+                      width: 200,
+                      child: CustomTextFiel(
+                        controller:_ProjecaoRecursosFundebPr ,
+                        label:'Fator Para Cálculo' ,
+                        hintText: 'code',
+                        suffixIcon: Icons.play_circle_fill,
+                        inputFormatters: [
+                          ValorInputFormatter(),
+                        ],
+                        onToggleVisibility: () async {
+                          await _gravaFatorCalculo(_ProjecaoRecursosFundebPr.text);
+                          setState(() {});
+                        },
+                      ),
                     ),
-                  ),
-                  onPressed: () {
-                    _carregarDadosBanco();
-                  },
+
+                    SizedBox(width: 10,),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      label: Text('Atualiza', style: TextStyle(color: Colors.black54)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () {
+                        _carregarDadosBanco();
+                      },
+                    ),
+                    SizedBox(width: 10,),
+                  ],
                 ),
+
                 SizedBox(width: 25,),
                 //const SizedBox(height: 16),
                 Expanded( // Adicionado Expanded aqui

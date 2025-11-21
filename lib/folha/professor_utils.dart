@@ -14,8 +14,8 @@ class ProfessorUtils {
   }
 
   static double totalDeVencimentos(String nivel, int coluna, var professores) {
-    // Formata o nível/classe no formato esperado (ex: "B01" para NB coluna 1)
-    String nivelFormatado = nivel.substring(1); // Remove o "N" do início
+
+   String nivelFormatado = nivel.substring(1); // Remove o "N" do início
     String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
     String chave = '$nivelFormatado$colunaFormatada';
 
@@ -23,26 +23,56 @@ class ProfessorUtils {
 
     for (var professor in professores) {
       if (professor['nivel'] == chave && professor['vencimento'] != null) {
-        total += double.tryParse(professor['vencimento'].toString()) ?? 0.0;
+        double sal=double.tryParse(professor['vencimento'].toString()) ?? 0.0;
+        String tmp=sal.toStringAsFixed(2);
+        sal=double.parse(tmp);
+        total += sal;
       }
     }
 
     return total;
   }
 
-  static Future<double> totalDeVencimentosProposta(String n, int coluna, var professores,
+  static Future<double> totalDeVencimentosPropostaNova(String n, int coluna, var professores,
       List<List<double>> calculatedTableValues) async {
    try {
+
      String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
+      String chave = '$n$colunaFormatada';
+      chave=chave.replaceAll('NIVEL', '').trim();
+      double total = 0.0;
+      for (var professor in professores) {
+       if (professor.nivel == chave && professor.vencimento != 0) {
+         double sal=obterValorPorNivel(calculatedTableValues, chave);
+         String tmp=sal.toStringAsFixed(2);
+         sal=double.parse(tmp);
+         total += sal;
+       }
+     }
+      return total;
+    } catch (e) {
+      print('Erro em totalDeVencimentosProposta: $e');
+      return 0.0;
+    }
+  }
+
+  static Future<double> totalDeVencimentosProposta(String n, int coluna, var professores,
+      List<List<double>> calculatedTableValues) async {
+    try {
+      String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
       String chave = '$n$colunaFormatada';
       chave=chave.replaceAll('NIVEL', '').trim();
       double total = 0.0;
 
       for (var professor in professores) {
         if (professor['nivel'] == chave && professor['vencimento'] != null) {
-          total += obterValorPorNivel(calculatedTableValues, chave);
+          double sal=obterValorPorNivel(calculatedTableValues, chave);
+          String tmp=sal.toStringAsFixed(2);
+          sal=double.parse(tmp);
+          total += sal;
         }
       }
+
       return total;
     } catch (e) {
       print('Erro em totalDeVencimentosProposta: $e');
@@ -62,12 +92,12 @@ class ProfessorUtils {
       // Extrair a letra e o número do nível
       String letra = nivel.substring(0, 1).toUpperCase();
       String numeroStr = nivel.substring(1);
-
       // Converter o número para índice (subtraindo 1 porque arrays começam em 0)
       int indiceColuna = int.parse(numeroStr) - 1;
 
       // Obter o índice da linha baseado na letra
       int indiceLinha = mapeamentoLetras[letra] ?? 0;
+      //indiceLinha--;
 
       // Verificar se os índices são válidos
       if (indiceLinha >= matrizString.length || indiceColuna >= matrizString[indiceLinha].length) {

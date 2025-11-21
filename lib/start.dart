@@ -12,7 +12,6 @@ import 'impacto/impacto.dart';
 import 'import/importar_dados.dart';
 import 'import/pdfExtractorPage.dart';
 import 'professor/professor_conferencia.dart';
-import 'professor/professores.dart';
 import 'folha/tabela_professor.dart';
 import 'services/escolher_municipio.dart';
 import 'services/utils.dart';
@@ -151,10 +150,7 @@ class _StartState extends State<Start> {
         'drawerLabel': 'Impacto',
         'appBarTitle': 'Análise de Impacto',
         'icon': Icons.lightbulb_outline,
-
         'builder': () => Impacto(),
-
-       // 'builder': () => ImpactoGrid2(),
       },
 
       // === GRUPO: AUXILIARES ===
@@ -171,8 +167,6 @@ class _StartState extends State<Start> {
         'drawerLabel': 'Encargos Sociais',
         'appBarTitle': 'Cadastro de Encargos Sociais',
         'builder': () => PdfExtractorPage(),//importação dois vizinhos
-        //'builder': () => ImportarVantagens(),// importação Rio Negrinho
-
       },
       {
         'id': 'aux_usuarios',
@@ -334,6 +328,8 @@ class _StartState extends State<Start> {
                           novoMunicipioCode = 'cia_';
                         case 'Indaial':
                           novoMunicipioCode = 'ind_';
+                        case 'Rio Negro':
+                          novoMunicipioCode = 'rne_';
                       }
                       // ATUALIZE APENAS O CONTROLLER. Ele cuidará de persistir o dado com o Utils.
                       filterController.updateFilters(novoMunicipio: novoMunicipioCode);
@@ -360,10 +356,20 @@ class _StartState extends State<Start> {
                 if (widget.acessos != null)
                   if (widget.acessos[0]['simulador'] == '1')
                     _buildExpansionTile('simulador', 'Estrutura', Icons.swap_vertical_circle_rounded),
+
                 if (widget.acessos[0]['professores'] == '1')
                   _buildExpansionTile('professores', 'Professores', Icons.perm_contact_cal_sharp),
+
                 if (widget.acessos[0]['impacto'] == '1')
-                  _buildExpansionTile('impacto', 'Impácto', Icons.auto_graph_outlined),
+                  _buildExpansionTile('impacto', 'Impacto', Icons.auto_graph_outlined),
+
+                if (widget.acessos[0]['folha_de_pagamento'] == '1')
+                  _buildExpansionTile('professores', 'Folha de Pagamento', Icons.auto_graph_outlined),
+
+
+                if (widget.acessos[0]['encargos_sociais'] == '1')
+                  _buildExpansionTile('auxiliares', 'Encargos Sociais', Icons.settings),
+
                 if (widget.acessos[0]['documentacao'] == '1')
                   _buildExpansionTile('auxiliares', 'Auxiliares', Icons.settings),
               ],
@@ -375,7 +381,7 @@ class _StartState extends State<Start> {
             padding: const EdgeInsets.all(16),
             width: double.infinity,
             child: const Text(
-              'Copyright © 2025 XmkTech. V.021\nAll rights reserved (41-9-9558-2579)',
+              'Copyright © 2025 XmkTech. V.023\nAll rights reserved (41-9-9558-2579)',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),

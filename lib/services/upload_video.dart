@@ -47,11 +47,8 @@ class _UploadVideoPageState extends State<UploadVideoPage> {
     try {
       // 1. Upload para Firebase Storage
       final storageRef = FirebaseStorage.instance.ref().child('videos/$fileName');
-      print('aaaaaaa');
       final uploadTask = await storageRef.putData(fileBytes);
-      print('bbbbbbb');
       final videoUrl = await uploadTask.ref.getDownloadURL();
-      print('1');
 
       setState(() => _mensagem = 'generating_thumbnail'.tr);
 

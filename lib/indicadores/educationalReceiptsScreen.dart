@@ -43,6 +43,7 @@ class _EducationImpactPage extends State<EducationalReceiptsPage> {
 
     // Use 'await' e forneça um valor padrão (lista vazia) se a API retornar null.
     var result = await ApiMySql.get(TBReceitasEducacionais, null, null);
+    print('RECEITA');
     print(result);
     lista = result ?? []; // Se result for null, lista se torna [].
 
