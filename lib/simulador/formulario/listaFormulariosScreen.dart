@@ -104,6 +104,7 @@ class _ListaFormulariosScreenState extends State<ListaFormulariosScreen> {
             id: int.parse(_itens[i]['id']),
             label: _itens[i]['label'],
             nivel: _itens[i]['nivel'],
+            titulo: _itens[i]['titulo']??'',
             tipo:  getTipoItem(_itens[i]['tipo']),
             percentual: double.parse(_itens[i]['perc']?? '0.0'),
             valor: double.parse(_itens[i]['valor']),

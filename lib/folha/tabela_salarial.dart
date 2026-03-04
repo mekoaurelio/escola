@@ -10,6 +10,7 @@ class TabelaSalarial extends StatefulWidget {
   final Color borderColor;
   final int cargaHoraria;
   final List<String> niveis;
+  final List<String> titulos;
   final List<String> niveisP;
   final List<List<double>> calculatedTableValues;
   final Function(String, int) quantidadeDeProfessores;
@@ -23,6 +24,7 @@ class TabelaSalarial extends StatefulWidget {
     required this.borderColor,
     required this.cargaHoraria,
     required this.niveis,
+    required this.titulos,
     required this.niveisP,
     required this.calculatedTableValues,
     required this.quantidadeDeProfessores,
@@ -34,10 +36,15 @@ class TabelaSalarial extends StatefulWidget {
   _TabelaSalarialState createState() => _TabelaSalarialState();
 }
 
+
+
+
+
 class _TabelaSalarialState extends State<TabelaSalarial> {
   int? selectedRow;
   int? selectedColumn;
   int? ind;
+  final ScrollController _horizontalController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
@@ -59,8 +66,13 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
             ),
 
             Texto(tit: 'Valores calculados para cada nível e classe',cor:widget.textColor.withOpacity(0.6),tam: 14,bottom: 16,),
-
-            SingleChildScrollView(
+            Scrollbar(
+              controller: _horizontalController,
+              thumbVisibility: true,
+              trackVisibility: true,
+              interactive: true,
+              child:      SingleChildScrollView(
+                controller: _horizontalController,
               scrollDirection: Axis.horizontal,
               child: Column(
                 children: [
@@ -86,11 +98,24 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
                       child: Row(
                         children: [
                           Container(
-                            width: 80,
+                            width: 10,
                             padding: EdgeInsets.symmetric(vertical: 12),
                             alignment: Alignment.center,
                             child: Text(
                               widget.niveis[nivelIndex],
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: nivelIndex == 0 ? Colors.blue : widget.textColor,
+                              ),
+                            ),
+                          ),
+
+                          Container(
+                            width: 60,
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            alignment: Alignment.center,
+                            child: Text(
+                              widget.titulos[nivelIndex],
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: nivelIndex == 0 ? Colors.blue : widget.textColor,
@@ -141,6 +166,7 @@ class _TabelaSalarialState extends State<TabelaSalarial> {
                 ],
               ),
             ),
+            )
           ],
         ),
       ),

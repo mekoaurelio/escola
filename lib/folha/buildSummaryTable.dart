@@ -62,7 +62,6 @@ class _SummaryTableState extends State<SummaryTable> {
     _encargosPercentual = encargos; //percentual dos encargos
     _remuneracaoTotal =  custoMensal*(_meses+1+_ferias);
     _totalEncargos = (_remuneracaoTotal * _encargosPercentual)/100;
-
     _totalComEncargos = _remuneracaoTotal +_totalEncargos;
 
   }

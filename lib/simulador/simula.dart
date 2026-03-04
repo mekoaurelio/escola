@@ -33,6 +33,7 @@ class _SimulaState extends State<Simula> {
   List<String> niveisUnicos=[];
   List<String> valorNivel=[];
   List<Map<String, dynamic>> professores = [];
+  final ScrollController _horizontalController = ScrollController();
 
   @override
   void initState() {
@@ -658,6 +659,7 @@ class _SimulaState extends State<Simula> {
   }
 
 
+/*
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -732,7 +734,6 @@ class _SimulaState extends State<Simula> {
               ),
             ),
           ),
-
           /// Tabela de resumo
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.99,
@@ -742,5 +743,117 @@ class _SimulaState extends State<Simula> {
       ),
     );
   }
+
+ */
+
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+        children: [
+
+          /// ÁREA QUE PRECISA SCROLL HORIZONTAL
+          SizedBox(
+            height: 560,
+            child: Scrollbar(
+              controller: _horizontalController,
+              thumbVisibility: true,
+              trackVisibility: true,
+              interactive: true,
+              child: SingleChildScrollView(
+                controller: _horizontalController,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  constraints: BoxConstraints(
+                    minWidth: MediaQuery
+                        .of(context)
+                        .size
+                        .width,
+                  ),
+                  child: Row(
+                    children: List.generate(professores.length, (index) {
+                      final data = professores[index];
+
+                      final totVecto = double.parse(data['totalVencimentos']);
+                      final proposta = totVecto +
+                          (totVecto * (double.parse(percAumento) / 100));
+
+                      final vatagensPecuniarias =
+                      double.parse(data['totalVantagens']);
+                      final propostaVantagens = vatagensPecuniarias +
+                          (vatagensPecuniarias *
+                              (double.parse(percAumento) / 100));
+
+                      final encargos = totVecto * 0.14;
+                      final proEncargos = encargos +
+                          (encargos * (double.parse(percAumento) / 100));
+
+                      final dadosExemplo = DadosFinanceiros(
+                        vencimentoAtual:
+                        double.tryParse(data['totalVencimentos']) ?? 0.0,
+                        vencimentoProposta: proposta,
+                        adicionalAtual: 0.00,
+                        adicionalProposta: 0.00,
+                        vantagensAtual: vatagensPecuniarias,
+                        vantagensProposta: propostaVantagens,
+                        encargosAtual: encargos,
+                        encargosProposta: proEncargos,
+                        dispersaoHorizontal:
+                        double.tryParse(data['dispersaoHorizontal']) ??
+                            0.0,
+                        dispersaoTotal:
+                        double.tryParse(data['dispersaoTotal']) ?? 0.0,
+                      );
+
+                      final String descricao = data['descricao']?.toString() ??
+                          data['horas']?.toString() ??
+                          'Não especificado';
+                      final int quantidade =
+                          int.tryParse(data['quantidade']) ?? 0;
+
+                      return Container(
+                        width: 800,
+                        margin: const EdgeInsets.only(right: 16.0),
+                        child: _buildSummaryCard(
+                          icon: Icons.school_rounded,
+                          iconColor: const Color(0xFF007BFF),
+                          backgroundColor: const Color(0xFFD6EAF8),
+                          label: descricao,
+                          count: quantidade,
+                          dispersaoHorizontal: data['dispersaoHorizontal'],
+                          dispersaoTotal: data['dispersaoTotal'],
+                          classes: data['classes'].toString(),
+                          progressao: data['progressao'].toString(),
+                          id: data['id'],
+                          child: FinancialDetailsTable(
+                            dados: dadosExemplo,
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          /// Tabela de resumo
+          SizedBox(
+            width: MediaQuery
+                .of(context)
+                .size
+                .width * 0.99,
+            child: _buildResumoTable(),
+          ),
+        ],
+      ),
+    );
+  }
+
 
 }//868

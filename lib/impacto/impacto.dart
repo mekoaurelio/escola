@@ -339,7 +339,13 @@ SELECT
   Future<void> _ajustaSalarioBase(var percentualDeProgressao) async{
     var p=percentualDeProgressao.toString().replaceAll(',', '.');
     double perc=double.parse(p)/100;
-    String sql='UPDATE $TBSimulaForm SET valor_progressao = ROUND(valor PLUS_OPERATOR (valor MULT_OPERATOR $perc))';
+
+    String sql='';
+    if (perc == 0) {
+      sql = "UPDATE cia_simula_form2601 SET valor_progressao = valor";
+    } else {
+      sql = "UPDATE cia_simula_form2601 SET valor_progressao = ROUND(valor PLUS_OPERATOR (valor MULT_OPERATOR $perc), 2)";
+    }
 
    await  ApiMySql.executaSql(sql);
 
@@ -349,10 +355,7 @@ SELECT
     var x=await ApiMySql.executaSql('select id,id_form,nivel,label,tipo,valor,valor_progressao,perc from $TBSimulaForm').timeout(const Duration(seconds: 30));
     var str=fixJsonString(x.toString());
     List<dynamic> jsonList = jsonDecode(str);
-    print('XXXXXXXXXXXXX');
     simulaFormjsonList = jsonList.map((json) => ModelSimulaForm.fromJson(json)).toList();
-    print('MANOEL');
-    print(simulaFormjsonList);
     progressaoController.text=percentualDeProgressao;
 
     _carregarDados();

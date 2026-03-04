@@ -61,14 +61,17 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
   final GlobalFilterController filterController = Get.find<GlobalFilterController>();
 
   List<String> novosNiveis=[];
+  List<String> titulos=[];
   List<String> valorNivel=[];
   List<String> niveisUnicos=[];
+
+  final ScrollController _horizontalController = ScrollController();
 
   int quantidadeDeProfessores(String nivel, int coluna) {
     String colunaFormatada = coluna < 10 ? '0$coluna' : '$coluna';
     String chave = '$nivel$colunaFormatada';
     chave=chave.replaceAll('NIVEL', '').trim();
-    //bool existe = professores.any((professor) => professor['nivel'] == chave);
+    final ScrollController _horizontalController = ScrollController();
     return _professoresPorNivel[chave] ?? 0;
   }
 
@@ -88,6 +91,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       }
 
       final novosNiveisTmp = getNiveis.map((item) => item['label'].toString()).toList();
+      final titulosTmp = getNiveis.map((item) => item['titulo'].toString()).toList();
       final valorNivelProgressaoTmp = getNiveis.map((item) => item['valor_progressao'].toString()).toList();
       final nu = await ApiMySql.getProfPorNivel(TBFolha, widget.hora,).timeout(const Duration(seconds: 30));
       final niveisUnicosTmp = nu.map((item) => item['nivel'].toString()).toList();
@@ -143,12 +147,11 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       }
 
       // ======= Atualiza tudo de uma vez =======
-
       double cm=await calculaCustoMensal(novosNiveisTmp,calculatedTableValuesTmp,professoresTmp);
 
       setState(() {
         novosNiveis = novosNiveisTmp;
-        //valorNivel = valorNivelTmp;
+        titulos = titulosTmp;
 
         valorNivel = valorNivelProgressaoTmp;
 
@@ -226,7 +229,14 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
       body: professores==null?Center(
           child: Utils.vazio('Nenhum dado Encontrado')
       ):
-      SingleChildScrollView(
+
+      Scrollbar(
+        controller: _horizontalController,
+        thumbVisibility: true,
+        trackVisibility: true,
+        interactive: true,
+      child: SingleChildScrollView(
+        controller: _horizontalController,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -242,6 +252,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
                 borderColor: Colors.grey.shade300,
                 cargaHoraria: cargaHoraria, // Sua carga horária
                 niveis: novosNiveis,
+                titulos: titulos,
                 niveisP: niveisUnicos,
                 descricao: widget.descricao,
                 calculatedTableValues: _calculatedTableValues, // Seus valores calculados
@@ -286,6 +297,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
           ),
         ),
       ),
+      )
     );
   }
 
@@ -422,6 +434,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
           percEntreColunas: double.parse(novoValor),
         );
         await ApiMySql.executaSql('update $TBSimulaCab set classes=$novoValor where id=$id').timeout(const Duration(seconds: 30));
+
         final cm=await calculaCustoMensal(novosNiveis,result.calculatedTableValues,professores);
         setState(() {
           _custoMensal=cm;

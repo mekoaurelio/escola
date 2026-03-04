@@ -43,6 +43,7 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
 
     // Inicializa os dados para o diálogo
     final labelController = TextEditingController(text: isEditing ? item.label : '');
+    final tituloController = TextEditingController(text: isEditing ? item.titulo : '');
     final percentController = TextEditingController(text: isEditing ? item.percentual?.toString() ?? '' : '');
     final valorController = TextEditingController(text: isEditing ? item.valor.toString() : '');
     final valorProgressaoController = TextEditingController(text: isEditing ? item.valor_progressao.toString() : '');
@@ -108,6 +109,7 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
                     if (formKey.currentState!.validate()) {
                       setState(() {
                         final label = labelController.text;
+                        final titulo = tituloController.text;
                         final percent = double.tryParse(percentController.text);
                         final valor = double.tryParse(valorController.text) ?? 0.0;
                         final valorProgressao = double.tryParse(valorProgressaoController.text) ?? 0.0;
@@ -124,6 +126,7 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
                                 id: _dbService.getProximoItemId(),
                                 label: label,
                                 nivel: label,
+                                titulo: titulo,
                                 tipo: tipoSelecionado,
                                 percentual: percent,
                                 valor: valor,
@@ -158,7 +161,7 @@ class _FormularioBuilderScreenState extends State<FormularioBuilderScreen> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
           child: _formulario.itens.isEmpty
-              ? const Center(child: Text('Nenhum item adicionado ainda.'))
+              ? const Center(child: Text('Nenhum ítem adicionado ainda.'))
               : ListView(
             padding: const EdgeInsets.all(16),
             children: [

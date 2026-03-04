@@ -1,17 +1,14 @@
+import 'package:GEM/pdf/ler_pdf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'package:GEM/services/GlobalFilterController.dart';
-import 'form/qr_code.dart';
-import 'import/importar_dados.dart';
-import 'import/pdfExtractorPage.dart';
+import 'myCustomScrollBehavior.dart';
 import 'services/table_name_service.dart';
 import 'lang/translation_service.dart';
 import 'login/login.dart';
 import 'services/utils.dart';
-import 'simulador/formulario/formularioScreen.dart';
-import 'simulador/formulario/listaFormulariosScreen.dart';
 import 'splash_screen.dart';
 
 void main()async {
@@ -65,6 +62,9 @@ class _TattooStudioAppState extends State<TattooStudioApp> {
   @override
   Widget build(BuildContext context) {
     return  GetMaterialApp(
+        scrollBehavior: MyCustomScrollBehavior().copyWith(
+          physics: const BouncingScrollPhysics(),
+        ),
       debugShowCheckedModeBanner: false,
       title: 'GEM',
       // locale: state.locale,
@@ -82,10 +82,7 @@ class _TattooStudioAppState extends State<TattooStudioApp> {
         GlobalCupertinoLocalizations.delegate,  ],
 
       home: _initialScreen!,
-      //  home: QRCodeGenerator()
-
-
-
+      //  home: ChatScreen()
     );
   }
 }

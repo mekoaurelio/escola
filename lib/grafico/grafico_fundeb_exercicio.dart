@@ -22,7 +22,7 @@ class _FundebChartSelectorState extends State<FundebChartSelector> with AnoBimes
   var receitaFundeb = [];
   var exercicioFundeb = [];
   bool _isLoading = true;
-  final anos = ['2020', '2021', '2022', '2023', '2024', '2025'];
+  final anos = ['2020', '2021', '2022', '2023', '2024', '2025','2026'];
   final anoBimestreController = Get.find<AnoBimestreController>();
 
   @override

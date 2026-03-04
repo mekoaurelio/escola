@@ -167,42 +167,40 @@ class _ExcelReaderPageState extends State<ExcelReaderPage> {
         final Map<String, dynamic> dadosFuncionario = {
           'Matrícula': matricula,
           'Nome': nome,
-          'Local de Trabalho': row[2]?.value,
+          'Local de Trabalho': row[2]?.value,//UNIDADE
           'Data Admissão':row[3]!=null?Utils.dtToMysql(row[3]?.value.toString()):'', // Idealmente converter com Utils.dtToMysql
+
           'Cargo': row[4]?.value,
-          'Nivel': row[5]?.value,
+         // 'Nivel': row[5]?.value,
           'Horas': row[6]?.value,
-          'Classe': row[8]?.value,
+          'Nivel': row[7]?.value,
           'Horas Normais (CLT)': row[9]?.value,
           'Vantagens': [] // Lista para armazenar as vantagens.
         };
 
-        final unidade=dadosFuncionario['Cargo'];
-        final local=dadosFuncionario['Local de Trabalho'];
+        final cargo=dadosFuncionario['Cargo'];
+        final unidade=dadosFuncionario['Local de Trabalho'];
         final admissao=dadosFuncionario['Data Admissão'];
         final nivel=dadosFuncionario['Nivel'];
-        final classe=dadosFuncionario['Classe'];
+        //final classe=dadosFuncionario['Classe'];
         final salario=dadosFuncionario['Horas Normais (CLT)'];
         final horas=dadosFuncionario['Horas'];
-        print('CLASSE : $classe');
-        String cla=classe.toString();
-        print('CLA $cla');
-        if(cla.length<2){
-          cla='0$classe';
-        }
-        print('CLASSE ---> $cla');
-        final nivelClasse='$nivel$cla';
-        print('nivelClasse $nivelClasse');
+        //String cla=classe.toString();
+        //if(cla.length<2){
+          //cla='0$classe';
+       // }
+       // final nivelClasse='$nivel$cla';
+        //final nivelClasse='$nivel$cla';
 
         if(tipo=='PROFESSOR'){
 
-          print("INSERT INTO $TBFolha (matricula, nome,unidade,local_lotacao,admissao,nivel,vencimento,horas) VALUES "
-              "( '$matricula', '$nome', '$unidade','$local','$admissao', '$nivelClasse', $salario,'$horas');");
+          print("INSERT INTO $TBFolha (matricula, nome,unidade,cargo,admissao,nivel,vencimento,horas) VALUES "
+              "( '$matricula', '$nome', '$unidade','$cargo','$admissao', '$nivel', $salario,'$horas');");
 
 
           await ApiMySql.executaSql(
-              "INSERT INTO $TBFolha (matricula, nome,unidade,local_lotacao,admissao,nivel,vencimento,horas) VALUES "
-                  "( '$matricula', '$nome', '$unidade','$local','$admissao', '$nivelClasse', $salario,'$horas');");
+              "INSERT INTO $TBFolha (matricula, nome,unidade,cargo,admissao,nivel,vencimento,horas) VALUES "
+                  "( '$matricula', '$nome', '$unidade','$cargo','$admissao', '$nivel', $salario,'$horas');");
 
         }else { ///VATGAENS
           List<Map<String, String>> vantagens = [];

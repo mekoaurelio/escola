@@ -21,6 +21,7 @@ class ItemFormulario {
   int id;
   String label;
   String nivel;
+  String titulo;
   double? percentual; // Nulo para itens como o "Piso Inicial"
   double valor;
   double valor_progressao;
@@ -31,6 +32,7 @@ class ItemFormulario {
     required this.id,
     required this.label,
     required this.nivel,
+    required this.titulo,
     this.percentual,
     required this.valor,
     required this.valor_progressao,

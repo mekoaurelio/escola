@@ -175,7 +175,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreen extends State<DashboardScreen> {
-  String _currentAno = '25'; // Default para evitar '00'
+  String _currentAno = '26'; // Default para evitar '00'
   String _currentBimestre = '01'; // Default para evitar '00'
   final GlobalFilterController _filterController = Get.find<GlobalFilterController>();
 
@@ -187,6 +187,7 @@ class _DashboardScreen extends State<DashboardScreen> {
     {'code': '23', 'name': '2023'},
     {'code': '24', 'name': '2024'},
     {'code': '25', 'name': '2025'},
+    {'code': '26', 'name': '2026'},
   ];
 
   final List<Map<String, String>> _bimestres = [
