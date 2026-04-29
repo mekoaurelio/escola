@@ -1,5 +1,4 @@
 
-import 'dart:typed_data';
 import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,7 +8,6 @@ import 'package:get/get.dart';
 
 import '../data/api_my_sql.dart';
 import '../impacto/model_simula_form.dart';
-import '../services/GlobalFilterController.dart';
 import '../services/table_name_service.dart';
 import '../services/utils.dart';
 
@@ -396,8 +394,6 @@ class _RelatorioScreenState extends State<Relatorio> {
 
   Future<void> generatePdf() async {
     final pdf = pw.Document();
-
-
     //final Uint8List imageBytes = (await rootBundle.load('assets/images/${_cidadeSelecionada}.png')).buffer.asUint8List();
     final Uint8List imageBytes = (await rootBundle.load('assets/images/Rio Negro.png')).buffer.asUint8List();
     //'assets/images/${_cidadeSelecionada}.png',
@@ -868,10 +864,6 @@ As tabelas a ser aplicado para os profissionais da educação básica a partir d
 
     var totais = await ApiMySql.get(TBTotais, null, null).timeout(const Duration(seconds: 30));
 
-    //var x = await ApiMySql.get(TBSimulaForm, null, null).timeout(const Duration(seconds: 30));
-    //var x=await ApiMySql.executaSql('select id,id_form,nivel,label,tipo,valor,valor_progressao,perc from $TBSimulaForm').timeout(const Duration(seconds: 30));
-    //print(x);
-
     vrVaaf = totais[0]['vaaf'] ?? '0.0';
     vrVaar = totais[0]['vaar'] ?? '0.0';
     r = double.tryParse(totais[0]['receita']?.toString() ?? '0.0') ?? 0.0; //1
@@ -891,14 +883,29 @@ As tabelas a ser aplicado para os profissionais da educação básica a partir d
     });
   }
 
+  volta(){
+    print('kkkkkk');
+    Get.back();
+  }
+
   @override
   Widget build(BuildContext context) {
     return _isLoading ? const Center(child: CircularProgressIndicator()):
+      Column(
+        children: [
+          const SizedBox(height: 16),
+        ElevatedButton(
+        onPressed: generatePdf,
+        child: const Text('Gerar PDF e baixar'),
+      ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: volta,
+            child: const Text('Voltar'),
+          )
+        ],
+      );
 
-      ElevatedButton(
-      onPressed: generatePdf,
-      child: const Text('Gerar PDF e baixar'),
-    );
   }
 }
 

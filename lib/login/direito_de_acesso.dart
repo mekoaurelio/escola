@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 
 import '../const/const.dart';
 import '../data/api_my_sql.dart';
-import '../services/utils.dart';
 import '../widgets/custom_butom.dart';
 
 class DireitoDeAcesso extends StatefulWidget {
@@ -43,10 +42,15 @@ class _DireitoDeAcessoState extends State<DireitoDeAcesso> {
     int idUser=int.parse(widget.idUser!);
     if(widget.tipo=='INSERT'){
       await ApiMySql.gerarInsertQuery(idUser, acessos);
-      Utils.snak('Parabéns', 'Direitos inseridos com sucesso!', false, Colors.green);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Funcionou!')),
+      );
+      //Utils.snak('Parabéns', 'Direitos inseridos com sucesso!', false, Colors.green);
     }else{
       await ApiMySql.gerarUpdateQuery(idUser, acessos);
-      Utils.snak('Parabéns', 'Direitos Atualizados com sucesso!', false, Colors.green);
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Direitos Atualizados com sucesso!'),backgroundColor: Colors.blue,));
+     // Utils.snak('Parabéns', 'Direitos Atualizados com sucesso!', false, Colors.green);
     }
   }
 
@@ -54,19 +58,25 @@ class _DireitoDeAcessoState extends State<DireitoDeAcesso> {
     return Card(
       elevation: 0,
       margin: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            titulo,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          ...itens.map((item) => CheckboxListTile(
-            title: Text(item),
-            value: acessos[item] ?? false,
-            onChanged: (v) => toggle(item, v),
-          )),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              titulo,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            ...itens.map((item) => CheckboxListTile(
+              title: Text(item),
+              value: acessos[item] ?? false,
+              onChanged: (v) => toggle(item, v),
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+            )),
+          ],
+        ),
       ),
     );
   }
@@ -103,39 +113,47 @@ class _DireitoDeAcessoState extends State<DireitoDeAcesso> {
         padding: const EdgeInsets.all(16),
         child: Center(
           child: Container(
-            width: MediaQuery.of(context).size.width *0.44,
+            width: MediaQuery.of(context).size.width * 0.44,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTituloVisual("Direitos de Acesso de ${widget.nmUser!}"),
-                const SizedBox(height: 12),
-                _buildGrupo("Simulador", [
-                  "Simulador",
-                  "Projeção dos Recursos do FUNDEB",
-                  "Projeção de Recursos",
-                  "Simulador Magistério",
-                ]),
-                _buildGrupo("Professores", [
-                  "Professores",
-                  "Professor Educador",
-                  "Educador Infantil",
-                  "Folha de Pagamento",
-                ]),
-                _buildGrupo("Impacto", [
-                  "Impacto",
-                ]),
-                _buildGrupo("Auxiliares", [
-                  "Documentação",
-                  "Encargos Sociais",
-                ]),
-                const SizedBox(height: 20),
-                Center(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTituloVisual("Direitos de Acesso de ${widget.nmUser!}"),
+                  const SizedBox(height: 12),
+                  _buildGrupo("Simulador", [
+                    "Simulador",
+                    "Projeção dos Recursos do FUNDEB",
+                    "Projeção de Recursos",
+                    "Simulador Magistério",
+                  ]),
+                  _buildGrupo("Professores", [
+                    "Professores",
+                    "Professor Educador",
+                    "Educador Infantil",
+                    "Folha de Pagamento",
+                  ]),
+                  _buildGrupo("Impacto", [
+                    "Impacto",
+                  ]),
+                  _buildGrupo("Auxiliares", [
+                    "Documentação",
+                    "Encargos Sociais",
+                    "Notificação",  // Opção adicionada
+                  ]),
+                  const SizedBox(height: 20),
+                  Center(
                     child: Row(
                       children: [
                         Expanded(
                           child: AppButton(
                             text: 'Cancelar',
-                            onPressed: Get.back,
+                           // onPressed: Get.back,
+                            onPressed: () {
+                              // Garantir que o pop seja chamado com segurança
+                              if (Navigator.canPop(context)) {
+                                Navigator.of(context).pop();
+                              }
+                              Get.back();
+                            },
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -146,14 +164,13 @@ class _DireitoDeAcessoState extends State<DireitoDeAcesso> {
                             onPressed: salvarAcessos,
                           ),
                         ),
-
                       ],
                     ),
-                )
-            ]
-            )
+                  )
+                ]
+            ),
           ),
-        )
+        ),
       ),
     );
   }

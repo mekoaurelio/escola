@@ -24,7 +24,6 @@ class _SimulaState extends State<Simula> {
   bool _isLoading = true;
   bool _hasError = false;
   String _errorMessage = '';
-  double _atsAdulto = 0;
   var percAumento = '0';
   double totalGeralProfessor = 0;
   double totalPropostaProfessor = 0;
@@ -493,11 +492,11 @@ class _SimulaState extends State<Simula> {
                     tooltip: 'Dispersão salarial entre classes \nClick Aqui Para Saber Mais',
                     bgColor:
                     double.parse(dispersaoHorizontal) > 29.5
-                        ? Colors.red!
+                        ? Colors.red
                         : Colors.green[100]!,
                     borderColor:
                     double.parse(dispersaoHorizontal) > 29.5
-                        ? Colors.red!
+                        ? Colors.red
                         : Colors.green[100]!,
                     textColor: Colors.black54,
                     iconColor: Colors.black54,

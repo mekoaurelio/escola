@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -189,7 +187,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
         }
       }
     }
-    print('VALOR MENSAL 40 horas $total');
+   // print('VALOR MENSAL 40 horas $total');
     return total;
   }
 
@@ -418,6 +416,7 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
     );
   }
 
+  /*
   void _editWorkingHours() {
     Utils.mostrarDialogoEditarValor(
       context: context,
@@ -442,10 +441,68 @@ class _SimuladorTabelaProfessorState extends State<SimuladorTabelaProfessor> {
           _calculatedTableValues = result.calculatedTableValues;//São os valores calculados
           _dispersaoHorizontal = result.dispersaoHorizontal;
           _dispersaoTotal = result.dispersaoTotal;
+          novosNiveis=novosNiveis;
+        });
+
+        /*
+        TabelaSalarial(
+                primaryColor: Colors.blue, // Sua cor primária
+                textColor: Colors.black,   // Sua cor de texto
+                borderColor: Colors.grey.shade300,
+                cargaHoraria: cargaHoraria, // Sua carga horária
+                niveis: novosNiveis,
+                titulos: titulos,
+                niveisP: niveisUnicos,
+                descricao: widget.descricao,
+                calculatedTableValues: _calculatedTableValues, // Seus valores calculados
+                quantidadeDeProfessores: (nivel1, coluna) {
+                  return quantidadeDeProfessores(nivel1, coluna);
+                },
+                onCellSelected: (row, column) {
+                  //_handleCellSelection(row, column);
+                },
+              ),
+         */
+      },
+    );
+  }
+
+   */
+
+  void _editWorkingHours() {
+    Utils.mostrarDialogoEditarValor(
+      context: context,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      titulo: 'Editar Classes',
+      labelCampo: 'Classes',
+      valorInicial: cargaHoraria.toString(),
+      aoSalvar: (novoValor) async {
+        var id = widget.idItens;
+
+        // CORREÇÃO: Use o percentual correto (perProgressaoEntreClasse) e o novo valor da carga horária
+        final result = calculateTableAndDispersions(
+          niveis: novosNiveis,
+          valoresIniciaisNiveis: valorNivel,
+          cargaHoraria: int.parse(novoValor), // Use o novo valor da carga horária
+          percEntreColunas: perProgressaoEntreClasse, // Use o percentual atual
+        );
+
+        await ApiMySql.executaSql('update $TBSimulaCab set classes=$novoValor where id=$id').timeout(const Duration(seconds: 30));
+
+        final cm = await calculaCustoMensal(novosNiveis, result.calculatedTableValues, professores);
+
+        setState(() {
+          _custoMensal = cm;
+          cargaHoraria = int.parse(novoValor);
+          _calculatedTableValues = result.calculatedTableValues;
+          _dispersaoHorizontal = result.dispersaoHorizontal;
+          _dispersaoTotal = result.dispersaoTotal;
+          // Não precisa atualizar novosNiveis aqui, pois eles não mudaram
         });
       },
     );
   }
+
 
   void _editProgression() {
     Utils.mostrarDialogoEditarValor(

@@ -103,7 +103,6 @@ class _ImpactoScreenState extends State<Impacto> {
   Future<void> _carregarSoUmavez() async {
     print('carrga só uma vez');
     cab=await ApiMySql.executaSql('select * from $TBSimulaCab').timeout(const Duration(seconds: 30));
-    //progressao
     //PEGA OS VALORES SIMULAFORM
     var x=await ApiMySql.executaSql('select id,id_form,nivel,label,tipo,valor,valor_progressao,perc from $TBSimulaForm').timeout(const Duration(seconds: 30));
     var str=fixJsonString(x.toString());
@@ -128,13 +127,14 @@ class _ImpactoScreenState extends State<Impacto> {
     var strVr=fixSal(getVr.toString());
     List<dynamic> jsonListVr = jsonDecode(strVr.toString());
 
+
     String sql = """
 SELECT 
     (SELECT SUM(valor) FROM $TBVantagens) as totVan,
     (SELECT SUM(vr12) FROM $TBImpostos) as totImp,
     (SELECT SUM(vr12) FROM $TBDecenio) as totImp2,
     (SELECT SUM(vr1) FROM $TBDecenio) as totImp3,
-    t.*FROM $TBTotais t
+    t.* FROM $TBTotais t
 """;
     resultado = await ApiMySql.executaSql(sql);
     setState(() {
@@ -145,7 +145,6 @@ SELECT
       progressaoController.text=percAumento.toString();
     });
   }
-
 
   String fixSal(String original){
 
@@ -227,10 +226,9 @@ SELECT
   Future<void> _carregarDados() async {
     try {
       //PASSE UMA PROGRESSAO
-      await _progressao(2.80);
+      await _progressao(5.40);//2.8
 
-      double totalFolha=await _totalFolha(2.80);
-
+      double totalFolha=await _totalFolha(5.40);//2.80
       setState(() {
         //DADOS DA FOLHA
         totalFolhaDePagamento=totalFolha ;//1
@@ -284,8 +282,8 @@ SELECT
   }
 
   _getSalarios(String horas){
-
-    List<ModelSalario> filteredItems = salariosjsonList.where((item) => item.horas.toString().trim() == horas).toList();
+    String hs = horas.contains('hs') ? horas : horas + 'hs';
+    List<ModelSalario> filteredItems = salariosjsonList.where((item) => item.horas.toString().trim() == hs).toList();
     professores=filteredItems;
   }
 
@@ -294,7 +292,6 @@ SELECT
     double tot=0;
     for (int i = 0; i < cab.length; i++){
       //PEGA TODOS OS PROFESSORES
-      //var h=cab[i]['horas']+'hs';
       var h=cab[i]['horas'];
       _getSalarios(h);
       _getNivelValor(cab[i]['id'],'PROGRESSAO');
@@ -306,6 +303,7 @@ SELECT
       }
       tot+=await calculaCustoMensal(progre);
     }
+
     totalFolhaNovo=tot;
     String tmp =totalFolhaNovo.toStringAsFixed(2);
     totalFolhaNovo=double.parse(tmp);
@@ -684,8 +682,6 @@ SELECT
         }
       }
     }
-   // print('VALOR MENSAL $total');
-   // print('===============================================');
     return total;
   }
 

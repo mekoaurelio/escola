@@ -38,7 +38,6 @@ class DatabaseService {
       if (!temTabela) {
         var tbCriada = await ApiMySql.CriaTabelaSimulaCab(tb);
       }
-      print('insert into $tb (descricao,horas,classes,progressao,) values ("$titulo","$horas"),15,1.0');
       var itens = await ApiMySql.executaSql('insert into $tb (descricao,horas) values ("$titulo","$horas")');
       var result = await ApiMySql.executaSql('select * from $tb where descricao="$titulo"').timeout(const Duration(seconds: 30));
       print('KKKKKKKKK');

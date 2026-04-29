@@ -33,7 +33,7 @@ class ApiMySql {
 INSERT INTO login_direitos (${colunas.join(', ')})
 VALUES (${valores.join(', ')});
 ''';
-   // print(query);
+  //  print(query);
     return await executaSql(query);
   }
 
@@ -49,7 +49,7 @@ UPDATE login_direitos
 SET $sets
 WHERE id_user = $idUser;
 ''';
-    //print(query);
+  //  print(query);
     return await executaSql(query);
   }
   
@@ -148,7 +148,8 @@ WHERE id_user = $idUser;
       if (response.statusCode == 200) {
 
         final result = json.decode(response.body.trim());
-        //print(result);
+       // if(sql.contains('login_direitos'))
+       // print(result);
         return result is List ? result : [result].whereType<dynamic>().toList();
       }
       return [];
@@ -283,20 +284,23 @@ WHERE id_user = $idUser;
 
   static Future<dynamic> insereSql(String sql) async {
     String cleanSql = sql.replaceAll(r'\"', '"');
-    if(sql.contains('$TBExercicio')) {
+   // if(sql.contains('$TBExercicio')) {}
 
-    }
-    var url = pathDados + 'insert.php?sql=$cleanSql';
+    var url = '${urlProducao}insert.php?sql=$cleanSql';
+    print(url);
+
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
+        print('MANOEL');
+        print(response.body);
         return response.body;
       } else {
         return 'ERRO DE CONEXÃO';
       }
     } catch (e) {
       // Utils.snak('ERRO AO INSERIR', e.toString(), false, Colors.red);
-      return 'ERRO AO INSERIR $sql';
+      return 'ERRO AO INSERIR $cleanSql $e';
     }
   }
 
@@ -929,8 +933,24 @@ WHERE id_user = $idUser;
       ..write('INSERT INTO $tb (')..write(campos.join(', '))..write(
           ') VALUES (')..write(valores.join(', '))..write(')');
 
-     //print(sql);
-    return await insereSql(sql.toString());
+    //return await insereSql(sql.toString());
+    await executaSql(sql.toString());
+    var result= await executaSql('SELECT * FROM login ORDER BY id DESC LIMIT 1').timeout(const Duration(seconds: 30));
+    print('mmmm');
+    print(result[0]['id']);
+    //ApiMySql.getProPorHora(widget.hora, TBFolha, TBVantagens,).timeout(const Duration(seconds: 30));
+    return result[0]['id'];
+
+    //var itens = await ApiMySql.executaSql('insert into $tb (descricao,horas) values ("$titulo","$horas")');
+    //var result = await ApiMySql.executaSql('select * from $tb where descricao="$titulo"').timeout(const Duration(seconds: 30));
+
+    //var sql="Select * progressao from $TBSimulaCab where horas=$hr";
+    //return await executaSql(sql);
+
+
+    //print('kkkkkkkkkk');
+    //print(id);
+    //return id;
   }
 
   /// Atualiza um registro na tabela [tb], montando o SET a partir de [data].

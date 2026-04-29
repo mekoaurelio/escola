@@ -1,7 +1,5 @@
 import 'package:GEM/auxiliares/usuario_detalhe.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-
 import '../services/base_lista.dart';
 import '../widgets/line.dart';
 import '../widgets/painel.dart';
@@ -50,6 +48,7 @@ class _ListaBaseState extends ListaBaseState<UsuariosLista> {
   @override
   String getAppBarTitle() => 'Alunos';
 
+  /*
   Future<void> selecao(rec) async {
     var result=await showDialog(
       context: context,
@@ -61,9 +60,10 @@ class _ListaBaseState extends ListaBaseState<UsuariosLista> {
         onClose: () => Navigator.of(context).pop(),
       ),
     );
-      setState(() {
-        carregarDados(widget.table);
-      });
+
+    if(result!=null) {
+      setState(() => carregarDados(widget.table));
+    }
   }
 
   Future<void> onAdd() async {
@@ -79,6 +79,52 @@ class _ListaBaseState extends ListaBaseState<UsuariosLista> {
     );
     if(result!=null) {
       setState(() => lista = result);
+    }
+  }
+
+   */
+
+  Future<void> selecao(rec) async {
+    var result = await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Panel(
+        width: MediaQuery.of(context).size.width * 0.44,
+        height: MediaQuery.of(context).size.height * 0.44,
+        child: UsuarioDetalhe(
+          data: hoverIndex >= 0 && hoverIndex < lista.length ? lista[hoverIndex] : null,
+          table: widget.table,
+        ),
+        onClose: () => Navigator.of(context).pop(),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        carregarDados(widget.table);
+      });
+    }
+  }
+
+  Future<void> onAdd() async {
+    var result = await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Panel(
+        width: MediaQuery.of(context).size.width * 0.40,
+        height: MediaQuery.of(context).size.height * 0.40,
+        child: UsuarioDetalhe(
+          data: null,
+          table: widget.table,
+        ),
+        onClose: () => Navigator.of(context).pop(),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        lista = result;
+      });
     }
   }
 
